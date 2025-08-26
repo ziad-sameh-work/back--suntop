@@ -1,0 +1,640 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "endpoints": {
+    "authentication": {
+      "login": {
+        "method": "POST",
+        "url": "/api/auth/login",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "request_body": {
+          "username": "testuser",
+          "password": "password123"
+        },
+        "response": {
+          "success": true,
+          "message": "تم تسجيل الدخول بنجاح",
+          "data": {
+            "access_token": "1|eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+            "refresh_token": "2|eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "user": {
+              "id": "1",
+              "username": "testuser",
+              "email": "test@example.com",
+              "full_name": "Test User",
+              "phone": "+20 109 999 9999",
+              "role": "user",
+              "is_active": true,
+              "profile_image": null,
+              "created_at": "2024-01-20T10:30:00Z",
+              "last_login_at": "2024-01-20T14:30:00Z"
+            }
+          }
+        }
+      },
+      "profile": {
+        "method": "GET",
+        "url": "/api/auth/profile",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "id": "1",
+            "username": "testuser",
+            "email": "test@example.com",
+            "full_name": "Test User",
+            "phone": "+20 109 999 9999",
+            "role": "user",
+            "is_active": true,
+            "profile_image": null,
+            "created_at": "2024-01-20T10:30:00Z",
+            "last_login_at": "2024-01-20T14:30:00Z"
+          }
+        }
+      },
+      "reset_password": {
+        "method": "POST",
+        "url": "/api/auth/reset-password",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "request_body": {
+          "old_password": "password123",
+          "new_password": "newpassword123",
+          "new_password_confirmation": "newpassword123"
+        },
+        "response": {
+          "success": true,
+          "message": "تم تغيير كلمة المرور بنجاح",
+          "data": {
+            "password_changed_at": "2024-01-20T14:30:00Z"
+          }
+        }
+      },
+      "refresh_token": {
+        "method": "POST",
+        "url": "/api/auth/refresh-token",
+        "headers": {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "request_body": {
+          "refresh_token": "2|eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+        },
+        "response": {
+          "success": true,
+          "message": "تم تحديث الرمز المميز بنجاح",
+          "data": {
+            "access_token": "3|eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "user": {
+              "id": "1",
+              "username": "testuser",
+              "email": "test@example.com",
+              "full_name": "Test User",
+              "phone": "+20 109 999 9999",
+              "role": "user",
+              "is_active": true,
+              "profile_image": null,
+              "created_at": "2024-01-20T10:30:00Z"
+            }
+          }
+        }
+      },
+      "logout": {
+        "method": "POST",
+        "url": "/api/auth/logout",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "message": "تم تسجيل الخروج بنجاح"
+        }
+      }
+    },
+    "products": {
+      "list": {
+        "method": "GET",
+        "url": "/api/products",
+        "query_params": {
+          "category": "Citrus",
+          "page": 1,
+          "limit": 20,
+          "search": "سن توب",
+          "sort_by": "rating",
+          "sort_order": "desc"
+        },
+        "headers": {
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "products": [
+              {
+                "id": "1",
+                "name": "سن توب برتقال طازج",
+                "description": "عصير برتقال طازج فاخر - زجاجة 500 مل مع فيتامين سي",
+                "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                "price": 2.50,
+                "original_price": 3.00,
+                "currency": "EGP",
+                "category": "Citrus",
+                "size": "500ml",
+                "volume_category": "250ml",
+                "is_available": true,
+                "stock_quantity": 50,
+                "rating": 4.9,
+                "review_count": 89,
+                "tags": ["Popular", "Fresh", "Vitamin C"],
+                "nutrition_facts": {
+                  "calories": 120,
+                  "sugar": "25g",
+                  "vitamin_c": "100%"
+                },
+                "created_at": "2024-01-10T08:00:00Z",
+                "updated_at": "2024-01-20T12:00:00Z"
+              }
+            ],
+            "pagination": {
+              "current_page": 1,
+              "per_page": 20,
+              "total": 8,
+              "total_pages": 1,
+              "has_next": false,
+              "has_prev": false
+            },
+            "filters": {
+              "categories": ["1L", "250ml", "Citrus", "Tropical", "Berry"],
+              "price_range": {
+                "min": 2.25,
+                "max": 3.49
+              }
+            }
+          }
+        }
+      },
+      "featured": {
+        "method": "GET",
+        "url": "/api/products/featured",
+        "query_params": {
+          "limit": 10
+        },
+        "headers": {
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "products": [
+              {
+                "id": "1",
+                "name": "سن توب برتقال طازج",
+                "description": "عصير برتقال طازج فاخر",
+                "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                "price": 2.50,
+                "original_price": 3.00,
+                "currency": "EGP",
+                "category": "Citrus",
+                "size": "500ml",
+                "is_available": true,
+                "stock_quantity": 50,
+                "rating": 4.9,
+                "review_count": 89,
+                "tags": ["Popular", "Fresh"],
+                "created_at": "2024-01-10T08:00:00Z",
+                "updated_at": "2024-01-20T12:00:00Z"
+              }
+            ]
+          }
+        }
+      },
+      "categories": {
+        "method": "GET",
+        "url": "/api/products/categories",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "categories": [
+              "1L",
+              "250ml", 
+              "Citrus",
+              "Tropical",
+              "Berry",
+              "Classic",
+              "Summer",
+              "Exotic"
+            ]
+          }
+        }
+      },
+      "search": {
+        "method": "GET",
+        "url": "/api/products/search",
+        "query_params": {
+          "q": "سن توب",
+          "limit": 20
+        },
+        "headers": {
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "products": [
+              {
+                "id": "1",
+                "name": "سن توب برتقال طازج",
+                "description": "عصير برتقال طازج فاخر",
+                "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                "price": 2.50,
+                "currency": "EGP",
+                "category": "Citrus",
+                "is_available": true,
+                "rating": 4.9,
+                "review_count": 89
+              }
+            ],
+            "pagination": {
+              "current_page": 1,
+              "per_page": 20,
+              "total": 5,
+              "total_pages": 1,
+              "has_next": false,
+              "has_prev": false
+            },
+            "query": "سن توب"
+          }
+        }
+      },
+      "details": {
+        "method": "GET",
+        "url": "/api/products/{id}",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "id": "1",
+            "name": "سن توب برتقال طازج",
+            "description": "عصير برتقال طازج فاخر - زجاجة 500 مل مع فيتامين سي",
+            "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+            "gallery": [
+              "http://127.0.0.1:8000/storage/products/j1_1.jpg",
+              "http://127.0.0.1:8000/storage/products/j1_2.jpg"
+            ],
+            "price": 2.50,
+            "original_price": 3.00,
+            "currency": "EGP",
+            "category": "Citrus",
+            "size": "500ml",
+            "volume_category": "250ml",
+            "is_available": true,
+            "stock_quantity": 50,
+            "rating": 4.9,
+            "review_count": 89,
+            "tags": ["Popular", "Fresh", "Vitamin C"],
+            "ingredients": ["برتقال طبيعي", "ماء", "فيتامين سي"],
+            "nutrition_facts": {
+              "calories": 120,
+              "sugar": "25g",
+              "vitamin_c": "100%",
+              "sodium": "10mg"
+            },
+            "storage_instructions": "يُحفظ في الثلاجة بعد الفتح",
+            "expiry_info": "صالح لمدة 12 شهر",
+            "barcode": "1234567890123",
+            "reviews": [
+              {
+                "id": "1",
+                "user_name": "أحمد محمد",
+                "rating": 5,
+                "comment": "طعم رائع ومنعش",
+                "created_at": "2024-01-18T15:30:00Z"
+              }
+            ],
+            "created_at": "2024-01-10T08:00:00Z",
+            "updated_at": "2024-01-20T12:00:00Z"
+          }
+        }
+      }
+    },
+    "orders": {
+      "create": {
+        "method": "POST",
+        "url": "/api/orders",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        "request_body": {
+          "merchant_id": "1",
+          "items": [
+            {
+              "product_id": "1",
+              "quantity": 2,
+              "unit_price": 2.50
+            },
+            {
+              "product_id": "2",
+              "quantity": 1,
+              "unit_price": 2.99
+            }
+          ],
+          "delivery_address": {
+            "street": "شارع النيل",
+            "building": "رقم 15",
+            "apartment": "شقة 3",
+            "city": "القاهرة",
+            "district": "المعادي",
+            "postal_code": "11728",
+            "phone": "+20 109 999 9999",
+            "notes": "الدور الثاني"
+          },
+          "payment_method": "cash_on_delivery",
+          "offer_code": "SUMMER30",
+          "use_loyalty_points": 100,
+          "notes": "يرجى التوصيل بحذر"
+        },
+        "response": {
+          "success": true,
+          "message": "تم إنشاء الطلب بنجاح",
+          "data": {
+            "order": {
+              "id": "1",
+              "order_number": "ORD-2024-001",
+              "status": "pending",
+              "status_text": "في انتظار التأكيد",
+              "merchant": {
+                "id": "1",
+                "name": "Fresh Juice Corner",
+                "phone": "+20 109 999 9999"
+              },
+              "items": [
+                {
+                  "product_id": "1",
+                  "product_name": "سن توب برتقال طازج",
+                  "product_image": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                  "quantity": 2,
+                  "unit_price": 2.50,
+                  "total_price": 5.00
+                }
+              ],
+              "subtotal": 7.99,
+              "delivery_fee": 15.0,
+              "discount": 2.40,
+              "loyalty_discount": 1.00,
+              "tax": 1.20,
+              "total_amount": 20.79,
+              "currency": "EGP",
+              "payment_method": "cash_on_delivery",
+              "payment_status": "pending",
+              "delivery_address": {
+                "street": "شارع النيل",
+                "building": "رقم 15",
+                "apartment": "شقة 3",
+                "city": "القاهرة",
+                "district": "المعادي"
+              },
+              "estimated_delivery_time": "2024-01-22T15:00:00Z",
+              "tracking_number": "TRK123456",
+              "notes": "يرجى التوصيل بحذر",
+              "created_at": "2024-01-20T10:30:00Z"
+            }
+          }
+        }
+      },
+      "list": {
+        "method": "GET",
+        "url": "/api/orders",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Accept": "application/json"
+        },
+        "query_params": {
+          "status": "pending",
+          "page": 1,
+          "limit": 20
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "orders": [
+              {
+                "id": "1",
+                "order_number": "ORD-2024-001",
+                "status": "shipped",
+                "status_text": "تم الشحن",
+                "merchant_name": "Fresh Juice Corner",
+                "total_amount": 20.79,
+                "currency": "EGP",
+                "items_count": 3,
+                "tracking_number": "TRK123456",
+                "estimated_delivery": "2024-01-22T15:00:00Z",
+                "created_at": "2024-01-20T10:30:00Z"
+              }
+            ],
+            "pagination": {
+              "current_page": 1,
+              "per_page": 20,
+              "total": 15,
+              "total_pages": 1,
+              "has_next": false,
+              "has_prev": false
+            }
+          }
+        }
+      },
+      "details": {
+        "method": "GET",
+        "url": "/api/orders/{id}",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "id": "1",
+            "order_number": "ORD-2024-001",
+            "status": "shipped",
+            "status_text": "تم الشحن",
+            "merchant": {
+              "id": "1",
+              "name": "Fresh Juice Corner",
+              "phone": "+20 109 999 9999"
+            },
+            "items": [
+              {
+                "product_id": "1",
+                "product_name": "سن توب برتقال طازج",
+                "product_image": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                "quantity": 2,
+                "unit_price": 2.50,
+                "total_price": 5.00
+              }
+            ],
+            "subtotal": 7.99,
+            "delivery_fee": 15.0,
+            "discount": 2.40,
+            "loyalty_discount": 1.00,
+            "tax": 1.20,
+            "total_amount": 20.79,
+            "currency": "EGP",
+            "payment_method": "cash_on_delivery",
+            "payment_status": "pending",
+            "delivery_address": {
+              "street": "شارع النيل",
+              "building": "رقم 15",
+              "apartment": "شقة 3",
+              "city": "القاهرة",
+              "district": "المعادي"
+            },
+            "estimated_delivery_time": "2024-01-22T15:00:00Z",
+            "tracking_number": "TRK123456",
+            "delivered_at": null,
+            "notes": "يرجى التوصيل بحذر",
+            "created_at": "2024-01-20T10:30:00Z"
+          }
+        }
+      },
+      "tracking": {
+        "method": "GET",
+        "url": "/api/orders/{id}/tracking",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "order_id": "1",
+            "tracking_number": "TRK123456",
+            "current_status": "shipped",
+            "estimated_delivery": "2024-01-22T15:00:00Z",
+            "tracking_history": [
+              {
+                "status": "pending",
+                "status_text": "في انتظار التأكيد",
+                "timestamp": "2024-01-20T10:30:00Z",
+                "location": "Fresh Juice Corner",
+                "driver_name": null,
+                "driver_phone": null,
+                "notes": null
+              },
+              {
+                "status": "confirmed",
+                "status_text": "تم تأكيد الطلب",
+                "timestamp": "2024-01-20T11:00:00Z",
+                "location": "Fresh Juice Corner",
+                "driver_name": null,
+                "driver_phone": null,
+                "notes": null
+              },
+              {
+                "status": "shipped",
+                "status_text": "تم الشحن",
+                "timestamp": "2024-01-21T09:00:00Z",
+                "location": "مركز التوزيع - القاهرة",
+                "driver_name": "محمد أحمد",
+                "driver_phone": "+20 100 123 4567",
+                "notes": null
+              }
+            ]
+          }
+        }
+      },
+      "reorder": {
+        "method": "POST",
+        "url": "/api/orders/{id}/reorder",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "message": "تم إعادة الطلب بنجاح",
+          "data": {
+            "order": {
+              "id": "2",
+              "order_number": "ORD-2024-002",
+              "status": "pending",
+              "merchant": {
+                "id": "1",
+                "name": "Fresh Juice Corner"
+              },
+              "total_amount": 20.79,
+              "tracking_number": "TRK789012",
+              "created_at": "2024-01-20T15:30:00Z"
+            }
+          }
+        }
+      },
+      "cancel": {
+        "method": "POST",
+        "url": "/api/orders/{id}/cancel",
+        "headers": {
+          "Authorization": "Bearer {access_token}",
+          "Accept": "application/json"
+        },
+        "response": {
+          "success": true,
+          "message": "تم إلغاء الطلب بنجاح"
+        }
+      }
+    }
+  },
+  "errors": {
+    "401": {
+      "success": false,
+      "error": {
+        "message": "اسم المستخدم أو كلمة المرور غير صحيحة",
+        "timestamp": "2024-01-20T14:30:00Z"
+      }
+    },
+    "404": {
+      "success": false,
+      "error": {
+        "message": "المنتج غير موجود",
+        "timestamp": "2024-01-20T14:30:00Z"
+      }
+    },
+    "422": {
+      "success": false,
+      "error": {
+        "message": "خطأ في التحقق من صحة البيانات",
+        "details": {
+          "validation_errors": {
+            "merchant_id": ["معرف التاجر مطلوب"],
+            "items": ["عناصر الطلب مطلوبة"]
+          }
+        },
+        "timestamp": "2024-01-20T14:30:00Z"
+      }
+    },
+    "500": {
+      "success": false,
+      "error": {
+        "message": "خطأ في الخادم الداخلي",
+        "timestamp": "2024-01-20T14:30:00Z"
+      }
+    }
+  }
+}
