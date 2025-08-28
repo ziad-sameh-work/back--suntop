@@ -209,7 +209,7 @@ Route::prefix('offers')->group(function () {
     
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/{id}/validate', [App\Modules\Offers\Controllers\OfferController::class, 'validate']);
+        Route::post('/{id}/validate', [App\Modules\Offers\Controllers\OfferController::class, 'validateOffer']);
         Route::post('/{id}/redeem', [App\Modules\Offers\Controllers\OfferController::class, 'redeem']);
         Route::get('/user/redemptions', [App\Modules\Offers\Controllers\OfferController::class, 'userRedemptions']);
     });

@@ -220,7 +220,7 @@ class OfferController extends BaseController
     /**
      * Validate offer for user
      */
-    public function validate(Request $request, string $id): JsonResponse
+    public function validateOffer(Request $request, string $id): JsonResponse
     {
         try {
             $request->validate([
