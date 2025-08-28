@@ -16,6 +16,8 @@ use App\Modules\Admin\Controllers\AdminOfferController;
 use App\Modules\Admin\Controllers\AdminLoyaltyController;
 use App\Modules\Admin\Controllers\AdminAnalyticsController;
 use App\Http\Controllers\Api\ChatController;
+use App\Modules\Notifications\Controllers\NotificationController;
+use App\Modules\Notifications\Controllers\AdminNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -156,6 +158,18 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
         Route::post('/recalculate', [UserCategoryController::class, 'recalculateCategories']);
         Route::get('/test/amount', [UserCategoryController::class, 'getCategoryForAmount']);
     });
+
+    // Notifications Management
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [AdminNotificationController::class, 'index']);
+        Route::post('/', [AdminNotificationController::class, 'store']);
+        Route::post('/bulk', [AdminNotificationController::class, 'storeBulk']);
+        Route::post('/send-to-all', [AdminNotificationController::class, 'sendToAll']);
+        Route::get('/statistics', [AdminNotificationController::class, 'statistics']);
+        Route::get('/users', [AdminNotificationController::class, 'getUsers']);
+        Route::delete('/{id}', [AdminNotificationController::class, 'destroy']);
+        Route::post('/clean-old', [AdminNotificationController::class, 'cleanOld']);
+    });
 });
 
 // Customer Chat Routes (Protected)
@@ -165,6 +179,94 @@ Route::prefix('chat')->middleware('auth:sanctum')->group(function () {
     Route::get('/{chatId}/messages', [ChatController::class, 'getMessages']);
     Route::get('/history', [ChatController::class, 'getChatHistory']);
     Route::post('/{chatId}/read', [ChatController::class, 'markAsRead']);
+});
+
+// Real-Time Chat Routes (Protected)
+Route::prefix('rt-chat')->middleware('auth:sanctum')->group(function () {
+    Route::get('/start', [App\Http\Controllers\Api\ChatRealTimeController::class, 'getOrCreateChat']);
+    Route::post('/send', [App\Http\Controllers\Api\ChatRealTimeController::class, 'sendMessage']);
+    Route::get('/{chatId}/messages', [App\Http\Controllers\Api\ChatRealTimeController::class, 'getMessages']);
+});
+
+// Long-Polling Chat Routes (Protected) - No tokens required
+Route::prefix('lp-chat')->middleware('auth:sanctum')->group(function () {
+    Route::get('/start', [App\Http\Controllers\Api\ChatLongPollingController::class, 'getOrCreateChat']);
+    Route::post('/send', [App\Http\Controllers\Api\ChatLongPollingController::class, 'sendMessage']);
+    Route::get('/{chatId}/messages', [App\Http\Controllers\Api\ChatLongPollingController::class, 'getMessages']);
+    Route::post('/poll', [App\Http\Controllers\Api\ChatLongPollingController::class, 'pollMessages']);
+});
+
+// Offers Routes (Public and Protected)
+Route::prefix('offers')->group(function () {
+    Route::get('/', [App\Modules\Offers\Controllers\OfferController::class, 'index']);
+    Route::get('/featured', [App\Modules\Offers\Controllers\OfferController::class, 'featured']);
+    Route::get('/trending', [App\Modules\Offers\Controllers\OfferController::class, 'trending']);
+    Route::get('/stats', [App\Modules\Offers\Controllers\OfferController::class, 'stats']);
+    Route::get('/categories', [App\Modules\Offers\Controllers\OfferController::class, 'categories']);
+    Route::get('/types', [App\Modules\Offers\Controllers\OfferController::class, 'types']);
+    Route::get('/{id}', [App\Modules\Offers\Controllers\OfferController::class, 'show']);
+    Route::get('/{id}/performance', [App\Modules\Offers\Controllers\OfferController::class, 'performance']);
+    
+    // Protected routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/{id}/validate', [App\Modules\Offers\Controllers\OfferController::class, 'validate']);
+        Route::post('/{id}/redeem', [App\Modules\Offers\Controllers\OfferController::class, 'redeem']);
+        Route::get('/user/redemptions', [App\Modules\Offers\Controllers\OfferController::class, 'userRedemptions']);
+    });
+});
+
+// Loyalty Points Routes (Protected)
+Route::prefix('loyalty')->middleware('auth:sanctum')->group(function () {
+    Route::get('/points', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'getPoints']);
+    Route::get('/transactions', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'getTransactions']);
+    Route::get('/analytics', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'getAnalytics']);
+    Route::get('/earning-opportunities', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'getEarningOpportunities']);
+    
+    // Rewards
+    Route::get('/rewards', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'getRewards']);
+    Route::post('/rewards/{id}/redeem', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'redeemReward']);
+    Route::get('/rewards/redemptions', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'userRedemptions']);
+    
+    // Tiers
+    Route::get('/tiers', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'getTiers']);
+    
+    // For merchants/admin
+    Route::post('/points/add', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'addPoints']);
+});
+
+// Legacy loyalty route
+Route::prefix('loyalty')->middleware('auth:sanctum')->group(function () {
+    Route::get('/points', [App\Http\Controllers\Api\LoyaltyController::class, 'getPoints']);
+    Route::get('/transactions', [App\Http\Controllers\Api\LoyaltyController::class, 'getTransactions']);
+});
+
+// Notifications Routes (Protected)
+Route::prefix('notifications')->middleware('auth:sanctum')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::get('/statistics', [NotificationController::class, 'statistics']);
+    Route::get('/types', [NotificationController::class, 'types']);
+    Route::get('/{id}', [NotificationController::class, 'show']);
+    Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/', [NotificationController::class, 'destroyAll']);
+});
+
+// Favorites Routes (Protected)
+Route::prefix('favorites')->middleware('auth:sanctum')->group(function () {
+    Route::get('/', [App\Modules\Favorites\Controllers\FavoriteController::class, 'index']);
+    Route::post('/', [App\Modules\Favorites\Controllers\FavoriteController::class, 'store']);
+    Route::post('/toggle', [App\Modules\Favorites\Controllers\FavoriteController::class, 'toggle']);
+    Route::post('/bulk-add', [App\Modules\Favorites\Controllers\FavoriteController::class, 'bulkAdd']);
+    Route::post('/check-multiple', [App\Modules\Favorites\Controllers\FavoriteController::class, 'checkMultiple']);
+    Route::get('/count', [App\Modules\Favorites\Controllers\FavoriteController::class, 'count']);
+    Route::get('/statistics', [App\Modules\Favorites\Controllers\FavoriteController::class, 'statistics']);
+    Route::get('/popular', [App\Modules\Favorites\Controllers\FavoriteController::class, 'popular']);
+    Route::get('/recommendations', [App\Modules\Favorites\Controllers\FavoriteController::class, 'recommendations']);
+    Route::get('/check/{product_id}', [App\Modules\Favorites\Controllers\FavoriteController::class, 'check']);
+    Route::delete('/clear', [App\Modules\Favorites\Controllers\FavoriteController::class, 'clear']);
+    Route::delete('/{product_id}', [App\Modules\Favorites\Controllers\FavoriteController::class, 'destroy']);
 });
 
 // Protected user route

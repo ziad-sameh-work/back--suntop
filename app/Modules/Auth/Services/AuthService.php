@@ -128,6 +128,13 @@ class AuthService extends BaseService
      */
     private function formatUserData(User $user): array
     {
+        // Load user category relationship if not already loaded
+        if (!$user->relationLoaded('userCategory')) {
+            $user->load('userCategory');
+        }
+        
+        $loyaltyPoints = app()->make('App\Modules\Loyalty\Services\LoyaltyService')->getUserPoints($user->id);
+        
         return [
             'id' => $user->id,
             'username' => $user->username,
@@ -139,6 +146,15 @@ class AuthService extends BaseService
             'profile_image' => $user->profile_image ? url('storage/' . $user->profile_image) : null,
             'created_at' => $user->created_at->toISOString(),
             'last_login_at' => $user->last_login_at?->toISOString(),
+            'user_category' => $user->userCategory ? [
+                'id' => $user->userCategory->id,
+                'name' => $user->userCategory->name,
+                'display_name' => $user->userCategory->display_name,
+                'discount_percentage' => (float) $user->userCategory->discount_percentage,
+            ] : null,
+            'loyalty_points' => [
+                'current_balance' => $loyaltyPoints
+            ]
         ];
     }
 }

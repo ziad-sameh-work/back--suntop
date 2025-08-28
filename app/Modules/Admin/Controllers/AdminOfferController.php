@@ -7,13 +7,18 @@ use App\Modules\Offers\Models\Offer;
 use App\Modules\Admin\Requests\CreateOfferRequest;
 use App\Modules\Admin\Requests\UpdateOfferRequest;
 use App\Modules\Admin\Resources\AdminOfferResource;
+use App\Modules\Notifications\Services\NotificationService;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminOfferController extends BaseController
 {
-    public function __construct()
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->middleware('auth:sanctum');
         $this->middleware('role:admin');
     }
@@ -89,6 +94,25 @@ class AdminOfferController extends BaseController
         try {
             $data = $request->validated();
             $offer = Offer::create($data);
+
+            // Send notification to users about the new offer if it's active and valid
+            if ($offer->is_active && $offer->valid_from <= now() && $offer->valid_until >= now()) {
+                try {
+                    $this->notificationService->createOfferNotification(
+                        $offer->title,
+                        $offer->description,
+                        [
+                            'offer_id' => $offer->id,
+                            'code' => $offer->code,
+                            'discount_percentage' => $offer->discount_percentage,
+                            'discount_amount' => $offer->discount_amount,
+                            'valid_until' => $offer->valid_until,
+                        ]
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send offer notification: ' . $e->getMessage());
+                }
+            }
 
             return $this->successResponse(
                 ['offer' => new AdminOfferResource($offer)],

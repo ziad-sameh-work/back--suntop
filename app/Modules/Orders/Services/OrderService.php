@@ -11,6 +11,7 @@ use App\Modules\Merchants\Services\MerchantService;
 use App\Modules\Loyalty\Services\LoyaltyService;
 use App\Modules\Offers\Services\OfferService;
 use App\Modules\Users\Services\UserCategoryService;
+use App\Modules\Notifications\Services\NotificationService;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -23,6 +24,7 @@ class OrderService extends BaseService
     protected $loyaltyService;
     protected $offerService;
     protected $userCategoryService;
+    protected $notificationService;
 
     public function __construct(
         Order $order,
@@ -30,7 +32,8 @@ class OrderService extends BaseService
         MerchantService $merchantService,
         LoyaltyService $loyaltyService,
         OfferService $offerService,
-        UserCategoryService $userCategoryService
+        UserCategoryService $userCategoryService,
+        NotificationService $notificationService
     ) {
         $this->model = $order;
         $this->productService = $productService;
@@ -38,6 +41,7 @@ class OrderService extends BaseService
         $this->loyaltyService = $loyaltyService;
         $this->offerService = $offerService;
         $this->userCategoryService = $userCategoryService;
+        $this->notificationService = $notificationService;
     }
 
     /**
@@ -152,6 +156,25 @@ class OrderService extends BaseService
             }
             if ($totalPackages >= 10) {
                 $this->loyaltyService->awardPackageBonusPoints($data['user_id'], $totalPackages);
+            }
+
+            // Send order confirmation notification
+            try {
+                $this->notificationService->createOrderStatusNotification(
+                    $order->user_id,
+                    $order->order_number,
+                    Order::STATUS_PENDING,
+                    [
+                        'order_id' => $order->id,
+                        'tracking_number' => $order->tracking_number,
+                        'total_amount' => $order->total_amount,
+                        'merchant_name' => $merchant->name,
+                        'estimated_delivery' => $order->estimated_delivery_time,
+                    ]
+                );
+            } catch (\Exception $e) {
+                // Log error but don't fail the order creation
+                \Log::error('Failed to send order confirmation notification: ' . $e->getMessage());
             }
 
             return $order->load(['items', 'merchant']);
@@ -289,6 +312,23 @@ class OrderService extends BaseService
         // Mark as delivered
         if ($status === Order::STATUS_DELIVERED) {
             $order->update(['delivered_at' => now()]);
+        }
+
+        // Send notification to user about status change
+        try {
+            $this->notificationService->createOrderStatusNotification(
+                $order->user_id,
+                $order->order_number,
+                $status,
+                [
+                    'order_id' => $order->id,
+                    'tracking_number' => $order->tracking_number,
+                    'total_amount' => $order->total_amount,
+                ]
+            );
+        } catch (\Exception $e) {
+            // Log error but don't fail the order update
+            \Log::error('Failed to send order status notification: ' . $e->getMessage());
         }
 
         return true;

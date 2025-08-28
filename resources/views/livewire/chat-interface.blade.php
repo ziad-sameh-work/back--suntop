@@ -134,6 +134,27 @@
     </div>
 </div>
 
+<script>
+    // التمرير إلى أسفل عند تحديث الرسائل
+    document.addEventListener('livewire:load', function () {
+        // التمرير لأسفل عند التحميل
+        scrollToBottom();
+        
+        // الاستماع للحدث
+        window.addEventListener('scrollToBottom', event => {
+            scrollToBottom();
+        });
+        
+        // دالة التمرير لأسفل
+        function scrollToBottom() {
+            const container = document.getElementById('messagesContainer');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+    });
+</script>
+
 <style>
 /* Chat Interface */
 .chat-interface {

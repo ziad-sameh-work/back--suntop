@@ -22,8 +22,28 @@ class ChatInterface extends Component
     
     protected $listeners = [
         'chatUpdated' => 'refreshMessages',
-        'messageAdded' => 'addMessage'
+        'messageAdded' => 'addMessage',
+        'stopPolling' => 'disablePolling',
+        'resumePolling' => 'enablePolling'
     ];
+
+    // تحديث تلقائي كل 3 ثواني
+    public function getPollingInterval()
+    {
+        return $this->pollingEnabled ? 3000 : null; // بالمللي ثانية
+    }
+    
+    public $pollingEnabled = true;
+    
+    public function disablePolling()
+    {
+        $this->pollingEnabled = false;
+    }
+    
+    public function enablePolling()
+    {
+        $this->pollingEnabled = true;
+    }
 
     public function mount(Chat $chat)
     {
@@ -139,6 +159,37 @@ class ChatInterface extends Component
         $this->loadMessages();
         $this->dispatchBrowserEvent('scrollToBottom');
     }
+    
+    // يستخدم هذا التابع تلقائياً مع polling
+    public function render()
+    {
+        // فحص ما إذا كان هناك رسائل جديدة
+        $latestMessageId = 0;
+        if (count($this->messages) > 0) {
+            $latestMessageId = collect($this->messages)->max('id');
+        }
+        
+        // التحقق من وجود رسائل جديدة
+        $hasNewMessages = false;
+        if ($latestMessageId > 0) {
+            $hasNewMessages = $this->chat->messages()
+                ->where('id', '>', $latestMessageId)
+                ->exists();
+        }
+        
+        // إذا كانت هناك رسائل جديدة، قم بتحميلها
+        if ($hasNewMessages) {
+            $this->loadMessages();
+            $this->dispatchBrowserEvent('scrollToBottom');
+            
+            // وضع علامة "مقروء" على الرسائل إذا كان المستخدم مدير
+            if (Auth::user()->role === 'admin') {
+                $this->chat->markAsRead('admin');
+            }
+        }
+        
+        return view('livewire.chat-interface');
+    }
 
     public function removeAttachment()
     {
@@ -154,10 +205,5 @@ class ChatInterface extends Component
     {
         $this->newMessage .= $emoji;
         $this->showEmojiPicker = false;
-    }
-
-    public function render()
-    {
-        return view('livewire.chat-interface');
     }
 }

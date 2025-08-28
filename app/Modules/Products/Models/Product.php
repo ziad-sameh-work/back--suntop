@@ -24,8 +24,10 @@ class Product extends Model
         'weight',
         'dimensions',
         'merchant_id',
+        'category_id',
         'is_available',
         'is_featured',
+        'back_color',
         'meta_title',
         'meta_description',
         // Carton and Package fields
@@ -126,8 +128,20 @@ class Product extends Model
      */
     public function scopeByCategory($query, $category)
     {
-        return $query->where('category', $category)
-                    ->orWhere('volume_category', $category);
+        // إذا كان المعرف رقمي، نبحث في category_id
+        if (is_numeric($category)) {
+            return $query->where('category_id', $category);
+        }
+        
+        // إذا كان نص، نبحث في الحقول القديمة أو في جدول الفئات
+        return $query->where(function($q) use ($category) {
+            $q->where('category', $category)
+              ->orWhere('volume_category', $category)
+              ->orWhereHas('category', function($q2) use ($category) {
+                  $q2->where('name', $category)
+                     ->orWhere('display_name', 'LIKE', "%{$category}%");
+              });
+        });
     }
 
     /**
@@ -148,6 +162,14 @@ class Product extends Model
     public function merchant()
     {
         return $this->belongsTo(\App\Modules\Merchants\Models\Merchant::class);
+    }
+    
+    /**
+     * Category relationship
+     */
+    public function category()
+    {
+        return $this->belongsTo(ProductCategory::class);
     }
 
     /**
@@ -294,5 +316,39 @@ class Product extends Model
         }
         
         return $requirements;
+    }
+
+    /**
+     * Favorites relationship
+     */
+    public function favorites()
+    {
+        return $this->hasMany(\App\Models\Favorite::class);
+    }
+
+    /**
+     * Users who favorited this product
+     */
+    public function favoritedByUsers()
+    {
+        return $this->belongsToMany(\App\Models\User::class, 'favorites', 'product_id', 'user_id')
+                   ->withTimestamps()
+                   ->withPivot('added_at');
+    }
+
+    /**
+     * Check if product is favorited by specific user
+     */
+    public function isFavoritedBy(int $userId): bool
+    {
+        return $this->favorites()->where('user_id', $userId)->exists();
+    }
+
+    /**
+     * Get favorites count
+     */
+    public function getFavoritesCountAttribute(): int
+    {
+        return $this->favorites()->count();
     }
 }

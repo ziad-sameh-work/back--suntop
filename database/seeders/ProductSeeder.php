@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Modules\Products\Models\Product;
+use App\Modules\Products\Models\ProductCategory;
 
 class ProductSeeder extends Seeder
 {
@@ -32,21 +33,11 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 2.50,
                 'original_price' => 3.00,
-                // Carton & Package settings
-                'carton_size' => 24,
-                'carton_price' => 55.00, // خصم للكرتون الكامل
-                'is_full_carton' => false,
-                'package_size' => 6,
-                'package_price' => 14.50, // خصم للحزمة
-                'is_full_package' => false,
-                'allow_individual_units' => true,
-                'carton_loyalty_points' => 15,
-                'package_loyalty_points' => 4,
-                'unit_loyalty_points' => 1,
                 'currency' => 'EGP',
                 'category' => 'Citrus',
                 'size' => '500ml',
                 'volume_category' => '250ml',
+                'category_id' => 2, // فئة 250 مل
                 'is_available' => true,
                 'stock_quantity' => 150,
                 'rating' => 4.9,
@@ -67,6 +58,7 @@ class ProductSeeder extends Seeder
                 'sort_order' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'back_color' => '#FFF8E1',
             ],
             [
                 'name' => 'سن توب مانجو استوائي',
@@ -78,21 +70,11 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 2.75,
                 'original_price' => 3.25,
-                // Carton & Package settings
-                'carton_size' => 24,
-                'carton_price' => 60.00,
-                'is_full_carton' => false,
-                'package_size' => 6,
-                'package_price' => 15.50,
-                'is_full_package' => false,
-                'allow_individual_units' => true,
-                'carton_loyalty_points' => 18,
-                'package_loyalty_points' => 5,
-                'unit_loyalty_points' => 1,
                 'currency' => 'EGP',
                 'category' => 'Tropical',
                 'size' => '500ml',
                 'volume_category' => '250ml',
+                'category_id' => 2, // فئة 250 مل
                 'is_available' => true,
                 'stock_quantity' => 120,
                 'rating' => 4.8,
@@ -113,6 +95,7 @@ class ProductSeeder extends Seeder
                 'sort_order' => 2,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'back_color' => '#FFECB3',
             ],
             [
                 'name' => 'سن توب تفاح أخضر',
@@ -124,21 +107,11 @@ class ProductSeeder extends Seeder
                 ],
                 'price' => 4.50,
                 'original_price' => 5.00,
-                // Carton & Package settings
-                'carton_size' => 12, // أقل لأنها زجاجات أكبر
-                'carton_price' => 50.00,
-                'is_full_carton' => false,
-                'package_size' => 4,
-                'package_price' => 17.00,
-                'is_full_package' => false,
-                'allow_individual_units' => true,
-                'carton_loyalty_points' => 25,
-                'package_loyalty_points' => 8,
-                'unit_loyalty_points' => 2,
                 'currency' => 'EGP',
                 'category' => 'Classic',
                 'size' => '1L',
                 'volume_category' => '1L',
+                'category_id' => 1, // فئة 1 لتر
                 'is_available' => true,
                 'stock_quantity' => 80,
                 'rating' => 4.7,
@@ -159,6 +132,7 @@ class ProductSeeder extends Seeder
                 'sort_order' => 3,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'back_color' => '#E8F5E9',
             ],
             [
                 'name' => 'سن توب كوكتيل فواكه',
@@ -173,6 +147,7 @@ class ProductSeeder extends Seeder
                 'category' => 'Mixed',
                 'size' => '500ml',
                 'volume_category' => '250ml',
+                'category_id' => 2, // فئة 250 مل
                 'is_available' => true,
                 'stock_quantity' => 95,
                 'rating' => 4.6,
@@ -193,6 +168,7 @@ class ProductSeeder extends Seeder
                 'sort_order' => 4,
                 'created_at' => now(),
                 'updated_at' => now(),
+                'back_color' => '#F3E5F5',
             ],
             [
                 'name' => 'سن توب ليمون بالنعناع',
@@ -205,6 +181,7 @@ class ProductSeeder extends Seeder
                 'category' => 'Summer',
                 'size' => '500ml',
                 'volume_category' => '250ml',
+                'category_id' => 2, // فئة 250 مل
                 'is_available' => true,
                 'stock_quantity' => 110,
                 'rating' => 4.5,
@@ -239,6 +216,7 @@ class ProductSeeder extends Seeder
                 'category' => 'Berry',
                 'size' => '500ml',
                 'volume_category' => '250ml',
+                'category_id' => 2, // فئة 250 مل
                 'is_available' => true,
                 'stock_quantity' => 75,
                 'rating' => 4.8,
@@ -271,6 +249,7 @@ class ProductSeeder extends Seeder
                 'category' => 'Exotic',
                 'size' => '500ml',
                 'volume_category' => '250ml',
+                'category_id' => 2, // فئة 250 مل
                 'is_available' => true,
                 'stock_quantity' => 60,
                 'rating' => 4.4,
@@ -306,6 +285,7 @@ class ProductSeeder extends Seeder
                 'category' => 'Classic',
                 'size' => '1L',
                 'volume_category' => '1L',
+                'category_id' => 1, // فئة 1 لتر
                 'is_available' => false, // Out of stock for testing
                 'stock_quantity' => 0,
                 'rating' => 4.3,
@@ -342,6 +322,10 @@ class ProductSeeder extends Seeder
         $this->command->info('3. سن توب كوكتيل فواكه (ID: 4) - 2.99 EGP');
         $this->command->info('');
         $this->command->info('📋 فئات المنتجات:');
+        $this->command->info('- حجم 1 لتر: تفاح أخضر، عنب أحمر');
+        $this->command->info('- حجم 250 مل: برتقال، مانجو، كوكتيل فواكه، ليمون بالنعناع، فراولة، أناناس');
+        $this->command->info('');
+        $this->command->info('📋 أنواع المنتجات:');
         $this->command->info('- Citrus: برتقال');
         $this->command->info('- Tropical: مانجو');
         $this->command->info('- Classic: تفاح، عنب');

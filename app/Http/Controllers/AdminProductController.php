@@ -156,6 +156,8 @@ class AdminProductController extends Controller
     public function create()
     {
         $merchants = [];
+        $categories = [];
+        
         try {
             if (Schema::hasTable('merchants')) {
                 $merchants = Merchant::where('is_active', true)->get();
@@ -164,7 +166,17 @@ class AdminProductController extends Controller
             // Merchants table might not exist yet
         }
         
-        return view('admin.products.create', compact('merchants'));
+        try {
+            if (Schema::hasTable('product_categories')) {
+                $categories = \App\Modules\Products\Models\ProductCategory::where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            // Product Categories table might not exist yet
+        }
+        
+        return view('admin.products.create', compact('merchants', 'categories'));
     }
 
     /**
@@ -180,6 +192,7 @@ class AdminProductController extends Controller
             'stock_quantity' => 'required|integer|min:0',
             'is_available' => 'boolean',
             'is_featured' => 'boolean',
+            'back_color' => 'nullable|string|max:20',
         ];
         
         // Add conditional validation rules
@@ -203,6 +216,9 @@ class AdminProductController extends Controller
         }
         if (Schema::hasColumn('products', 'merchant_id') && Schema::hasTable('merchants')) {
             $rules['merchant_id'] = 'required|exists:merchants,id';
+        }
+        if (Schema::hasColumn('products', 'category_id') && Schema::hasTable('product_categories')) {
+            $rules['category_id'] = 'nullable|exists:product_categories,id';
         }
         if (Schema::hasColumn('products', 'images')) {
             $rules['images'] = 'nullable|array|max:5';
@@ -257,16 +273,22 @@ class AdminProductController extends Controller
     {
         $product = Product::findOrFail($id);
         
-        // Load merchant relationship if it exists
+        // Load merchant and category relationships if they exist
         try {
             if (Schema::hasColumn('products', 'merchant_id')) {
                 $product->load('merchant');
             }
+            
+            if (Schema::hasColumn('products', 'category_id')) {
+                $product->load('category');
+            }
         } catch (\Exception $e) {
-            // Merchant relationship might not exist yet
+            // Relationships might not exist yet
         }
         
         $merchants = [];
+        $categories = [];
+        
         try {
             if (Schema::hasTable('merchants')) {
                 $merchants = Merchant::where('is_active', true)->get();
@@ -275,7 +297,17 @@ class AdminProductController extends Controller
             // Merchants table might not exist yet
         }
         
-        return view('admin.products.edit', compact('product', 'merchants'));
+        try {
+            if (Schema::hasTable('product_categories')) {
+                $categories = \App\Modules\Products\Models\ProductCategory::where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->get();
+            }
+        } catch (\Exception $e) {
+            // Product Categories table might not exist yet
+        }
+        
+        return view('admin.products.edit', compact('product', 'merchants', 'categories'));
     }
 
     /**
@@ -293,6 +325,7 @@ class AdminProductController extends Controller
             'stock_quantity' => 'required|integer|min:0',
             'is_available' => 'boolean',
             'is_featured' => 'boolean',
+            'back_color' => 'nullable|string|max:20',
         ];
         
         // Add conditional validation rules

@@ -21,6 +21,9 @@ class ModuleServiceProvider extends ServiceProvider
         $this->registerLoyaltyServices();
         $this->registerOfferServices();
         $this->registerUserCategoryServices();
+        $this->registerNotificationServices();
+        $this->registerRewardServices();
+        $this->registerFavoriteServices();
     }
 
     /**
@@ -77,7 +80,8 @@ class ModuleServiceProvider extends ServiceProvider
                     $app->make(\App\Modules\Merchants\Services\MerchantService::class),
                     $app->make(\App\Modules\Loyalty\Services\LoyaltyService::class),
                     $app->make(\App\Modules\Offers\Services\OfferService::class),
-                    $app->make(\App\Modules\Users\Services\UserCategoryService::class)
+                    $app->make(\App\Modules\Users\Services\UserCategoryService::class),
+                    $app->make(\App\Modules\Notifications\Services\NotificationService::class)
                 );
             }
         );
@@ -107,7 +111,8 @@ class ModuleServiceProvider extends ServiceProvider
             \App\Modules\Loyalty\Services\LoyaltyService::class,
             function ($app) {
                 return new \App\Modules\Loyalty\Services\LoyaltyService(
-                    $app->make(\App\Modules\Loyalty\Models\LoyaltyPoint::class)
+                    $app->make(\App\Modules\Loyalty\Models\LoyaltyPoint::class),
+                    $app->make(\App\Modules\Notifications\Services\NotificationService::class)
                 );
             }
         );
@@ -138,6 +143,51 @@ class ModuleServiceProvider extends ServiceProvider
             function ($app) {
                 return new \App\Modules\Users\Services\UserCategoryService(
                     $app->make(\App\Modules\Users\Models\UserCategory::class)
+                );
+            }
+        );
+    }
+
+    /**
+     * Register Notification module services
+     */
+    private function registerNotificationServices()
+    {
+        $this->app->bind(
+            \App\Modules\Notifications\Services\NotificationService::class,
+            function ($app) {
+                return new \App\Modules\Notifications\Services\NotificationService(
+                    $app->make(\App\Models\Notification::class)
+                );
+            }
+        );
+    }
+
+    /**
+     * Register Reward services
+     */
+    private function registerRewardServices()
+    {
+        $this->app->bind(
+            \App\Modules\Loyalty\Services\RewardService::class,
+            function ($app) {
+                return new \App\Modules\Loyalty\Services\RewardService(
+                    $app->make(\App\Modules\Loyalty\Models\Reward::class)
+                );
+            }
+        );
+    }
+
+    /**
+     * Register Favorite services
+     */
+    private function registerFavoriteServices()
+    {
+        $this->app->bind(
+            \App\Modules\Favorites\Services\FavoriteService::class,
+            function ($app) {
+                return new \App\Modules\Favorites\Services\FavoriteService(
+                    $app->make(\App\Models\Favorite::class)
                 );
             }
         );

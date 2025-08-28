@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use App\Events\NewChatMessage;
 
 class ChatMessage extends Model
 {
@@ -153,6 +154,13 @@ class ChatMessage extends Model
             // Increment unread count for the recipient
             $recipientType = $message->sender_type === 'customer' ? 'admin' : 'customer';
             $message->chat->incrementUnreadCount($recipientType);
+            
+            // إرسال الحدث لدعم الشات المباشر للتطبيقات
+            // استخدم Laravel Echo للشات المباشر للتطبيقات (Flutter)
+            // ولكن للوحة الإدارة نستخدم Livewire Polling
+            if ($message->sender_type === 'customer' || (isset($message->metadata['sent_from']) && $message->metadata['sent_from'] === 'api_rt')) {
+                event(new NewChatMessage($message));
+            }
         });
     }
 }

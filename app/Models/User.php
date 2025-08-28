@@ -128,6 +128,32 @@ class User extends Authenticatable
     }
 
     /**
+     * Notifications relationship
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(\App\Models\Notification::class);
+    }
+
+    /**
+     * Favorites relationship
+     */
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(\App\Models\Favorite::class);
+    }
+
+    /**
+     * Favorite products relationship
+     */
+    public function favoriteProducts()
+    {
+        return $this->belongsToMany(\App\Modules\Products\Models\Product::class, 'favorites', 'user_id', 'product_id')
+                   ->withTimestamps()
+                   ->withPivot('added_at');
+    }
+
+    /**
      * Scope by category
      */
     public function scopeByCategory($query, $categoryId)

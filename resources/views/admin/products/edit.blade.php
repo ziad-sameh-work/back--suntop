@@ -106,6 +106,22 @@
                     @error('merchant_id')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
                 @endif
+                
+                @if(count($categories) > 0)
+                <div class="form-group">
+                    <label class="form-label">فئة المنتج <span class="required">*</span></label>
+                    <select name="category_id" class="form-select" required>
+                        <option value="">اختر فئة المنتج</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
+                                {{ $category->display_name }} ({{ $category->name }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="form-help">حدد ما إذا كان المنتج من فئة 1 لتر أو 250 مل</div>
+                    @error('category_id')<div class="form-error">{{ $message }}</div>@enderror
+                </div>
+                @endif
 
                 <div class="form-group full-width">
                     <label class="form-label">الوصف <span class="required">*</span></label>
@@ -136,6 +152,19 @@
                         </label>
                         <span>عرض في المنتجات المميزة</span>
                     </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">لون خلفية المنتج</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="color" name="back_color" class="form-input" style="width: 60px; height: 40px; padding: 5px;"
+                               value="{{ old('back_color', $product->back_color ?? '#FFFFFF') }}">
+                        <input type="text" class="form-input" id="backColorText" style="flex: 1;"
+                               value="{{ old('back_color', $product->back_color ?? '#FFFFFF') }}" placeholder="#FFFFFF"
+                               oninput="document.querySelector('input[name=back_color]').value = this.value">
+                    </div>
+                    <div style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">اختر لون خلفية لعرض المنتج في التطبيق</div>
+                    @error('back_color')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
             </div>
 

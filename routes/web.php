@@ -12,6 +12,7 @@ use App\Http\Controllers\AdminLoyaltyController;
 use App\Http\Controllers\AdminUserCategoryController;
 use App\Http\Controllers\AdminAnalyticsController;
 use App\Http\Controllers\AdminChatController;
+use App\Http\Controllers\AdminNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -156,4 +157,28 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('chats/{chat}/status', [AdminChatController::class, 'updateStatus'])->name('chats.updateStatus');
     Route::post('chats/{chat}/priority', [AdminChatController::class, 'updatePriority'])->name('chats.updatePriority');
     Route::get('chats-admins', [AdminChatController::class, 'getAdmins'])->name('chats.admins');
+
+    // Notification Routes
+    Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/create', [AdminNotificationController::class, 'create'])->name('notifications.create');
+    Route::post('notifications', [AdminNotificationController::class, 'store'])->name('notifications.store');
+    Route::get('notifications/{id}', [AdminNotificationController::class, 'show'])->name('notifications.show');
+    Route::delete('notifications/{id}', [AdminNotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::post('notifications/send-to-all', [AdminNotificationController::class, 'sendToAll'])->name('notifications.send-to-all');
+    Route::post('notifications/clean-old', [AdminNotificationController::class, 'cleanOld'])->name('notifications.clean-old');
+    Route::get('notifications-stats', [AdminNotificationController::class, 'getStats'])->name('notifications.stats');
+
+    // Featured Offers Management Routes
+    Route::prefix('featured-offers')->group(function () {
+        Route::get('/', [App\Http\Controllers\AdminFeaturedOffersController::class, 'index'])->name('featured-offers.index');
+        Route::get('/create', [App\Http\Controllers\AdminFeaturedOffersController::class, 'create'])->name('featured-offers.create');
+        Route::post('/', [App\Http\Controllers\AdminFeaturedOffersController::class, 'store'])->name('featured-offers.store');
+        Route::get('/{offer}/edit', [App\Http\Controllers\AdminFeaturedOffersController::class, 'edit'])->name('featured-offers.edit');
+        Route::put('/{offer}', [App\Http\Controllers\AdminFeaturedOffersController::class, 'update'])->name('featured-offers.update');
+        Route::delete('/{offer}', [App\Http\Controllers\AdminFeaturedOffersController::class, 'destroy'])->name('featured-offers.destroy');
+        Route::post('/{offer}/toggle-featured', [App\Http\Controllers\AdminFeaturedOffersController::class, 'toggleFeatured'])->name('featured-offers.toggle-featured');
+        Route::post('/update-order', [App\Http\Controllers\AdminFeaturedOffersController::class, 'updateOrder'])->name('featured-offers.update-order');
+        Route::get('/update-trends', [App\Http\Controllers\AdminFeaturedOffersController::class, 'updateTrendScores'])->name('featured-offers.update-trends');
+        Route::get('/stats/data', [App\Http\Controllers\AdminFeaturedOffersController::class, 'getStats'])->name('featured-offers.stats');
+    });
 });

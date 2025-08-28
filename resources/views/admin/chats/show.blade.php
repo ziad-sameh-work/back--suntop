@@ -8,6 +8,8 @@
 
 @section('content')
 <div class="dashboard-content">
+    <!-- مؤشر تحديث الشات -->
+    @livewire('chat-updates-indicator')
     <div class="chat-layout">
         <!-- Sidebar -->
         <div class="chat-sidebar">
