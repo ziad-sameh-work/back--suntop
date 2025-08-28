@@ -8,16 +8,19 @@ use App\Modules\Orders\Requests\CreateOrderRequest;
 use App\Modules\Orders\Resources\OrderResource;
 use App\Modules\Orders\Resources\OrderDetailResource;
 use App\Modules\Orders\Resources\TrackingResource;
+use App\Modules\Notifications\Services\OrderNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class OrderController extends BaseController
 {
     protected $orderService;
+    protected $notificationService;
 
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderService $orderService, OrderNotificationService $notificationService)
     {
         $this->orderService = $orderService;
+        $this->notificationService = $notificationService;
         $this->middleware('auth:sanctum');
     }
 
@@ -31,6 +34,18 @@ class OrderController extends BaseController
             $data['user_id'] = $request->user()->id;
 
             $order = $this->orderService->createOrder($data);
+
+            // Send notification to admin about new order
+            $this->notificationService->sendAdminOrderNotification(
+                $order->order_number,
+                $order->status,
+                [
+                    'order_id' => $order->id,
+                    'user_name' => $request->user()->name,
+                    'total_amount' => $order->total_amount,
+                    'items_count' => $order->items->count(),
+                ]
+            );
 
             return $this->successResponse(
                 ['order' => new OrderDetailResource($order)],
@@ -65,6 +80,12 @@ class OrderController extends BaseController
                     'total_pages' => $orders->lastPage(),
                     'has_next' => $orders->hasMorePages(),
                     'has_prev' => $orders->currentPage() > 1,
+                ],
+                'summary' => [
+                    'pending_count' => $this->orderService->getUserOrdersCountByStatus($request->user()->id, 'pending'),
+                    'confirmed_count' => $this->orderService->getUserOrdersCountByStatus($request->user()->id, 'confirmed'),
+                    'shipped_count' => $this->orderService->getUserOrdersCountByStatus($request->user()->id, 'shipped'),
+                    'delivered_count' => $this->orderService->getUserOrdersCountByStatus($request->user()->id, 'delivered'),
                 ]
             ]);
         } catch (\Exception $e) {
@@ -139,6 +160,92 @@ class OrderController extends BaseController
                 'تم إعادة الطلب بنجاح',
                 201
             );
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get real-time order status
+     */
+    public function getOrderStatus(Request $request, string $id): JsonResponse
+    {
+        try {
+            $order = $this->orderService->getOrderById($id, $request->user()->id);
+
+            if (!$order) {
+                return $this->errorResponse('الطلب غير موجود', null, 404);
+            }
+
+            $latestTracking = $order->trackings()->latest('timestamp')->first();
+
+            return $this->successResponse([
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+                'status_text' => $order->status_text,
+                'latest_tracking' => $latestTracking ? [
+                    'location' => $latestTracking->location,
+                    'driver_name' => $latestTracking->driver_name,
+                    'driver_phone' => $latestTracking->driver_phone,
+                    'notes' => $latestTracking->notes,
+                    'timestamp' => $latestTracking->timestamp->toISOString(),
+                    'time_ago' => $latestTracking->timestamp->diffForHumans(),
+                ] : null,
+                'estimated_delivery_time' => $order->estimated_delivery_time?->toISOString(),
+                'delivered_at' => $order->delivered_at?->toISOString(),
+            ]);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get order history for user
+     */
+    public function history(Request $request): JsonResponse
+    {
+        try {
+            $orders = $this->orderService->getUserOrderHistory($request->user()->id);
+
+            return $this->successResponse([
+                'recent_orders' => OrderResource::collection($orders['recent']),
+                'favorite_items' => $orders['favorite_items'],
+                'statistics' => [
+                    'total_orders' => $orders['stats']['total_orders'],
+                    'total_spent' => $orders['stats']['total_spent'],
+                    'avg_order_value' => $orders['stats']['avg_order_value'],
+                    'favorite_merchant' => $orders['stats']['favorite_merchant'],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Rate order
+     */
+    public function rate(Request $request, string $id): JsonResponse
+    {
+        try {
+            $request->validate([
+                'rating' => 'required|integer|min:1|max:5',
+                'review' => 'nullable|string|max:1000',
+            ]);
+
+            $result = $this->orderService->rateOrder(
+                $id,
+                $request->user()->id,
+                $request->rating,
+                $request->review
+            );
+
+            if (!$result) {
+                return $this->errorResponse('لا يمكن تقييم هذا الطلب');
+            }
+
+            return $this->successResponse(null, 'تم تقييم الطلب بنجاح');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }

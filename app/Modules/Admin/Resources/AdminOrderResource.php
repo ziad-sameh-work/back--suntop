@@ -3,6 +3,7 @@
 namespace App\Modules\Admin\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Modules\Orders\Models\Order;
 
 class AdminOrderResource extends JsonResource
 {
@@ -12,9 +13,6 @@ class AdminOrderResource extends JsonResource
             'id' => $this->id,
             'order_number' => $this->order_number,
             'tracking_number' => $this->tracking_number,
-            'status' => $this->status,
-            'status_text' => $this->status_text,
-            'status_badge_color' => $this->getStatusBadgeColor(),
             'user' => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
@@ -22,54 +20,44 @@ class AdminOrderResource extends JsonResource
                 'phone' => $this->user->phone,
                 'category' => $this->user->userCategory ? [
                     'name' => $this->user->userCategory->name,
-                    'display_name' => $this->user->userCategory->display_name,
+                    'discount_percentage' => $this->user->userCategory->discount_percentage,
                 ] : null,
             ],
             'merchant' => [
                 'id' => $this->merchant->id,
                 'name' => $this->merchant->name,
                 'phone' => $this->merchant->phone,
+                'is_open' => $this->merchant->is_open,
             ],
-            'items_count' => $this->items_count ?? $this->items->count(),
-            'subtotal' => $this->subtotal,
-            'delivery_fee' => $this->delivery_fee,
-            'discount' => $this->discount,
-            'category_discount' => $this->category_discount ?? 0,
-            'loyalty_discount' => $this->loyalty_discount,
-            'tax' => $this->tax,
-            'total_amount' => $this->total_amount,
-            'formatted_total' => number_format($this->total_amount, 2) . ' ' . $this->currency,
-            'currency' => $this->currency,
+            'status' => $this->status,
+            'status_text' => $this->status_text,
             'payment_method' => $this->payment_method,
             'payment_method_text' => $this->getPaymentMethodText(),
             'payment_status' => $this->payment_status,
             'payment_status_text' => $this->getPaymentStatusText(),
+            'financial' => [
+                'subtotal' => $this->subtotal,
+                'delivery_fee' => $this->delivery_fee,
+                'discount' => $this->discount,
+                'category_discount' => $this->category_discount,
+                'loyalty_discount' => $this->loyalty_discount,
+                'tax' => $this->tax,
+                'total_amount' => $this->total_amount,
+                'currency' => $this->currency,
+            ],
             'delivery_address' => $this->delivery_address,
+            'items_count' => $this->items_count ?? $this->items->count(),
             'estimated_delivery_time' => $this->estimated_delivery_time?->toISOString(),
-            'estimated_delivery_human' => $this->estimated_delivery_time?->diffForHumans(),
             'delivered_at' => $this->delivered_at?->toISOString(),
-            'delivered_at_human' => $this->delivered_at?->diffForHumans(),
             'notes' => $this->notes,
             'created_at' => $this->created_at->toISOString(),
-            'created_at_human' => $this->created_at->diffForHumans(),
             'updated_at' => $this->updated_at->toISOString(),
+            'order_age_hours' => $this->created_at->diffInHours(now()),
+            'is_overdue' => $this->estimated_delivery_time && now()->gt($this->estimated_delivery_time),
         ];
     }
 
-    private function getStatusBadgeColor()
-    {
-        return match($this->status) {
-            'pending' => 'warning',
-            'confirmed' => 'info',
-            'preparing' => 'primary',
-            'shipped' => 'secondary',
-            'delivered' => 'success',
-            'cancelled' => 'danger',
-            default => 'secondary',
-        };
-    }
-
-    private function getPaymentMethodText()
+    private function getPaymentMethodText(): string
     {
         return match($this->payment_method) {
             'cash_on_delivery' => 'الدفع عند الاستلام',
@@ -79,13 +67,13 @@ class AdminOrderResource extends JsonResource
         };
     }
 
-    private function getPaymentStatusText()
+    private function getPaymentStatusText(): string
     {
         return match($this->payment_status) {
             'pending' => 'في انتظار الدفع',
-            'paid' => 'مدفوع',
+            'paid' => 'تم الدفع',
             'failed' => 'فشل الدفع',
-            'refunded' => 'مسترد',
+            'refunded' => 'تم الاسترداد',
             default => $this->payment_status,
         };
     }

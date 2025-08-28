@@ -3,6 +3,7 @@
 namespace App\Modules\Admin\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Modules\Products\Resources\ProductResource;
 
 class AdminOrderDetailResource extends JsonResource
 {
@@ -12,81 +13,64 @@ class AdminOrderDetailResource extends JsonResource
             'id' => $this->id,
             'order_number' => $this->order_number,
             'tracking_number' => $this->tracking_number,
-            'status' => $this->status,
-            'status_text' => $this->status_text,
-            'status_badge_color' => $this->getStatusBadgeColor(),
             'user' => [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
                 'email' => $this->user->email,
                 'phone' => $this->user->phone,
-                'full_name' => $this->user->full_name,
-                'category' => $this->user->userCategory ? [
-                    'id' => $this->user->userCategory->id,
-                    'name' => $this->user->userCategory->name,
-                    'display_name' => $this->user->userCategory->display_name,
-                    'discount_percentage' => $this->user->userCategory->discount_percentage,
-                ] : null,
-                'total_orders' => $this->user->total_orders_count,
-                'total_spent' => $this->user->total_purchase_amount,
+                'avatar_url' => $this->user->avatar_url,
+                'category' => $this->when($this->user->userCategory, [
+                    'id' => $this->user->userCategory?->id,
+                    'name' => $this->user->userCategory?->name,
+                    'discount_percentage' => $this->user->userCategory?->discount_percentage,
+                    'min_total_amount' => $this->user->userCategory?->min_total_amount,
+                ]),
+                'total_orders' => $this->user->orders()->count(),
+                'total_spent' => $this->user->orders()->where('status', 'delivered')->sum('total_amount'),
             ],
             'merchant' => [
                 'id' => $this->merchant->id,
                 'name' => $this->merchant->name,
                 'phone' => $this->merchant->phone,
-                'email' => $this->merchant->email,
                 'address' => $this->merchant->address,
+                'is_open' => $this->merchant->is_open,
                 'delivery_fee' => $this->merchant->delivery_fee,
                 'estimated_delivery_time' => $this->merchant->estimated_delivery_time,
             ],
+            'status' => $this->status,
+            'status_text' => $this->status_text,
+            'payment_method' => $this->payment_method,
+            'payment_method_text' => $this->getPaymentMethodText(),
+            'payment_status' => $this->payment_status,
+            'payment_status_text' => $this->getPaymentStatusText(),
+            'financial' => [
+                'subtotal' => $this->subtotal,
+                'delivery_fee' => $this->delivery_fee,
+                'discount' => $this->discount,
+                'category_discount' => $this->category_discount,
+                'loyalty_discount' => $this->loyalty_discount,
+                'tax' => $this->tax,
+                'total_amount' => $this->total_amount,
+                'currency' => $this->currency,
+            ],
+            'delivery_address' => $this->delivery_address,
             'items' => $this->items->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'product_id' => $item->product_id,
                     'product_name' => $item->product_name,
-                    'product_image' => $item->product_image ? url('storage/' . $item->product_image) : null,
+                    'product_image' => $item->product_image,
+                    'product' => $item->product ? new ProductResource($item->product) : null,
                     'quantity' => $item->quantity,
                     'unit_price' => $item->unit_price,
                     'total_price' => $item->total_price,
-                    'product' => $item->product ? [
-                        'id' => $item->product->id,
-                        'name' => $item->product->name,
-                        'current_price' => $item->product->price,
-                        'stock_quantity' => $item->product->stock_quantity,
-                        'is_available' => $item->product->is_available,
-                    ] : null,
+                    'selling_type' => $item->selling_type,
+                    'cartons_count' => $item->cartons_count,
+                    'packages_count' => $item->packages_count,
+                    'units_count' => $item->units_count,
                 ];
             }),
-            'financial_breakdown' => [
-                'subtotal' => $this->subtotal,
-                'delivery_fee' => $this->delivery_fee,
-                'discount' => $this->discount,
-                'category_discount' => $this->category_discount ?? 0,
-                'loyalty_discount' => $this->loyalty_discount,
-                'tax' => $this->tax,
-                'total_amount' => $this->total_amount,
-                'formatted_breakdown' => [
-                    'subtotal' => number_format($this->subtotal, 2) . ' ' . $this->currency,
-                    'delivery_fee' => number_format($this->delivery_fee, 2) . ' ' . $this->currency,
-                    'discount' => number_format($this->discount, 2) . ' ' . $this->currency,
-                    'category_discount' => number_format($this->category_discount ?? 0, 2) . ' ' . $this->currency,
-                    'loyalty_discount' => number_format($this->loyalty_discount, 2) . ' ' . $this->currency,
-                    'tax' => number_format($this->tax, 2) . ' ' . $this->currency,
-                    'total_amount' => number_format($this->total_amount, 2) . ' ' . $this->currency,
-                ],
-            ],
-            'currency' => $this->currency,
-            'payment_method' => $this->payment_method,
-            'payment_method_text' => $this->getPaymentMethodText(),
-            'payment_status' => $this->payment_status,
-            'payment_status_text' => $this->getPaymentStatusText(),
-            'delivery_address' => $this->delivery_address,
-            'estimated_delivery_time' => $this->estimated_delivery_time?->toISOString(),
-            'estimated_delivery_human' => $this->estimated_delivery_time?->diffForHumans(),
-            'delivered_at' => $this->delivered_at?->toISOString(),
-            'delivered_at_human' => $this->delivered_at?->diffForHumans(),
-            'notes' => $this->notes,
-            'tracking_history' => $this->trackings->map(function ($tracking) {
+            'tracking' => $this->trackings->map(function ($tracking) {
                 return [
                     'id' => $tracking->id,
                     'status' => $tracking->status,
@@ -96,31 +80,23 @@ class AdminOrderDetailResource extends JsonResource
                     'driver_phone' => $tracking->driver_phone,
                     'notes' => $tracking->notes,
                     'timestamp' => $tracking->timestamp->toISOString(),
-                    'timestamp_human' => $tracking->timestamp->diffForHumans(),
+                    'time_ago' => $tracking->timestamp->diffForHumans(),
                 ];
             }),
+            'estimated_delivery_time' => $this->estimated_delivery_time?->toISOString(),
+            'delivered_at' => $this->delivered_at?->toISOString(),
+            'notes' => $this->notes,
+            'created_at' => $this->created_at->toISOString(),
+            'updated_at' => $this->updated_at->toISOString(),
+            'order_age_hours' => $this->created_at->diffInHours(now()),
+            'is_overdue' => $this->estimated_delivery_time && now()->gt($this->estimated_delivery_time),
             'can_cancel' => in_array($this->status, ['pending', 'confirmed']),
             'can_update_status' => !in_array($this->status, ['delivered', 'cancelled']),
-            'created_at' => $this->created_at->toISOString(),
-            'created_at_human' => $this->created_at->diffForHumans(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'next_possible_statuses' => $this->getNextPossibleStatuses(),
         ];
     }
 
-    private function getStatusBadgeColor()
-    {
-        return match($this->status) {
-            'pending' => 'warning',
-            'confirmed' => 'info',
-            'preparing' => 'primary',
-            'shipped' => 'secondary',
-            'delivered' => 'success',
-            'cancelled' => 'danger',
-            default => 'secondary',
-        };
-    }
-
-    private function getPaymentMethodText()
+    private function getPaymentMethodText(): string
     {
         return match($this->payment_method) {
             'cash_on_delivery' => 'الدفع عند الاستلام',
@@ -130,14 +106,35 @@ class AdminOrderDetailResource extends JsonResource
         };
     }
 
-    private function getPaymentStatusText()
+    private function getPaymentStatusText(): string
     {
         return match($this->payment_status) {
             'pending' => 'في انتظار الدفع',
-            'paid' => 'مدفوع',
+            'paid' => 'تم الدفع',
             'failed' => 'فشل الدفع',
-            'refunded' => 'مسترد',
+            'refunded' => 'تم الاسترداد',
             default => $this->payment_status,
         };
+    }
+
+    private function getNextPossibleStatuses(): array
+    {
+        $transitions = [
+            'pending' => ['confirmed', 'cancelled'],
+            'confirmed' => ['preparing', 'cancelled'],
+            'preparing' => ['shipped', 'cancelled'],
+            'shipped' => ['delivered'],
+            'delivered' => [],
+            'cancelled' => [],
+        ];
+
+        $possibleStatuses = $transitions[$this->status] ?? [];
+        
+        return collect($possibleStatuses)->map(function ($status) {
+            return [
+                'value' => $status,
+                'text' => \App\Modules\Orders\Models\Order::STATUSES[$status] ?? $status,
+            ];
+        })->values()->toArray();
     }
 }

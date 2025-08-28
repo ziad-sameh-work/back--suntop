@@ -419,6 +419,94 @@ class OrderService extends BaseService
     }
 
     /**
+     * Get user orders count by status
+     */
+    public function getUserOrdersCountByStatus(int $userId, string $status): int
+    {
+        return $this->model->forUser($userId)->byStatus($status)->count();
+    }
+
+    /**
+     * Get user order history with statistics
+     */
+    public function getUserOrderHistory(int $userId): array
+    {
+        $recentOrders = $this->model->with(['merchant:id,name', 'items.product'])
+                                  ->forUser($userId)
+                                  ->orderBy('created_at', 'desc')
+                                  ->take(10)
+                                  ->get();
+
+        $stats = [
+            'total_orders' => $this->model->forUser($userId)->count(),
+            'total_spent' => $this->model->forUser($userId)->where('status', 'delivered')->sum('total_amount'),
+            'avg_order_value' => $this->model->forUser($userId)->where('status', 'delivered')->avg('total_amount'),
+            'favorite_merchant' => $this->model->with('merchant:id,name')
+                                             ->forUser($userId)
+                                             ->selectRaw('merchant_id, COUNT(*) as count')
+                                             ->groupBy('merchant_id')
+                                             ->orderBy('count', 'desc')
+                                             ->first()
+                                             ?->merchant
+                                             ?->name ?? 'لا يوجد',
+        ];
+
+        // Get most ordered items
+        $favoriteItems = OrderItem::whereHas('order', function ($q) use ($userId) {
+                                      $q->where('user_id', $userId);
+                                  })
+                                  ->with('product:id,name,image_url,price')
+                                  ->selectRaw('product_id, SUM(quantity) as total_quantity, COUNT(*) as order_count')
+                                  ->groupBy('product_id')
+                                  ->orderBy('total_quantity', 'desc')
+                                  ->take(5)
+                                  ->get()
+                                  ->map(function ($item) {
+                                      return [
+                                          'product' => $item->product,
+                                          'total_quantity' => $item->total_quantity,
+                                          'order_count' => $item->order_count,
+                                      ];
+                                  });
+
+        return [
+            'recent' => $recentOrders,
+            'stats' => $stats,
+            'favorite_items' => $favoriteItems,
+        ];
+    }
+
+    /**
+     * Rate order
+     */
+    public function rateOrder(string $orderId, int $userId, int $rating, ?string $review = null): bool
+    {
+        $order = $this->model->forUser($userId)->find($orderId);
+
+        if (!$order || $order->status !== Order::STATUS_DELIVERED) {
+            return false;
+        }
+
+        // Create or update review
+        $reviewData = [
+            'user_id' => $userId,
+            'order_id' => $order->id,
+            'rating' => $rating,
+            'review' => $review,
+        ];
+
+        // You would create a reviews table and model for this
+        // For now, we'll just add it to order notes
+        $order->update([
+            'notes' => ($order->notes ? $order->notes . "\n\n" : '') . 
+                      "تقييم العميل: {$rating}/5" . 
+                      ($review ? "\nالتعليق: {$review}" : '')
+        ]);
+
+        return true;
+    }
+
+    /**
      * Legacy method: Validate and calculate order items
      */
     private function validateAndCalculateItems(array $items): Collection

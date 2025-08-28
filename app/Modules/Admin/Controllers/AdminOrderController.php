@@ -8,13 +8,17 @@ use App\Modules\Orders\Models\OrderTracking;
 use App\Modules\Admin\Requests\UpdateOrderStatusRequest;
 use App\Modules\Admin\Resources\AdminOrderResource;
 use App\Modules\Admin\Resources\AdminOrderDetailResource;
+use App\Modules\Notifications\Services\OrderNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminOrderController extends BaseController
 {
-    public function __construct()
+    protected $notificationService;
+
+    public function __construct(OrderNotificationService $notificationService)
     {
+        $this->notificationService = $notificationService;
         $this->middleware('auth:sanctum');
         $this->middleware('role:admin');
     }
@@ -151,6 +155,44 @@ class AdminOrderController extends BaseController
                 $order->update(['delivered_at' => now()]);
             }
 
+            // Send notification to user if requested
+            if ($data['send_notification'] ?? true) {
+                try {
+                    if ($data['status'] === Order::STATUS_SHIPPED && isset($data['driver_name'])) {
+                        // Send delivery notification for shipped orders with driver info
+                        $this->notificationService->sendDeliveryNotification(
+                            $order->user_id,
+                            $order->order_number,
+                            [
+                                'order_id' => $order->id,
+                                'driver_name' => $data['driver_name'],
+                                'driver_phone' => $data['driver_phone'],
+                                'estimated_minutes' => $data['estimated_delivery_minutes'] ?? null,
+                                'location' => $data['location'],
+                            ]
+                        );
+                    } else {
+                        // Send regular status update notification
+                        $this->notificationService->sendOrderStatusNotification(
+                            $order->user_id,
+                            $order->order_number,
+                            $data['status'],
+                            [
+                                'order_id' => $order->id,
+                                'tracking_number' => $order->tracking_number,
+                                'total_amount' => $order->total_amount,
+                                'location' => $data['location'],
+                                'driver_name' => $data['driver_name'],
+                                'driver_phone' => $data['driver_phone'],
+                                'notes' => $data['notes'],
+                            ]
+                        );
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send order status notification: ' . $e->getMessage());
+                }
+            }
+
             return $this->successResponse(
                 ['order' => new AdminOrderDetailResource($order->load(['user', 'merchant', 'items.product', 'trackings']))],
                 'تم تحديث حالة الطلب بنجاح'
@@ -201,6 +243,22 @@ class AdminOrderController extends BaseController
                 'timestamp' => now(),
             ]);
 
+            // Send cancellation notification to user
+            try {
+                $this->notificationService->sendOrderStatusNotification(
+                    $order->user_id,
+                    $order->order_number,
+                    Order::STATUS_CANCELLED,
+                    [
+                        'order_id' => $order->id,
+                        'reason' => $request->reason,
+                        'total_amount' => $order->total_amount,
+                    ]
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to send order cancellation notification: ' . $e->getMessage());
+            }
+
             return $this->successResponse(
                 ['order' => new AdminOrderDetailResource($order->load(['user', 'merchant', 'items.product', 'trackings']))],
                 'تم إلغاء الطلب بنجاح'
@@ -226,7 +284,7 @@ class AdminOrderController extends BaseController
 
             $order = Order::findOrFail($id);
 
-            OrderTracking::create([
+            $tracking = OrderTracking::create([
                 'order_id' => $order->id,
                 'status' => $request->status,
                 'status_text' => Order::STATUSES[$request->status],
@@ -237,7 +295,35 @@ class AdminOrderController extends BaseController
                 'timestamp' => now(),
             ]);
 
-            return $this->successResponse(null, 'تم إضافة تحديث التتبع بنجاح');
+            // Send tracking update notification
+            try {
+                $this->notificationService->sendTrackingUpdateNotification(
+                    $order->user_id,
+                    $order->order_number,
+                    [
+                        'order_id' => $order->id,
+                        'location' => $request->location,
+                        'driver_name' => $request->driver_name,
+                        'driver_phone' => $request->driver_phone,
+                        'notes' => $request->notes,
+                    ]
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to send tracking notification: ' . $e->getMessage());
+            }
+
+            return $this->successResponse([
+                'tracking' => [
+                    'id' => $tracking->id,
+                    'status' => $tracking->status,
+                    'status_text' => $tracking->status_text,
+                    'location' => $tracking->location,
+                    'driver_name' => $tracking->driver_name,
+                    'driver_phone' => $tracking->driver_phone,
+                    'notes' => $tracking->notes,
+                    'timestamp' => $tracking->timestamp->toISOString(),
+                ]
+            ], 'تم إضافة تحديث التتبع بنجاح');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
@@ -373,6 +459,130 @@ class AdminOrderController extends BaseController
         ];
 
         return in_array($newStatus, $transitions[$currentStatus] ?? []);
+    }
+
+    /**
+     * Bulk update orders status
+     */
+    public function bulkUpdateStatus(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'order_ids' => 'required|array|min:1',
+                'order_ids.*' => 'integer|exists:orders,id',
+                'status' => 'required|string|in:pending,confirmed,preparing,shipped,delivered,cancelled',
+                'location' => 'nullable|string|max:255',
+                'driver_name' => 'nullable|string|max:255',
+                'driver_phone' => 'nullable|string|max:20',
+                'notes' => 'nullable|string|max:500',
+                'send_notifications' => 'boolean',
+            ]);
+
+            $orders = Order::whereIn('id', $request->order_ids)->get();
+            $updatedCount = 0;
+
+            foreach ($orders as $order) {
+                // Validate status transition for each order
+                if (!$this->isValidStatusTransition($order->status, $request->status)) {
+                    continue;
+                }
+
+                $order->update(['status' => $request->status]);
+
+                // Create tracking entry
+                OrderTracking::create([
+                    'order_id' => $order->id,
+                    'status' => $request->status,
+                    'status_text' => Order::STATUSES[$request->status],
+                    'location' => $request->location ?? 'مركز الإدارة',
+                    'driver_name' => $request->driver_name,
+                    'driver_phone' => $request->driver_phone,
+                    'notes' => $request->notes,
+                    'timestamp' => now(),
+                ]);
+
+                // Special handling for delivered status
+                if ($request->status === Order::STATUS_DELIVERED) {
+                    $order->update(['delivered_at' => now()]);
+                }
+
+                $updatedCount++;
+            }
+
+            // Send bulk notifications if requested
+            if ($request->send_notifications ?? true) {
+                $this->notificationService->sendBulkStatusNotifications(
+                    $request->order_ids,
+                    $request->status,
+                    [
+                        'location' => $request->location,
+                        'driver_name' => $request->driver_name,
+                        'driver_phone' => $request->driver_phone,
+                        'notes' => $request->notes,
+                    ]
+                );
+            }
+
+            return $this->successResponse([
+                'updated_count' => $updatedCount,
+                'total_count' => count($request->order_ids),
+            ], "تم تحديث {$updatedCount} طلب بنجاح");
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get orders summary dashboard
+     */
+    public function dashboard(Request $request): JsonResponse
+    {
+        try {
+            $today = now()->startOfDay();
+            $yesterday = now()->subDay()->startOfDay();
+            $thisWeek = now()->startOfWeek();
+            $thisMonth = now()->startOfMonth();
+
+            $summary = [
+                'today' => [
+                    'total_orders' => Order::whereDate('created_at', $today)->count(),
+                    'pending_orders' => Order::whereDate('created_at', $today)->where('status', 'pending')->count(),
+                    'confirmed_orders' => Order::whereDate('created_at', $today)->where('status', 'confirmed')->count(),
+                    'shipped_orders' => Order::whereDate('created_at', $today)->where('status', 'shipped')->count(),
+                    'delivered_orders' => Order::whereDate('created_at', $today)->where('status', 'delivered')->count(),
+                    'revenue' => Order::whereDate('created_at', $today)->where('status', 'delivered')->sum('total_amount'),
+                ],
+                'yesterday' => [
+                    'total_orders' => Order::whereDate('created_at', $yesterday)->count(),
+                    'revenue' => Order::whereDate('created_at', $yesterday)->where('status', 'delivered')->sum('total_amount'),
+                ],
+                'this_week' => [
+                    'total_orders' => Order::where('created_at', '>=', $thisWeek)->count(),
+                    'revenue' => Order::where('created_at', '>=', $thisWeek)->where('status', 'delivered')->sum('total_amount'),
+                    'avg_order_value' => Order::where('created_at', '>=', $thisWeek)->where('status', 'delivered')->avg('total_amount'),
+                ],
+                'this_month' => [
+                    'total_orders' => Order::where('created_at', '>=', $thisMonth)->count(),
+                    'revenue' => Order::where('created_at', '>=', $thisMonth)->where('status', 'delivered')->sum('total_amount'),
+                ],
+                'recent_orders' => AdminOrderResource::collection(
+                    Order::with(['user', 'merchant'])
+                         ->orderBy('created_at', 'desc')
+                         ->take(10)
+                         ->get()
+                ),
+                'overdue_orders' => Order::where('estimated_delivery_time', '<', now())
+                                        ->whereNotIn('status', ['delivered', 'cancelled'])
+                                        ->count(),
+                'urgent_pending' => Order::where('status', 'pending')
+                                        ->where('created_at', '<', now()->subHours(2))
+                                        ->count(),
+            ];
+
+            return $this->successResponse(['dashboard' => $summary]);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
     }
 
     /**

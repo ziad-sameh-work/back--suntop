@@ -55,10 +55,13 @@ Route::prefix('products')->group(function () {
 Route::prefix('orders')->middleware('auth:sanctum')->group(function () {
     Route::get('/', [OrderController::class, 'index']);
     Route::post('/', [OrderController::class, 'store']);
+    Route::get('/history', [OrderController::class, 'history']);
     Route::get('/{id}', [OrderController::class, 'show']);
+    Route::get('/{id}/status', [OrderController::class, 'getOrderStatus']);
     Route::get('/{id}/tracking', [OrderController::class, 'tracking']);
     Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
     Route::post('/{id}/reorder', [OrderController::class, 'reorder']);
+    Route::post('/{id}/rate', [OrderController::class, 'rate']);
 });
 
 // Admin Routes (Protected)
@@ -105,12 +108,14 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
     // Order Management
     Route::prefix('orders')->group(function () {
         Route::get('/', [AdminOrderController::class, 'index']);
+        Route::get('/dashboard', [AdminOrderController::class, 'dashboard']);
+        Route::get('/statistics/overview', [AdminOrderController::class, 'statistics']);
+        Route::get('/export/csv', [AdminOrderController::class, 'export']);
+        Route::post('/bulk-update-status', [AdminOrderController::class, 'bulkUpdateStatus']);
         Route::get('/{id}', [AdminOrderController::class, 'show']);
         Route::put('/{id}/status', [AdminOrderController::class, 'updateStatus']);
         Route::post('/{id}/cancel', [AdminOrderController::class, 'cancel']);
         Route::post('/{id}/tracking', [AdminOrderController::class, 'addTracking']);
-        Route::get('/statistics/overview', [AdminOrderController::class, 'statistics']);
-        Route::get('/export/csv', [AdminOrderController::class, 'export']);
     });
 
     // Merchant Management
