@@ -5,10 +5,12 @@ namespace App\Http\Livewire;
 use App\Models\Chat;
 use App\Models\ChatMessage;
 use App\Models\User;
+use App\Services\FirebaseRealtimeService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ChatInterface extends Component
 {
@@ -19,6 +21,10 @@ class ChatInterface extends Component
     public $newMessage = '';
     public $attachment;
     public $showEmojiPicker = false;
+    public $isTyping = false;
+    public $typingIndicator = '';
+    
+    protected $firebaseService;
     
     protected $listeners = [
         'chatUpdated' => 'refreshMessages',
@@ -48,11 +54,19 @@ class ChatInterface extends Component
     public function mount(Chat $chat)
     {
         $this->chat = $chat;
+        $this->firebaseService = app(FirebaseRealtimeService::class);
         $this->loadMessages();
         
         // Mark messages as read for admin
         if (Auth::user()->role === 'admin') {
             $this->chat->markAsRead('admin');
+            $this->firebaseService->markMessagesAsRead($chat->id, 'admin');
+            
+            // تسجيل حضور الأدمن
+            $this->firebaseService->registerAdminPresence(
+                Auth::id(),
+                Auth::user()->full_name ?? Auth::user()->name
+            );
         }
     }
 
@@ -108,18 +122,49 @@ class ChatInterface extends Component
             }
         }
 
-        $message = ChatMessage::create([
-            'chat_id' => $this->chat->id,
-            'sender_id' => $user->id,
-            'sender_type' => $senderType,
-            'message' => $this->newMessage,
-            'message_type' => $messageType,
-            'attachment_path' => $attachmentPath,
-            'attachment_name' => $attachmentName,
-            'metadata' => [
-                'sent_from' => 'admin_panel'
-            ]
-        ]);
+        $message = DB::transaction(function () use ($user, $senderType, $messageType, $attachmentPath, $attachmentName) {
+            $message = ChatMessage::create([
+                'chat_id' => $this->chat->id,
+                'sender_id' => $user->id,
+                'sender_type' => $senderType,
+                'message' => $this->newMessage,
+                'message_type' => $messageType,
+                'attachment_path' => $attachmentPath,
+                'attachment_name' => $attachmentName,
+                'metadata' => [
+                    'sent_from' => 'api_rt' // Changed to trigger real-time events
+                ]
+            ]);
+            
+            // إرسال الرسالة إلى Firebase للـ Real-time
+            if ($this->firebaseService) {
+                $this->firebaseService->sendMessage($this->chat->id, [
+                    'id' => $message->id,
+                    'sender_id' => $user->id,
+                    'sender_name' => $user->full_name ?? $user->name,
+                    'sender_type' => $senderType,
+                    'message' => $this->newMessage,
+                    'message_type' => $messageType,
+                    'attachment_url' => $attachmentPath ? url('storage/' . $attachmentPath) : null,
+                    'attachment_name' => $attachmentName,
+                    'metadata' => [
+                        'sent_from' => 'admin_panel_firebase',
+                        'admin_id' => $user->id,
+                        'admin_name' => $user->full_name ?? $user->name
+                    ]
+                ]);
+                
+                // إشعار العميل برسالة جديدة
+                $this->firebaseService->notifyCustomer($this->chat->customer_id, [
+                    'type' => 'admin_reply',
+                    'chat_id' => $this->chat->id,
+                    'admin_name' => $user->full_name ?? $user->name,
+                    'message' => "رد جديد من فريق الدعم: " . substr($this->newMessage, 0, 50) . (strlen($this->newMessage) > 50 ? '...' : '')
+                ]);
+            }
+            
+            return $message;
+        });
         
         // Debug: Log message creation
         \Log::info('ChatInterface: Created message ' . $message->id . ' for chat ' . $this->chat->id);

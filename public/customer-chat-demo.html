@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Chat Demo - Real-time with Pusher</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: #f8f9fa;
+            padding: 2rem 0;
+        }
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+        }
+        .chat-demo {
+            background: white;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Demo Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="mb-0">💬 Real-time Chat Demo with Pusher</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            This is a demo of the real-time chat system built with Laravel and Pusher. 
+                            The chat supports instant messaging between customers and admins with real-time updates.
+                        </p>
+                        
+                        <h5>Features:</h5>
+                        <ul>
+                            <li>✅ Real-time messaging with Pusher</li>
+                            <li>✅ Customer and Admin interfaces</li>
+                            <li>✅ Message history persistence</li>
+                            <li>✅ Connection status indicators</li>
+                            <li>✅ Responsive design</li>
+                            <li>✅ Laravel Echo integration</li>
+                        </ul>
+
+                        <h5>API Endpoints:</h5>
+                        <div class="code-block">
+GET  /api/pusher-chat/start           # Get or create chat for customer
+POST /api/pusher-chat/messages        # Send message
+GET  /api/pusher-chat/messages/{id}   # Get chat messages
+GET  /api/pusher-chat/chats           # Get all chats (admin only)
+POST /api/pusher-chat/chats/{id}/reply # Admin reply to chat
+                        </div>
+
+                        <h5>Setup Instructions:</h5>
+                        <ol>
+                            <li>Set up Pusher account and get credentials</li>
+                            <li>Add Pusher credentials to <code>.env</code> file</li>
+                            <li>Run migrations: <code>php artisan migrate</code></li>
+                            <li>Enable broadcasting: Set <code>BROADCAST_DRIVER=pusher</code></li>
+                            <li>Include Laravel Echo and Pusher JS in your frontend</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Environment Setup -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">🔧 Environment Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Add these variables to your <code>.env</code> file:</p>
+                        <div class="code-block">
+# Broadcasting
+BROADCAST_DRIVER=pusher
+
+# Pusher Configuration
+PUSHER_APP_ID=your_app_id
+PUSHER_APP_KEY=your_app_key
+PUSHER_APP_SECRET=your_app_secret
+PUSHER_APP_CLUSTER=mt1
+
+# Mix Pusher (for frontend)
+MIX_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+MIX_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JavaScript Integration -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">📱 Frontend Integration</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Basic JavaScript setup for customers:</p>
+                        <div class="code-block">
+        // Initialize chat after authentication
+const chat = new PusherChatCustomer({
+    pusherKey: '44911da009b5537ffae1',
+    pusherCluster: 'eu',
+    csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+    apiToken: 'user_api_token',
+    baseUrl: 'http://127.0.0.1:8000',
+    containerId: 'chat-container'
+});
+                        </div>
+
+                        <p>For Laravel Blade templates:</p>
+                        <div class="code-block">
+&lt;script&gt;
+document.addEventListener('DOMContentLoaded', function() {
+    const chat = new PusherChatCustomer({
+        pusherKey: '44911da009b5537ffae1',
+        pusherCluster: 'eu',
+        csrfToken: '{{ csrf_token() }}',
+        apiToken: '{{ auth()->user()->createToken("chat")->plainTextToken }}',
+        baseUrl: '{{ url("/") }}',
+        containerId: 'chat-widget'
+    });
+});
+&lt;/script&gt;
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Live Chat Demo -->
+                <div class="chat-demo">
+                    <h5 class="mb-3">🎯 Live Chat Demo</h5>
+                    <p class="text-muted mb-3">
+                        To test the chat, you need to:
+                        <br>1. Login as a customer
+                        <br>2. Configure Pusher credentials
+                        <br>3. Enable broadcasting
+                    </p>
+                    
+                    <!-- Chat container -->
+                    <div id="chat-container">
+                        <!-- Chat widget will be rendered here -->
+                        <div class="text-center py-4">
+                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">
+                                Chat widget will appear here after authentication and proper configuration.
+                            </p>
+                            <button class="btn btn-primary" onclick="initializeDemoChat()">
+                                <i class="fas fa-play"></i> Initialize Demo Chat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Panel Link -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">👨‍💼 Admin Panel</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="card-text">Access the admin chat management panel:</p>
+                        <a href="/admin/pusher-chat" class="btn btn-success" target="_blank">
+                            <i class="fas fa-external-link-alt"></i> Open Admin Panel
+                        </a>
+                        <small class="text-muted d-block mt-2">
+                            (Requires admin authentication)
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Connection Status -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">📡 Connection Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Pusher Connection:</span>
+                            <span id="pusherStatus" class="badge bg-secondary">Not Connected</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span>Laravel Echo:</span>
+                            <span id="echoStatus" class="badge bg-secondary">Not Loaded</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span>Chat Channel:</span>
+                            <span id="channelStatus" class="badge bg-secondary">Not Subscribed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    
+    <!-- Laravel Echo (you would normally get this from Laravel Mix) -->
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.12.0/dist/echo.iife.js"></script>
+    
+    <!-- Our custom chat script -->
+    <script src="/js/pusher-chat-customer.js"></script>
+
+    <script>
+        // Demo functionality
+        function initializeDemoChat() {
+            // This is a demo function - in real implementation,
+            // you would have proper authentication and configuration
+            
+            alert('Demo Mode:\n\n' +
+                  '1. Set up Pusher credentials in .env\n' +
+                  '2. Authenticate as a customer\n' +
+                  '3. The chat widget will initialize automatically\n\n' +
+                  'For testing, use the API endpoints directly or the admin panel.');
+        }
+
+        // Check if required dependencies are loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check Pusher
+            if (typeof Pusher !== 'undefined') {
+                document.getElementById('pusherStatus').textContent = 'Loaded';
+                document.getElementById('pusherStatus').className = 'badge bg-success';
+            }
+
+            // Check Laravel Echo
+            if (typeof Echo !== 'undefined') {
+                document.getElementById('echoStatus').textContent = 'Loaded';
+                document.getElementById('echoStatus').className = 'badge bg-success';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -18,6 +18,8 @@ use App\Modules\Admin\Controllers\AdminAnalyticsController;
 use App\Http\Controllers\Api\ChatController;
 use App\Modules\Notifications\Controllers\NotificationController;
 use App\Modules\Notifications\Controllers\AdminNotificationController;
+use App\Http\Controllers\Api\PusherChatController;
+use App\Http\Controllers\BroadcastingAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,6 +31,10 @@ use App\Modules\Notifications\Controllers\AdminNotificationController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+// Broadcasting Authentication Routes
+Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'auth'])
+    ->middleware('auth:sanctum');
 
 // Authentication Routes
 Route::prefix('auth')->group(function () {
@@ -193,6 +199,22 @@ Route::prefix('rt-chat')->middleware('auth:sanctum')->group(function () {
     Route::get('/{chatId}/messages', [App\Http\Controllers\Api\ChatRealTimeController::class, 'getMessages']);
 });
 
+// Firebase Real-Time Chat Routes (New Enhanced Version)
+Route::prefix('firebase-chat')->middleware('auth:sanctum')->group(function () {
+    Route::get('/test-connection', [App\Http\Controllers\Api\ChatFirebaseController::class, 'testFirebaseConnection']);
+    Route::get('/start', [App\Http\Controllers\Api\ChatFirebaseController::class, 'getOrCreateChat']);
+    Route::post('/send', [App\Http\Controllers\Api\ChatFirebaseController::class, 'sendMessage']);
+    Route::get('/{chatId}/messages', [App\Http\Controllers\Api\ChatFirebaseController::class, 'getMessages']);
+    Route::post('/{chatId}/read', [App\Http\Controllers\Api\ChatFirebaseController::class, 'markAsRead']);
+    Route::post('/typing-indicator', [App\Http\Controllers\Api\ChatFirebaseController::class, 'sendTypingIndicator']);
+});
+
+// Firebase Test Routes (No Auth Required)
+Route::prefix('test-firebase')->group(function () {
+    Route::get('/connection', [App\Http\Controllers\TestFirebaseController::class, 'testConnection']);
+    Route::get('/full-chat', [App\Http\Controllers\TestFirebaseController::class, 'testFullChat']);
+});
+
 // Long-Polling Chat Routes (Protected) - No tokens required
 Route::prefix('lp-chat')->middleware('auth:sanctum')->group(function () {
     Route::get('/start', [App\Http\Controllers\Api\ChatLongPollingController::class, 'getOrCreateChat']);
@@ -245,17 +267,17 @@ Route::prefix('loyalty')->middleware('auth:sanctum')->group(function () {
     Route::get('/transactions', [App\Http\Controllers\Api\LoyaltyController::class, 'getTransactions']);
 });
 
-// Notifications Routes (Protected)
+// Enhanced Notifications Routes (Protected)
 Route::prefix('notifications')->middleware('auth:sanctum')->group(function () {
-    Route::get('/', [NotificationController::class, 'index']);
-    Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
-    Route::get('/statistics', [NotificationController::class, 'statistics']);
-    Route::get('/types', [NotificationController::class, 'types']);
-    Route::get('/{id}', [NotificationController::class, 'show']);
-    Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
-    Route::delete('/{id}', [NotificationController::class, 'destroy']);
-    Route::delete('/', [NotificationController::class, 'destroyAll']);
+    Route::get('/', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'index']);
+    Route::get('/unread-count', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'unreadCount']);
+    Route::get('/statistics', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'statistics']);
+    Route::get('/types', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'types']);
+    Route::get('/{id}', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'show']);
+    Route::post('/{id}/read', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'markAsRead']);
+    Route::post('/mark-all-read', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'markAllAsRead']);
+    Route::delete('/{id}', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'destroy']);
+    Route::delete('/', [App\Modules\Notifications\Controllers\UserNotificationController::class, 'destroyAll']);
 });
 
 // Favorites Routes (Protected)
@@ -272,6 +294,19 @@ Route::prefix('favorites')->middleware('auth:sanctum')->group(function () {
     Route::get('/check/{product_id}', [App\Modules\Favorites\Controllers\FavoriteController::class, 'check']);
     Route::delete('/clear', [App\Modules\Favorites\Controllers\FavoriteController::class, 'clear']);
     Route::delete('/{product_id}', [App\Modules\Favorites\Controllers\FavoriteController::class, 'destroy']);
+});
+
+// Pusher Real-Time Chat Routes (Protected)
+Route::prefix('pusher-chat')->middleware('auth:sanctum')->group(function () {
+    // Customer routes
+    Route::get('/start', [PusherChatController::class, 'getOrCreateChat']);
+    Route::post('/messages', [PusherChatController::class, 'sendMessage']);
+    Route::get('/messages/{chat_id}', [PusherChatController::class, 'getMessages']);
+    
+    // Admin routes
+    Route::get('/chats', [PusherChatController::class, 'getAllChats']);
+    Route::post('/chats/{chat_id}/reply', [PusherChatController::class, 'adminReply']);
+    Route::post('/chats/{chat_id}/close', [PusherChatController::class, 'closeChat']);
 });
 
 // Protected user route

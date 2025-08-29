@@ -58,8 +58,12 @@ class NewChatMessage implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        // Use a public channel instead of private to simplify integration with Flutter
-        return new Channel('chat.' . $this->chatMessage->chat_id);
+        return [
+            // Public channel for customer apps (Flutter)
+            new Channel('chat.' . $this->chatMessage->chat_id),
+            // Private admin channel for real-time admin updates
+            new PrivateChannel('admin.chats')
+        ];
     }
 
     /**
@@ -79,8 +83,32 @@ class NewChatMessage implements ShouldBroadcast
      */
     public function broadcastWith()
     {
+        // Load chat with customer relationship
+        $this->chatMessage->load(['chat.customer']);
+        
         return [
-            'message' => $this->formattedMessage
+            'message' => $this->formattedMessage,
+            'chat' => [
+                'id' => $this->chatMessage->chat->id,
+                'user_id' => $this->chatMessage->chat->customer_id,
+                'status' => $this->chatMessage->chat->status,
+                'subject' => $this->chatMessage->chat->subject,
+                'priority' => $this->chatMessage->chat->priority,
+                'last_message_at' => $this->chatMessage->chat->last_message_at?->toISOString(),
+                'unread_admin_count' => $this->chatMessage->chat->admin_unread_count,
+                'unread_customer_count' => $this->chatMessage->chat->customer_unread_count,
+                'customer' => [
+                    'id' => $this->chatMessage->chat->customer->id,
+                    'name' => $this->chatMessage->chat->customer->name,
+                    'email' => $this->chatMessage->chat->customer->email,
+                ],
+                'last_message' => [
+                    'message' => $this->chatMessage->message,
+                    'sender_type' => $this->chatMessage->sender_type,
+                    'created_at' => $this->chatMessage->created_at->toISOString(),
+                ]
+            ],
+            'timestamp' => now()->toISOString(),
         ];
     }
 }

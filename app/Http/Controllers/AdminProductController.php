@@ -325,8 +325,10 @@ class AdminProductController extends Controller
             'stock_quantity' => 'required|integer|min:0',
             'is_available' => 'boolean',
             'is_featured' => 'boolean',
-            'back_color' => 'nullable|string|max:20',
         ];
+        
+        // Add back_color validation (always allow it)
+        $rules['back_color'] = 'nullable|string|max:20';
         
         // Add conditional validation rules
         if (Schema::hasColumn('products', 'short_description')) {
@@ -369,6 +371,30 @@ class AdminProductController extends Controller
 
             $validated['is_available'] = $request->has('is_available');
             $validated['is_featured'] = $request->has('is_featured');
+            
+            // Debug: Log the back_color value
+            \Log::info('Product Update - back_color value:', [
+                'request_back_color' => $request->get('back_color'),
+                'validated_back_color' => $validated['back_color'] ?? 'not set',
+                'product_id' => $product->id,
+                'has_back_color_column' => Schema::hasColumn('products', 'back_color'),
+                'all_request_data' => $request->all()
+            ]);
+            
+            // Ensure back_color is included in update data
+            if ($request->has('back_color')) {
+                $validated['back_color'] = $request->get('back_color');
+            } elseif ($request->has('back_color_backup')) {
+                $validated['back_color'] = $request->get('back_color_backup');
+            }
+            
+            // Additional logging for debugging
+            \Log::info('Final validated data for update:', [
+                'product_id' => $product->id,
+                'back_color_in_validated' => isset($validated['back_color']),
+                'back_color_value' => $validated['back_color'] ?? 'not set',
+                'all_validated_keys' => array_keys($validated)
+            ]);
 
             // Handle images upload (only if images column exists)
             if (Schema::hasColumn('products', 'images')) {
@@ -408,7 +434,27 @@ class AdminProductController extends Controller
                 }
             }
 
-            $product->update($validated);
+            // Try to update the product
+            $updateResult = $product->update($validated);
+            
+            // If update failed but we have back_color, try to set it directly
+            if (!$updateResult && isset($validated['back_color'])) {
+                \Log::warning('Product update failed, trying direct assignment', [
+                    'product_id' => $product->id,
+                    'back_color' => $validated['back_color']
+                ]);
+                
+                $product->back_color = $validated['back_color'];
+                $product->save();
+            }
+            
+            // Verify the update worked
+            $product->refresh();
+            \Log::info('Product update verification:', [
+                'product_id' => $product->id,
+                'final_back_color' => $product->back_color,
+                'update_successful' => $updateResult
+            ]);
 
             DB::commit();
 

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Chat;
 use App\Models\ChatMessage;
+use App\Models\PusherChat;
+use App\Models\PusherMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,28 +28,53 @@ class AdminChatController extends Controller
         $assigned = $request->get('assigned', 'all');
         $search = $request->get('search');
 
-        $query = Chat::with(['customer', 'assignedAdmin', 'latestMessage.sender'])
+        // Get statistics
+        $stats = $this->getChatStats();
+
+        // Handle AJAX request for stats only
+        if ($request->ajax() && $request->get('stats_only')) {
+            return response()->json([
+                'success' => true,
+                'stats' => $stats
+            ]);
+        }
+
+        // Get regular chats
+        $regularChats = Chat::with(['customer', 'assignedAdmin', 'latestMessage.sender'])
             ->withCount('messages');
 
-        // Apply filters
+        // Get pusher chats
+        $pusherChats = PusherChat::with(['customer', 'messages.user'])
+            ->withCount('messages');
+
+        // Apply filters to regular chats
         if ($status !== 'all') {
-            $query->where('status', $status);
+            $regularChats->where('status', $status);
         }
 
         if ($priority !== 'all') {
-            $query->where('priority', $priority);
+            $regularChats->where('priority', $priority);
         }
 
         if ($assigned === 'unassigned') {
-            $query->whereNull('assigned_admin_id');
+            $regularChats->whereNull('assigned_admin_id');
         } elseif ($assigned === 'assigned') {
-            $query->whereNotNull('assigned_admin_id');
+            $regularChats->whereNotNull('assigned_admin_id');
         } elseif ($assigned === 'mine') {
-            $query->where('assigned_admin_id', Auth::id());
+            $regularChats->where('assigned_admin_id', Auth::id());
         }
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $regularChats->where(function($q) use ($search) {
+                $q->where('subject', 'LIKE', "%{$search}%")
+                  ->orWhereHas('customer', function($qq) use ($search) {
+                      $qq->where('name', 'LIKE', "%{$search}%")
+                         ->orWhere('email', 'LIKE', "%{$search}%");
+                  });
+            });
+
+            // Apply same search to pusher chats
+            $pusherChats->where(function($q) use ($search) {
                 $q->where('subject', 'LIKE', "%{$search}%")
                   ->orWhereHas('customer', function($qq) use ($search) {
                       $qq->where('name', 'LIKE', "%{$search}%")
@@ -56,13 +83,76 @@ class AdminChatController extends Controller
             });
         }
 
-        $chats = $query->orderBy('admin_unread_count', 'desc')
+        // Apply status filter to pusher chats (map status values)
+        if ($status !== 'all') {
+            $pusherChats->where('status', $status);
+        }
+
+        // Execute queries
+        $regularChatsResults = $regularChats->orderBy('admin_unread_count', 'desc')
             ->orderBy('last_message_at', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->get();
 
-        // Get statistics
-        $stats = $this->getChatStats();
+        $pusherChatsResults = $pusherChats->orderBy('updated_at', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Transform pusher chats to match regular chat structure
+        $transformedPusherChats = $pusherChatsResults->map(function ($pusherChat) {
+            // Get the latest message
+            $latestMessage = $pusherChat->messages->sortByDesc('created_at')->first();
+            
+            // Create a pseudo Chat model that can work with routes
+            $pseudoChat = new \stdClass();
+            $pseudoChat->id = $pusherChat->id;
+            $pseudoChat->customer_id = $pusherChat->user_id;
+            $pseudoChat->subject = $pusherChat->subject ?: 'محادثة Pusher';
+            $pseudoChat->status = $pusherChat->status;
+            $pseudoChat->priority = 'medium'; // Default priority for pusher chats
+            $pseudoChat->admin_unread_count = 1; // Mark as unread for visibility
+            $pseudoChat->customer_unread_count = 0;
+            $pseudoChat->last_message_at = $latestMessage ? $latestMessage->created_at : $pusherChat->created_at;
+            $pseudoChat->created_at = $pusherChat->created_at;
+            $pseudoChat->updated_at = $pusherChat->updated_at;
+            $pseudoChat->customer = $pusherChat->customer;
+            $pseudoChat->assignedAdmin = null;
+            $pseudoChat->messages_count = $pusherChat->messages_count;
+            $pseudoChat->latestMessage = $latestMessage ? collect([
+                (object) [
+                    'id' => $latestMessage->id,
+                    'message' => $latestMessage->message,
+                    'sender_type' => $latestMessage->user_id == $pusherChat->user_id ? 'customer' : 'admin',
+                    'created_at' => $latestMessage->created_at,
+                    'sender' => $latestMessage->user
+                ]
+            ]) : collect([]);
+            $pseudoChat->is_pusher_chat = true; // Flag to identify pusher chats
+            $pseudoChat->formatted_last_message_time = $this->formatMessageTime($pseudoChat->last_message_at);
+            
+            return $pseudoChat;
+        });
+
+        // Combine and sort all chats
+        $allChats = $regularChatsResults->concat($transformedPusherChats)
+            ->sortByDesc(function ($chat) {
+                return $chat->last_message_at ?: $chat->created_at;
+            });
+
+        // Manually paginate the combined results
+        $perPage = 20;
+        $currentPage = request()->get('page', 1);
+        $offset = ($currentPage - 1) * $perPage;
+        
+        $chatsForPage = $allChats->slice($offset, $perPage);
+        
+        $chats = new \Illuminate\Pagination\LengthAwarePaginator(
+            $chatsForPage,
+            $allChats->count(),
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
         return view('admin.chats.index', compact('chats', 'stats', 'status', 'priority', 'assigned', 'search'));
     }
@@ -138,11 +228,12 @@ class AdminChatController extends Controller
     }
 
     /**
-     * Get chat statistics
+     * Get chat statistics (including pusher chats)
      */
     private function getChatStats()
     {
-        return [
+        // Regular chat stats
+        $regularStats = [
             'total' => Chat::count(),
             'open' => Chat::where('status', 'open')->count(),
             'in_progress' => Chat::where('status', 'in_progress')->count(),
@@ -151,6 +242,29 @@ class AdminChatController extends Controller
             'unassigned' => Chat::whereNull('assigned_admin_id')->count(),
             'with_unread' => Chat::where('admin_unread_count', '>', 0)->count(),
             'high_priority' => Chat::whereIn('priority', ['high', 'urgent'])->count(),
+        ];
+
+        // Pusher chat stats
+        $pusherStats = [
+            'total' => PusherChat::count(),
+            'open' => PusherChat::where('status', 'open')->count(),
+            'in_progress' => PusherChat::where('status', 'in_progress')->count(),
+            'resolved' => PusherChat::where('status', 'resolved')->count(),
+            'closed' => PusherChat::where('status', 'closed')->count(),
+        ];
+
+        // Combined stats
+        return [
+            'total' => $regularStats['total'] + $pusherStats['total'],
+            'open' => $regularStats['open'] + $pusherStats['open'],
+            'in_progress' => $regularStats['in_progress'] + $pusherStats['in_progress'],
+            'resolved' => $regularStats['resolved'] + $pusherStats['resolved'],
+            'closed' => $regularStats['closed'] + $pusherStats['closed'],
+            'unassigned' => $regularStats['unassigned'], // Pusher chats don't have assigned admin
+            'with_unread' => $regularStats['with_unread'] + $pusherStats['total'], // All pusher chats considered unread
+            'high_priority' => $regularStats['high_priority'],
+            'pusher_chats' => $pusherStats['total'], // Additional stat for pusher chats
+            'regular_chats' => $regularStats['total'], // Additional stat for regular chats
         ];
     }
 
@@ -162,5 +276,28 @@ class AdminChatController extends Controller
         return User::where('role', 'admin')
             ->select('id', 'name', 'full_name', 'email')
             ->get();
+    }
+
+    /**
+     * Format message time for display
+     */
+    private function formatMessageTime($timestamp)
+    {
+        if (!$timestamp) {
+            return 'منذ قليل';
+        }
+
+        $carbon = \Carbon\Carbon::parse($timestamp);
+        $diffInMinutes = $carbon->diffInMinutes(now());
+        
+        if ($diffInMinutes < 1) {
+            return 'الآن';
+        } elseif ($diffInMinutes < 60) {
+            return $diffInMinutes . ' دقيقة';
+        } elseif ($diffInMinutes < 1440) {
+            return $carbon->format('H:i');
+        } else {
+            return $carbon->format('M d');
+        }
     }
 }

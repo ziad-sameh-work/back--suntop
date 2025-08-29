@@ -36,16 +36,20 @@ class OrderController extends BaseController
             $order = $this->orderService->createOrder($data);
 
             // Send notification to admin about new order
-            $this->notificationService->sendAdminOrderNotification(
-                $order->order_number,
-                $order->status,
-                [
-                    'order_id' => $order->id,
-                    'user_name' => $request->user()->name,
-                    'total_amount' => $order->total_amount,
-                    'items_count' => $order->items->count(),
-                ]
-            );
+            try {
+                $this->notificationService->sendNewOrderNotificationToAdmin(
+                    $order->order_number,
+                    $order->status,
+                    [
+                        'order_id' => $order->id,
+                        'user_name' => $request->user()->name,
+                        'total_amount' => $order->total_amount,
+                        'items_count' => $order->items->count(),
+                    ]
+                );
+            } catch (\Exception $e) {
+                \Log::error('Failed to send admin notification: ' . $e->getMessage());
+            }
 
             return $this->successResponse(
                 ['order' => new OrderDetailResource($order)],

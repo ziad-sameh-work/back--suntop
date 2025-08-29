@@ -119,6 +119,8 @@ class NotificationService extends BaseService
         string $title,
         string $message,
         string $type,
+        string $body = null,
+        string $alertType = Notification::ALERT_INFO,
         array $data = [],
         string $priority = Notification::PRIORITY_MEDIUM,
         string $actionUrl = null,
@@ -129,10 +131,70 @@ class NotificationService extends BaseService
             $title,
             $message,
             $type,
+            $body,
+            $alertType,
             $data,
             $priority,
             $actionUrl,
             $scheduledAt
+        );
+    }
+
+    /**
+     * Create notification for user category
+     */
+    public function createNotificationForCategory(
+        int $categoryId,
+        string $title,
+        string $message,
+        string $type,
+        string $body = null,
+        string $alertType = Notification::ALERT_INFO,
+        array $data = [],
+        string $priority = Notification::PRIORITY_MEDIUM,
+        string $actionUrl = null,
+        Carbon $scheduledAt = null
+    ): int {
+        return Notification::createForUserCategory(
+            $categoryId,
+            $title,
+            $message,
+            $type,
+            $body,
+            $alertType,
+            $data,
+            $priority,
+            $actionUrl,
+            $scheduledAt
+        );
+    }
+
+    /**
+     * Create notification for all users
+     */
+    public function createNotificationForAll(
+        string $title,
+        string $message,
+        string $type,
+        string $body = null,
+        string $alertType = Notification::ALERT_INFO,
+        array $data = [],
+        string $priority = Notification::PRIORITY_MEDIUM,
+        string $actionUrl = null,
+        Carbon $scheduledAt = null,
+        string $roleFilter = null
+    ): int {
+        return Notification::createForAllUsers(
+            $title,
+            $message,
+            $type,
+            $body,
+            $alertType,
+            $data,
+            $priority,
+            $actionUrl,
+            $scheduledAt,
+            $roleFilter
         );
     }
 

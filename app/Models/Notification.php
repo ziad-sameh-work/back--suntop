@@ -14,8 +14,12 @@ class Notification extends Model
     protected $fillable = [
         'title',
         'message',
+        'body',
         'type',
+        'alert_type',
         'user_id',
+        'user_category_id',
+        'target_type',
         'read_at',
         'data',
         'action_url',
@@ -29,6 +33,12 @@ class Notification extends Model
         'read_at' => 'datetime',
         'scheduled_at' => 'datetime',
         'is_sent' => 'boolean',
+    ];
+
+    protected $attributes = [
+        'alert_type' => self::ALERT_INFO,
+        'target_type' => self::TARGET_USER,
+        'priority' => self::PRIORITY_MEDIUM,
     ];
 
     // Notification types
@@ -59,12 +69,44 @@ class Notification extends Model
         self::PRIORITY_HIGH => 'عالية',
     ];
 
+    // Alert types for UI styling
+    const ALERT_INFO = 'info';
+    const ALERT_SUCCESS = 'success';
+    const ALERT_WARNING = 'warning';
+    const ALERT_ERROR = 'error';
+
+    const ALERT_TYPES = [
+        self::ALERT_INFO => 'معلومات',
+        self::ALERT_SUCCESS => 'نجاح',
+        self::ALERT_WARNING => 'تحذير',
+        self::ALERT_ERROR => 'خطأ',
+    ];
+
+    // Target types
+    const TARGET_USER = 'user';
+    const TARGET_CATEGORY = 'category';
+    const TARGET_ALL = 'all';
+
+    const TARGET_TYPES = [
+        self::TARGET_USER => 'مستخدم محدد',
+        self::TARGET_CATEGORY => 'فئة مستخدمين',
+        self::TARGET_ALL => 'جميع المستخدمين',
+    ];
+
     /**
      * User relationship
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * User Category relationship
+     */
+    public function userCategory(): BelongsTo
+    {
+        return $this->belongsTo(\App\Modules\Users\Models\UserCategory::class);
     }
 
     /**
@@ -154,6 +196,22 @@ class Notification extends Model
     }
 
     /**
+     * Get alert type name in Arabic
+     */
+    public function getAlertTypeNameAttribute(): string
+    {
+        return self::ALERT_TYPES[$this->alert_type] ?? self::ALERT_TYPES[self::ALERT_INFO];
+    }
+
+    /**
+     * Get target type name in Arabic
+     */
+    public function getTargetTypeNameAttribute(): string
+    {
+        return self::TARGET_TYPES[$this->target_type] ?? self::TARGET_TYPES[self::TARGET_USER];
+    }
+
+    /**
      * Get time ago in Arabic
      */
     public function getTimeAgoAttribute(): string
@@ -195,6 +253,8 @@ class Notification extends Model
         string $title,
         string $message,
         string $type,
+        string $body = null,
+        string $alertType = self::ALERT_INFO,
         array $data = [],
         string $priority = self::PRIORITY_MEDIUM,
         string $actionUrl = null,
@@ -204,12 +264,122 @@ class Notification extends Model
             'user_id' => $userId,
             'title' => $title,
             'message' => $message,
+            'body' => $body,
             'type' => $type,
+            'alert_type' => $alertType,
+            'target_type' => self::TARGET_USER,
             'data' => $data,
             'priority' => $priority,
             'action_url' => $actionUrl,
             'scheduled_at' => $scheduledAt,
         ]);
+    }
+
+    /**
+     * Create notification for user category
+     */
+    public static function createForUserCategory(
+        int $categoryId,
+        string $title,
+        string $message,
+        string $type,
+        string $body = null,
+        string $alertType = self::ALERT_INFO,
+        array $data = [],
+        string $priority = self::PRIORITY_MEDIUM,
+        string $actionUrl = null,
+        Carbon $scheduledAt = null
+    ): int {
+        // Get all users in this category
+        $userIds = \App\Models\User::where('user_category_id', $categoryId)
+                                 ->where('is_active', true)
+                                 ->pluck('id')
+                                 ->toArray();
+
+        if (empty($userIds)) {
+            return 0;
+        }
+
+        // Create notifications for all users
+        $notifications = [];
+        $now = now();
+
+        foreach ($userIds as $userId) {
+            $notifications[] = [
+                'user_id' => $userId,
+                'user_category_id' => $categoryId,
+                'title' => $title,
+                'message' => $message,
+                'body' => $body,
+                'type' => $type,
+                'alert_type' => $alertType,
+                'target_type' => self::TARGET_CATEGORY,
+                'data' => json_encode($data),
+                'priority' => $priority,
+                'action_url' => $actionUrl,
+                'scheduled_at' => $scheduledAt,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        self::insert($notifications);
+        return count($notifications);
+    }
+
+    /**
+     * Create notification for all users
+     */
+    public static function createForAllUsers(
+        string $title,
+        string $message,
+        string $type,
+        string $body = null,
+        string $alertType = self::ALERT_INFO,
+        array $data = [],
+        string $priority = self::PRIORITY_MEDIUM,
+        string $actionUrl = null,
+        Carbon $scheduledAt = null,
+        string $roleFilter = null
+    ): int {
+        // Get all active users (optionally filtered by role)
+        $query = \App\Models\User::where('is_active', true);
+        
+        if ($roleFilter) {
+            $query->where('role', $roleFilter);
+        }
+        
+        $userIds = $query->pluck('id')->toArray();
+
+        if (empty($userIds)) {
+            return 0;
+        }
+
+        // Create notifications for all users
+        $notifications = [];
+        $now = now();
+
+        foreach ($userIds as $userId) {
+            $notifications[] = [
+                'user_id' => $userId,
+                'user_category_id' => null,
+                'title' => $title,
+                'message' => $message,
+                'body' => $body,
+                'type' => $type,
+                'alert_type' => $alertType,
+                'target_type' => self::TARGET_ALL,
+                'data' => json_encode($data),
+                'priority' => $priority,
+                'action_url' => $actionUrl,
+                'scheduled_at' => $scheduledAt,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        self::insert($notifications);
+        return count($notifications);
     }
 
     /**
@@ -220,6 +390,8 @@ class Notification extends Model
         string $title,
         string $message,
         string $type,
+        string $body = null,
+        string $alertType = self::ALERT_INFO,
         array $data = [],
         string $priority = self::PRIORITY_MEDIUM,
         string $actionUrl = null,
@@ -233,7 +405,10 @@ class Notification extends Model
                 'user_id' => $userId,
                 'title' => $title,
                 'message' => $message,
+                'body' => $body,
                 'type' => $type,
+                'alert_type' => $alertType,
+                'target_type' => self::TARGET_USER,
                 'data' => json_encode($data),
                 'priority' => $priority,
                 'action_url' => $actionUrl,

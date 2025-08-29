@@ -61,7 +61,7 @@ class OrderNotificationService extends BaseService
                 'status' => $status,
                 'status_text' => Order::STATUSES[$status] ?? $status,
             ], $extraData),
-            'action_url' => "/orders/{$extraData['order_id'] ?? ''}",
+            'action_url' => "/orders/" . ($extraData['order_id'] ?? ''),
             'priority' => $this->getNotificationPriority($status),
         ]);
     }
@@ -89,7 +89,7 @@ class OrderNotificationService extends BaseService
             'data' => array_merge([
                 'order_number' => $orderNumber,
             ], $trackingData),
-            'action_url' => "/orders/{$trackingData['order_id'] ?? ''}/tracking",
+            'action_url' => "/orders/" . ($trackingData['order_id'] ?? '') . "/tracking",
             'priority' => 'medium',
         ]);
     }
@@ -123,9 +123,25 @@ class OrderNotificationService extends BaseService
             'data' => array_merge([
                 'order_number' => $orderNumber,
             ], $deliveryData),
-            'action_url' => "/orders/{$deliveryData['order_id'] ?? ''}/tracking",
+            'action_url' => "/orders/" . ($deliveryData['order_id'] ?? '') . "/tracking",
             'priority' => 'high',
         ]);
+    }
+
+    /**
+     * Send new order notification to admin
+     */
+    public function sendNewOrderNotificationToAdmin(string $orderNumber, string $status, array $orderData): void
+    {
+        $this->sendAdminOrderNotification($orderNumber, $status, $orderData);
+    }
+
+    /**
+     * Create order status notification
+     */
+    public function createOrderStatusNotification(int $userId, string $orderNumber, string $status, array $extraData = []): Notification
+    {
+        return $this->sendOrderStatusNotification($userId, $orderNumber, $status, $extraData);
     }
 
     /**
@@ -155,7 +171,7 @@ class OrderNotificationService extends BaseService
                     'order_number' => $orderNumber,
                     'status' => $status,
                 ], $orderData),
-                'action_url' => "/admin/orders/{$orderData['order_id'] ?? ''}",
+                'action_url' => "/admin/orders/" . ($orderData['order_id'] ?? ''),
                 'priority' => $status === Order::STATUS_PENDING ? 'high' : 'medium',
             ]);
         }
@@ -166,12 +182,17 @@ class OrderNotificationService extends BaseService
      */
     private function getNotificationPriority(string $status): string
     {
-        return match($status) {
-            Order::STATUS_SHIPPED, Order::STATUS_DELIVERED => 'high',
-            Order::STATUS_CANCELLED => 'high',
-            Order::STATUS_CONFIRMED, Order::STATUS_PREPARING => 'medium',
-            default => 'medium',
-        };
+        switch($status) {
+            case Order::STATUS_SHIPPED:
+            case Order::STATUS_DELIVERED:
+            case Order::STATUS_CANCELLED:
+                return 'high';
+            case Order::STATUS_CONFIRMED:
+            case Order::STATUS_PREPARING:
+                return 'medium';
+            default:
+                return 'medium';
+        }
     }
 
     /**

@@ -20,7 +20,7 @@
     <!-- Statistics Cards -->
     <div class="stats-section">
         <div class="stats-container">
-            <div class="stat-card primary">
+            <div class="stat-card primary" data-stat="total">
                 <div class="stat-icon">
                     <i class="fas fa-comments"></i>
                 </div>
@@ -30,7 +30,7 @@
                 </div>
             </div>
 
-            <div class="stat-card success">
+            <div class="stat-card success" data-stat="open">
                 <div class="stat-icon">
                     <i class="fas fa-envelope-open"></i>
                 </div>
@@ -40,7 +40,7 @@
                 </div>
             </div>
 
-            <div class="stat-card warning">
+            <div class="stat-card warning" data-stat="in_progress">
                 <div class="stat-icon">
                     <i class="fas fa-clock"></i>
                 </div>
@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-            <div class="stat-card info">
+            <div class="stat-card info" data-stat="resolved">
                 <div class="stat-icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
@@ -60,7 +60,7 @@
                 </div>
             </div>
 
-            <div class="stat-card purple">
+            <div class="stat-card purple" data-stat="unassigned">
                 <div class="stat-icon">
                     <i class="fas fa-user-slash"></i>
                 </div>
@@ -70,7 +70,7 @@
                 </div>
             </div>
 
-            <div class="stat-card danger">
+            <div class="stat-card danger" data-stat="with_unread">
                 <div class="stat-icon">
                     <i class="fas fa-envelope"></i>
                 </div>
@@ -80,7 +80,7 @@
                 </div>
             </div>
 
-            <div class="stat-card orange">
+            <div class="stat-card orange" data-stat="high_priority">
                 <div class="stat-icon">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
@@ -159,7 +159,12 @@
                 @if($chats->count() > 0)
                     <div class="chats-list">
                         @foreach($chats as $chat)
-                            <div class="chat-item" onclick="window.location.href='{{ route('admin.chats.show', $chat) }}'">
+                            @php
+                                $chatRoute = (isset($chat->is_pusher_chat) && $chat->is_pusher_chat) 
+                                    ? route('admin.pusher-chat.show', $chat->id)
+                                    : route('admin.chats.show', $chat->id);
+                            @endphp
+                            <div class="chat-item" data-chat-id="{{ $chat->id }}" onclick="window.location.href='{{ $chatRoute }}'">
                                 <div class="chat-avatar">
                                     {{ substr($chat->customer->name, 0, 1) }}
                                 </div>
@@ -170,11 +175,11 @@
                                         <span class="chat-time">{{ $chat->formatted_last_message_time }}</span>
                                     </div>
 
-                                    <div class="chat-subject">{{ $chat->subject }}</div>
+                                    <div class="chat-subject">{{ $chat->subject ?: 'محادثة مع العميل' }}</div>
 
                                     @if($chat->latestMessage->first())
                                         <div class="chat-preview">
-                                            <strong>{{ $chat->latestMessage->first()->sender_type == 'customer' ? 'العميل' : 'الإدارة' }}:</strong>
+                                            <strong>{{ $chat->latestMessage->first()->sender_type == 'customer' ? $chat->latestMessage->first()->sender->name : 'الإدارة' }}:</strong>
                                             {{ Str::limit($chat->latestMessage->first()->message, 100) }}
                                         </div>
                                     @endif
@@ -189,14 +194,20 @@
                                             @endswitch
                                         </span>
 
-                                        <span class="priority-badge priority-{{ $chat->priority }}">
-                                            @switch($chat->priority)
+                                        <span class="priority-badge priority-{{ $chat->priority ?? 'medium' }}">
+                                            @switch($chat->priority ?? 'medium')
                                                 @case('low') منخفضة @break
                                                 @case('medium') متوسطة @break
                                                 @case('high') عالية @break
                                                 @case('urgent') عاجلة @break
                                             @endswitch
                                         </span>
+
+                                        @if(isset($chat->is_pusher_chat) && $chat->is_pusher_chat)
+                                            <span class="type-badge type-pusher">🚀 Pusher</span>
+                                        @else
+                                            <span class="type-badge type-regular">📝 عادي</span>
+                                        @endif
 
                                         @if($chat->assignedAdmin)
                                             <span class="assigned-admin">
@@ -212,31 +223,33 @@
                                 </div>
 
                                 <div class="chat-actions" onclick="event.stopPropagation()">
-                                    <a href="{{ route('admin.chats.show', $chat) }}" class="btn btn-sm btn-primary">
+                                    <a href="{{ $chatRoute }}" class="btn btn-sm btn-primary">
                                         <i class="fas fa-eye"></i>
                                         عرض
                                     </a>
 
-                                    @if(!$chat->assigned_admin_id)
-                                        <form method="POST" action="{{ route('admin.chats.assign', $chat) }}" style="display: inline;">
-                                            @csrf
-                                            <input type="hidden" name="admin_id" value="{{ auth()->id() }}">
-                                            <button type="submit" class="btn btn-sm btn-warning">
-                                                <i class="fas fa-user-plus"></i>
-                                                تعيين لي
-                                            </button>
-                                        </form>
-                                    @endif
+                                    @if(!isset($chat->is_pusher_chat) || !$chat->is_pusher_chat)
+                                        @if(isset($chat->assigned_admin_id) && !$chat->assigned_admin_id)
+                                            <form method="POST" action="{{ route('admin.chats.assign', $chat->id) }}" style="display: inline;">
+                                                @csrf
+                                                <input type="hidden" name="admin_id" value="{{ auth()->id() }}">
+                                                <button type="submit" class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-user-plus"></i>
+                                                    تعيين لي
+                                                </button>
+                                            </form>
+                                        @endif
 
-                                    @if($chat->status !== 'resolved')
-                                        <form method="POST" action="{{ route('admin.chats.updateStatus', $chat) }}" style="display: inline;">
-                                            @csrf
-                                            <input type="hidden" name="status" value="resolved">
-                                            <button type="submit" class="btn btn-sm btn-success">
-                                                <i class="fas fa-check"></i>
-                                                حل
-                                            </button>
-                                        </form>
+                                        @if($chat->status !== 'resolved')
+                                            <form method="POST" action="{{ route('admin.chats.updateStatus', $chat->id) }}" style="display: inline;">
+                                                @csrf
+                                                <input type="hidden" name="status" value="resolved">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-check"></i>
+                                                    حل
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
                                 </div>
                             </div>
@@ -548,6 +561,27 @@
 .priority-high { background: #fed7aa; color: #ea580c; }
 .priority-urgent { background: #fee2e2; color: #dc2626; }
 
+/* Type Badges */
+.type-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.type-pusher {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: 1px solid #5a67d8;
+}
+
+.type-regular {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border: 1px solid #4299e1;
+}
+
 .assigned-admin {
     color: #6366f1;
     font-size: 12px;
@@ -669,13 +703,433 @@
 </style>
 
 @section('scripts')
+<!-- Pusher JavaScript Library -->
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-refresh page every 30 seconds
+    // Initialize Pusher for Real-time Updates
+    initializePusherRealtime();
+    
+    // Fallback: Auto-refresh page every 5 minutes as backup
     setInterval(function() {
-        window.location.reload();
-    }, 30000);
+        refreshChatStats();
+    }, 300000);
 });
+
+let pusher = null;
+let adminChannel = null;
+
+function initializePusherRealtime() {
+    try {
+        // Initialize Pusher with your credentials
+        pusher = new Pusher('44911da009b5537ffae1', {
+            cluster: 'eu',
+            forceTLS: true,
+            authEndpoint: '/api/broadcasting/auth',
+            auth: {
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Authorization': 'Bearer {{ auth()->user()->createToken("chat-realtime")->plainTextToken }}'
+                }
+            }
+        });
+
+        // Subscribe to admin chats channel for real-time updates
+        adminChannel = pusher.subscribe('private-admin.chats');
+        
+        // Listen for new messages
+        adminChannel.bind('message.sent', function(data) {
+            console.log('🔔 New message received:', data);
+            handleNewMessage(data);
+            updateChatItemRealtime(data.chat);
+            showNotification(`رسالة جديدة من ${data.message.user.name}`, data.message.message);
+        });
+
+        // Listen for chat status changes
+        adminChannel.bind('chat.status.updated', function(data) {
+            console.log('📊 Chat status updated:', data);
+            updateChatStatus(data.chat_id, data.status);
+        });
+
+        // Listen for regular chat messages (NewChatMessage event)
+        adminChannel.bind('message.new', function(data) {
+            console.log('🔔 New regular chat message received:', data);
+            handleNewRegularChatMessage(data);
+        });
+
+        // Connection status handling
+        pusher.connection.bind('connected', function() {
+            console.log('✅ Pusher connected successfully');
+            showConnectionStatus('connected');
+        });
+
+        pusher.connection.bind('disconnected', function() {
+            console.log('❌ Pusher disconnected');
+            showConnectionStatus('disconnected');
+        });
+
+        pusher.connection.bind('error', function(error) {
+            console.error('🔴 Pusher connection error:', error);
+            showConnectionStatus('error');
+        });
+
+        adminChannel.bind('pusher:subscription_succeeded', function() {
+            console.log('✅ Successfully subscribed to admin chats channel');
+            showConnectionStatus('subscribed');
+        });
+
+        adminChannel.bind('pusher:subscription_error', function(error) {
+            console.error('🔴 Admin channel subscription error:', error);
+            showConnectionStatus('subscription_error');
+        });
+
+    } catch (error) {
+        console.error('Failed to initialize Pusher:', error);
+        showConnectionStatus('init_error');
+    }
+}
+
+function handleNewMessage(data) {
+    // Update unread count in stats
+    updateUnreadStats();
+    
+    // Update specific chat item if visible
+    const chatItem = document.querySelector(`[data-chat-id="${data.chat.id}"]`);
+    if (chatItem) {
+        updateChatItemUnreadCount(chatItem, data.chat.unread_admin_count);
+        moveToTop(chatItem);
+        highlightChatItem(chatItem);
+    }
+}
+
+function handleNewRegularChatMessage(data) {
+    console.log('📨 Processing regular chat message:', data);
+    
+    // Update unread count in stats
+    updateUnreadStats();
+    
+    // Find chat item and update it
+    const chatItem = document.querySelector(`[data-chat-id="${data.message.chat_id}"]`);
+    if (chatItem) {
+        // Update last message time
+        const timeElement = chatItem.querySelector('.chat-time');
+        if (timeElement) {
+            timeElement.textContent = 'الآن';
+        }
+
+        // Update last message preview
+        const previewElement = chatItem.querySelector('.chat-preview');
+        if (previewElement) {
+            const senderName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
+            previewElement.innerHTML = `<strong>${senderName}:</strong> ${data.message.message.substring(0, 100)}${data.message.message.length > 100 ? '...' : ''}`;
+        }
+
+        // Update customer name if needed
+        const customerNameElement = chatItem.querySelector('.chat-customer');
+        if (customerNameElement && data.message.sender_type === 'customer') {
+            customerNameElement.textContent = data.message.sender.name;
+        }
+
+        // Update unread badge
+        const currentUnread = parseInt(chatItem.querySelector('.unread-badge')?.textContent || '0');
+        updateChatItemUnreadCount(chatItem, currentUnread + 1);
+
+        // Move to top and highlight
+        moveToTop(chatItem);
+        highlightChatItem(chatItem);
+        
+        // Show notification with customer name
+        const customerName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
+        showNotification(`رسالة جديدة من ${customerName}`, data.message.message);
+    } else {
+        // Chat not visible, reload page to show new chat
+        console.log('Chat not found in current list, refreshing...');
+        setTimeout(() => {
+        window.location.reload();
+        }, 2000);
+    }
+}
+
+function updateChatItemRealtime(chatData) {
+    const chatItem = document.querySelector(`[data-chat-id="${chatData.id}"]`);
+    if (chatItem) {
+        // Update last message time
+        const timeElement = chatItem.querySelector('.chat-time');
+        if (timeElement) {
+            timeElement.textContent = 'الآن';
+        }
+
+        // Update last message preview
+        const previewElement = chatItem.querySelector('.chat-preview');
+        if (previewElement && chatData.last_message) {
+            const senderName = chatData.last_message.sender_type === 'customer' ? (chatData.customer?.name || 'العميل') : 'الإدارة';
+            previewElement.innerHTML = `<strong>${senderName}:</strong> ${chatData.last_message.message.substring(0, 100)}${chatData.last_message.message.length > 100 ? '...' : ''}`;
+        }
+
+        // Update customer name if needed
+        const customerNameElement = chatItem.querySelector('.chat-customer');
+        if (customerNameElement && chatData.customer?.name) {
+            customerNameElement.textContent = chatData.customer.name;
+        }
+
+        // Move to top of list
+        moveToTop(chatItem);
+        
+        // Add visual highlight
+        highlightChatItem(chatItem);
+    }
+}
+
+function updateChatItemUnreadCount(chatItem, unreadCount) {
+    const unreadBadge = chatItem.querySelector('.unread-badge');
+    
+    if (unreadCount > 0) {
+        if (unreadBadge) {
+            unreadBadge.textContent = unreadCount;
+        } else {
+            // Create new unread badge
+            const chatMeta = chatItem.querySelector('.chat-meta');
+            const newBadge = document.createElement('span');
+            newBadge.className = 'unread-badge';
+            newBadge.textContent = unreadCount;
+            chatMeta.appendChild(newBadge);
+        }
+    } else {
+        if (unreadBadge) {
+            unreadBadge.remove();
+        }
+    }
+}
+
+function moveToTop(chatItem) {
+    const chatsList = document.querySelector('.chats-list');
+    if (chatsList && chatItem.parentNode === chatsList) {
+        chatsList.insertBefore(chatItem, chatsList.firstChild);
+    }
+}
+
+function highlightChatItem(chatItem) {
+    chatItem.style.background = '#fff3cd';
+    chatItem.style.borderLeft = '4px solid #ffc107';
+    
+    setTimeout(() => {
+        chatItem.style.background = '';
+        chatItem.style.borderLeft = '';
+    }, 3000);
+}
+
+function updateUnreadStats() {
+    // Refresh unread messages count
+    fetch('{{ route("admin.chats.index") }}?ajax=1&stats_only=1')
+        .then(response => response.json())
+        .then(data => {
+            if (data.stats) {
+                updateStatsDisplay(data.stats);
+            }
+        })
+        .catch(error => console.error('Error updating stats:', error));
+}
+
+function updateStatsDisplay(stats) {
+    // Update stats cards
+    const statsElements = {
+        'total': document.querySelector('[data-stat="total"] .stat-number'),
+        'open': document.querySelector('[data-stat="open"] .stat-number'),
+        'in_progress': document.querySelector('[data-stat="in_progress"] .stat-number'),
+        'resolved': document.querySelector('[data-stat="resolved"] .stat-number'),
+        'unassigned': document.querySelector('[data-stat="unassigned"] .stat-number'),
+        'with_unread': document.querySelector('[data-stat="with_unread"] .stat-number'),
+        'high_priority': document.querySelector('[data-stat="high_priority"] .stat-number')
+    };
+
+    Object.keys(statsElements).forEach(key => {
+        const element = statsElements[key];
+        if (element && stats[key] !== undefined) {
+            element.textContent = new Intl.NumberFormat('ar-EG').format(stats[key]);
+        }
+    });
+}
+
+function updateChatStatus(chatId, newStatus) {
+    const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+    if (chatItem) {
+        const statusBadge = chatItem.querySelector('.status-badge');
+        if (statusBadge) {
+            // Update status badge
+            statusBadge.className = `status-badge status-${newStatus}`;
+            
+            const statusTexts = {
+                'open': 'مفتوحة',
+                'in_progress': 'قيد المعالجة', 
+                'resolved': 'محلولة',
+                'closed': 'مغلقة'
+            };
+            
+            statusBadge.textContent = statusTexts[newStatus] || newStatus;
+        }
+    }
+}
+
+function showNotification(title, message) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+            body: message.substring(0, 100),
+            icon: '/favicon.ico',
+            badge: '/favicon.ico'
+        });
+    } else if ('Notification' in window && Notification.permission !== 'denied') {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === 'granted') {
+                showNotification(title, message);
+            }
+        });
+    }
+    
+    // Also show in-page notification
+    showInPageNotification(title, message);
+}
+
+function showInPageNotification(title, message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'realtime-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <strong>${title}</strong>
+            <p>${message.substring(0, 80)}...</p>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    // Add styles
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+function showConnectionStatus(status) {
+    let statusText = '';
+    let statusColor = '';
+    
+    switch (status) {
+        case 'connected':
+            statusText = '🟢 متصل';
+            statusColor = '#28a745';
+            break;
+        case 'subscribed':
+            statusText = '🟢 Real-time نشط';
+            statusColor = '#28a745';
+            break;
+        case 'disconnected':
+            statusText = '🟡 منقطع';
+            statusColor = '#ffc107';
+            break;
+        case 'error':
+        case 'subscription_error':
+        case 'init_error':
+            statusText = '🔴 خطأ في الاتصال';
+            statusColor = '#dc3545';
+            break;
+    }
+    
+    // Create or update status indicator
+    let statusIndicator = document.getElementById('pusher-status');
+    if (!statusIndicator) {
+        statusIndicator = document.createElement('div');
+        statusIndicator.id = 'pusher-status';
+        statusIndicator.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            border: 2px solid;
+        `;
+        document.body.appendChild(statusIndicator);
+    }
+    
+    statusIndicator.textContent = statusText;
+    statusIndicator.style.borderColor = statusColor;
+    statusIndicator.style.color = statusColor;
+}
+
+function refreshChatStats() {
+    // Backup refresh function
+    console.log('📊 Refreshing chat stats (backup)');
+    updateUnreadStats();
+}
+
+// Request notification permission on page load
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+// Add styles for animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .notification-close {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .notification-close:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .realtime-notification .notification-content p {
+        margin: 5px 0 0 0;
+        font-size: 13px;
+        opacity: 0.9;
+    }
+`;
+document.head.appendChild(style);
 </script>
 @endsection
 @endsection

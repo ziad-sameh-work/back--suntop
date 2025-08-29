@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Product API Endpoints</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+            direction: rtl;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .method {
+            background: #007bff;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .url {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 8px;
+            border: 1px solid #ddd;
+            margin: 8px 0;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .test-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+        }
+        .test-btn:hover {
+            background: #218838;
+        }
+        .copy-btn {
+            background: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+        }
+        .result {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            margin-top: 10px;
+            border-radius: 3px;
+        }
+        .loading {
+            color: #007bff;
+            font-style: italic;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .success {
+            color: #28a745;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        .info-box {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid #b3d9ff;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+        h3 { color: #333; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار Product API Endpoints</h1>
+        
+        <div class="info-box">
+            <h3>📋 التعليمات:</h3>
+            <ul>
+                <li>اضغط على <strong>"Test API"</strong> لاختبار الـ endpoint</li>
+                <li>اضغط على <strong>"Copy cURL"</strong> لنسخ أمر cURL</li>
+                <li>تأكد من وجود <span class="highlight">back_color</span> في النتائج</li>
+                <li>جميع الـ endpoints تُرجع JSON response</li>
+            </ul>
+        </div>
+
+        <h2>🔗 Public API Endpoints</h2>
+        
+        <!-- All Products -->
+        <div class="endpoint">
+            <h3>📦 جميع المنتجات</h3>
+            <p>يُرجع قائمة بجميع المنتجات مع pagination</p>
+            <span class="method">GET</span>
+            <div class="url" id="url1">/api/products</div>
+            <button class="test-btn" onclick="testAPI('/api/products', 'result1')">Test API</button>
+            <button class="copy-btn" onclick="copyCurl('GET', '/api/products')">Copy cURL</button>
+            <div id="result1" class="result">اضغط "Test API" لعرض النتائج</div>
+        </div>
+
+        <!-- Featured Products -->
+        <div class="endpoint">
+            <h3>⭐ المنتجات المميزة</h3>
+            <p>يُرجع المنتجات المميزة فقط</p>
+            <span class="method">GET</span>
+            <div class="url" id="url2">/api/products/featured</div>
+            <button class="test-btn" onclick="testAPI('/api/products/featured', 'result2')">Test API</button>
+            <button class="copy-btn" onclick="copyCurl('GET', '/api/products/featured')">Copy cURL</button>
+            <div id="result2" class="result">اضغط "Test API" لعرض النتائج</div>
+        </div>
+
+        <!-- Single Product -->
+        <div class="endpoint">
+            <h3>🔍 منتج واحد</h3>
+            <p>يُرجع تفاصيل منتج واحد (تفاصيل كاملة)</p>
+            <span class="method">GET</span>
+            <div class="url" id="url3">/api/products/1</div>
+            <button class="test-btn" onclick="testAPI('/api/products/1', 'result3')">Test API</button>
+            <button class="copy-btn" onclick="copyCurl('GET', '/api/products/1')">Copy cURL</button>
+            <div id="result3" class="result">اضغط "Test API" لعرض النتائج</div>
+        </div>
+
+        <!-- Products with filters -->
+        <div class="endpoint">
+            <h3>🔎 منتجات مع فلاتر</h3>
+            <p>يُرجع منتجات مع فلاتر (category, search, featured)</p>
+            <span class="method">GET</span>
+            <div class="url" id="url4">/api/products?featured=1&limit=5</div>
+            <button class="test-btn" onclick="testAPI('/api/products?featured=1&limit=5', 'result4')">Test API</button>
+            <button class="copy-btn" onclick="copyCurl('GET', '/api/products?featured=1&limit=5')">Copy cURL</button>
+            <div id="result4" class="result">اضغط "Test API" لعرض النتائج</div>
+        </div>
+
+        <h2>🔐 Admin API Endpoints (تحتاج authentication)</h2>
+        
+        <div class="endpoint">
+            <h3>👨‍💼 منتجات الإدارة</h3>
+            <p>يُرجع منتجات للإدارة مع تفاصيل إضافية (يحتاج token)</p>
+            <span class="method">GET</span>
+            <div class="url" id="url5">/api/admin/products</div>
+            <button class="test-btn" onclick="testAPI('/api/admin/products', 'result5')">Test API</button>
+            <button class="copy-btn" onclick="copyCurl('GET', '/api/admin/products', true)">Copy cURL with Auth</button>
+            <div id="result5" class="result">اضغط "Test API" لعرض النتائج (قد يفشل بدون authentication)</div>
+        </div>
+
+        <h2>📊 back_color Field Verification</h2>
+        
+        <div class="info-box">
+            <h3>✅ ما يجب أن تجده في النتائج:</h3>
+            <ul>
+                <li><code>"back_color": "#FFFFFF"</code> أو أي لون hex صحيح</li>
+                <li>إذا كان <code>"back_color": null</code> فهناك مشكلة</li>
+                <li>إذا لم يظهر <code>back_color</code> نهائياً فهناك مشكلة في الـ Resource</li>
+            </ul>
+        </div>
+
+        <h2>🛠 أدوات إضافية</h2>
+        
+        <div class="endpoint">
+            <a href="/add_back_color_column.php" style="color: #007bff; text-decoration: none;">
+                <h3>🔧 إضافة عمود back_color</h3>
+            </a>
+            <p>إذا كان العمود مفقود من قاعدة البيانات</p>
+        </div>
+
+        <div class="endpoint">
+            <a href="/admin/products" style="color: #007bff; text-decoration: none;">
+                <h3>👨‍💼 لوحة تحكم المنتجات</h3>
+            </a>
+            <p>للذهاب إلى صفحة إدارة المنتجات</p>
+        </div>
+    </div>
+
+    <script>
+        function testAPI(url, resultId) {
+            const resultDiv = document.getElementById(resultId);
+            resultDiv.innerHTML = '<span class="loading">⏳ جاري التحميل...</span>';
+            resultDiv.className = 'result loading';
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    resultDiv.className = 'result success';
+                    
+                    // Highlight back_color in the response
+                    let jsonString = JSON.stringify(data, null, 2);
+                    jsonString = jsonString.replace(/"back_color":\s*"([^"]*?)"/g, 
+                        '"<span style="background-color: yellow; padding: 2px;">back_color</span>": "<span style="background-color: $1; color: white; padding: 2px 5px; border-radius: 2px;">$1</span>"');
+                    
+                    resultDiv.innerHTML = jsonString;
+                })
+                .catch(error => {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ خطأ: ${error.message}`;
+                });
+        }
+
+        function copyCurl(method, url, needsAuth = false) {
+            const baseUrl = window.location.origin;
+            let curlCommand = `curl -X ${method} "${baseUrl}${url}"`;
+            
+            if (needsAuth) {
+                curlCommand += ` -H "Authorization: Bearer YOUR_TOKEN_HERE"`;
+            }
+            
+            curlCommand += ` -H "Accept: application/json"`;
+            
+            navigator.clipboard.writeText(curlCommand).then(() => {
+                alert('تم نسخ أمر cURL إلى الحافظة!');
+            }).catch(() => {
+                prompt('انسخ هذا الأمر:', curlCommand);
+            });
+        }
+
+        // Auto-test the first endpoint on page load
+        window.onload = function() {
+            setTimeout(() => {
+                testAPI('/api/products', 'result1');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

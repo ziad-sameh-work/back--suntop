@@ -21,6 +21,9 @@ class ProductService extends BaseService
     {
         $query = $this->model->newQuery();
 
+        // Load relationships
+        $query->with(['category']);
+
         // Apply filters
         if ($filters['category']) {
             $query->byCategory($filters['category']);
@@ -49,9 +52,12 @@ class ProductService extends BaseService
      */
     public function getProductById(string $id): ?Product
     {
-        return $this->model->with(['reviews' => function ($query) {
-            $query->approved()->with('user:id,name')->latest()->take(5);
-        }])->find($id);
+        return $this->model->with([
+            'category',
+            'reviews' => function ($query) {
+                $query->latest()->take(5);
+            }
+        ])->find($id);
     }
 
     /**
@@ -59,7 +65,8 @@ class ProductService extends BaseService
      */
     public function getFeaturedProducts(int $limit = 10): Collection
     {
-        return $this->model->featured()
+        return $this->model->with(['category'])
+                          ->featured()
                           ->available()
                           ->orderBy('sort_order')
                           ->orderBy('created_at', 'desc')

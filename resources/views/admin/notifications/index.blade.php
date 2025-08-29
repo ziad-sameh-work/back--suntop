@@ -140,6 +140,18 @@
                         </select>
                     </div>
 
+                    <div class="col-md-2 mb-3">
+                        <label for="target_type" class="form-label">نوع الإرسال</label>
+                        <select class="form-select" id="target_type" name="target_type">
+                            <option value="">جميع الأنواع</option>
+                            @foreach(\App\Models\Notification::TARGET_TYPES as $key => $value)
+                                <option value="{{ $key }}" {{ ($filters['target_type'] ?? '') === $key ? 'selected' : '' }}>
+                                    {{ $value }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <div class="col-md-3 mb-3">
                         <label for="user_id" class="form-label">المستخدم</label>
                         <select class="form-select" id="user_id" name="user_id">
@@ -181,6 +193,7 @@
                                 <th>العنوان</th>
                                 <th>المستخدم</th>
                                 <th>النوع</th>
+                                <th>نوع الإرسال</th>
                                 <th>الأولوية</th>
                                 <th>الحالة</th>
                                 <th>التاريخ</th>
@@ -202,6 +215,17 @@
                                         <span class="badge bg-{{ $notification->type === 'shipment' ? 'info' : ($notification->type === 'offer' ? 'success' : ($notification->type === 'reward' ? 'warning' : 'secondary')) }}">
                                             {{ $notification->type_name }}
                                         </span>
+                                        @if($notification->alert_type)
+                                            <br><small class="text-muted">{{ $notification->alert_type_name }}</small>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ $notification->target_type === 'user' ? 'primary' : ($notification->target_type === 'category' ? 'info' : 'success') }}">
+                                            {{ $notification->target_type_name }}
+                                        </span>
+                                        @if($notification->target_type === 'category' && $notification->userCategory)
+                                            <br><small class="text-muted">{{ $notification->userCategory->display_name }}</small>
+                                        @endif
                                     </td>
                                     <td>
                                         <span class="badge bg-{{ $notification->priority === 'high' ? 'danger' : ($notification->priority === 'medium' ? 'warning' : 'secondary') }}">
@@ -276,8 +300,13 @@
                         <textarea class="form-control" id="broadcast_message" name="message" rows="4" required></textarea>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="broadcast_body" class="form-label">تفاصيل إضافية (اختياري)</label>
+                        <textarea class="form-control" id="broadcast_body" name="body" rows="3"></textarea>
+                    </div>
+
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="broadcast_type" class="form-label">النوع</label>
                             <select class="form-select" id="broadcast_type" name="type" required>
                                 @foreach(\App\Models\Notification::TYPES as $key => $value)
@@ -286,7 +315,16 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label for="broadcast_alert_type" class="form-label">نوع التنبيه</label>
+                            <select class="form-select" id="broadcast_alert_type" name="alert_type" required>
+                                @foreach(\App\Models\Notification::ALERT_TYPES as $key => $value)
+                                    <option value="{{ $key }}" {{ $key === 'info' ? 'selected' : '' }}>{{ $value }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
                             <label for="broadcast_priority" class="form-label">الأولوية</label>
                             <select class="form-select" id="broadcast_priority" name="priority" required>
                                 @foreach(\App\Models\Notification::PRIORITIES as $key => $value)

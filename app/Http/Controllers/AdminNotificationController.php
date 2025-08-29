@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Modules\Notifications\Services\NotificationService;
 use App\Models\Notification;
 use App\Models\User;
+use App\Modules\Users\Models\UserCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Illuminate\Http\JsonResponse;
 
 class AdminNotificationController extends Controller
 {
@@ -30,6 +32,7 @@ class AdminNotificationController extends Controller
             'is_read' => $request->get('is_read'),
             'priority' => $request->get('priority'),
             'search' => $request->get('search'),
+            'target_type' => $request->get('target_type'),
         ];
 
         $notifications = $this->notificationService->getAllNotifications(
@@ -41,8 +44,9 @@ class AdminNotificationController extends Controller
 
         $stats = $this->notificationService->getAdminNotificationStats();
         $users = User::select('id', 'name', 'email')->where('is_active', true)->get();
+        $categories = UserCategory::active()->ordered()->get();
 
-        return view('admin.notifications.index', compact('notifications', 'stats', 'users', 'filters'));
+        return view('admin.notifications.index', compact('notifications', 'stats', 'users', 'categories', 'filters'));
     }
 
     /**
@@ -55,7 +59,9 @@ class AdminNotificationController extends Controller
                     ->orderBy('name')
                     ->get();
 
-        return view('admin.notifications.create', compact('users'));
+        $categories = UserCategory::active()->ordered()->get();
+
+        return view('admin.notifications.create', compact('users', 'categories'));
     }
 
     /**
@@ -63,65 +69,100 @@ class AdminNotificationController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'user_ids' => 'required|array|min:1',
-            'user_ids.*' => 'exists:users,id',
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'message' => 'required|string|max:1000',
-            'type' => 'required|in:shipment,offer,reward,general,order_status,payment',
-            'priority' => 'required|in:low,medium,high',
-            'action_url' => 'nullable|string|max:500',
-            'scheduled_at' => 'nullable|date|after:now',
+            'message' => 'required|string|max:500',
+            'body' => 'nullable|string|max:2000',
+            'type' => 'required|in:' . implode(',', array_keys(Notification::TYPES)),
+            'alert_type' => 'required|in:' . implode(',', array_keys(Notification::ALERT_TYPES)),
+            'priority' => 'required|in:' . implode(',', array_keys(Notification::PRIORITIES)),
+            'action_url' => 'nullable|url',
+            'target_type' => 'required|in:user,category,all',
+            'user_ids' => 'required_if:target_type,user|array',
+            'user_ids.*' => 'exists:users,id',
+            'category_id' => 'required_if:target_type,category|exists:user_categories,id',
+            'role_filter' => 'nullable|in:customer,merchant,admin',
         ]);
 
         try {
-            $count = $this->notificationService->createBulkNotification(
-                $request->user_ids,
-                $request->title,
-                $request->message,
-                $request->type,
-                $request->data ?? [],
-                $request->priority,
-                $request->action_url,
-                $request->scheduled_at ? \Carbon\Carbon::parse($request->scheduled_at) : null
-            );
+            $count = 0;
+            
+            switch ($validated['target_type']) {
+                case 'user':
+                    $count = $this->notificationService->createBulkNotification(
+                        $validated['user_ids'],
+                        $validated['title'],
+                        $validated['message'],
+                        $validated['type'],
+                        $validated['body'] ?? null,
+                        $validated['alert_type'],
+                        [],
+                        $validated['priority'],
+                        $validated['action_url'] ?? null
+                    );
+                    break;
 
-            return redirect()
-                ->route('admin.notifications.index')
-                ->with('success', "تم إنشاء {$count} إشعار بنجاح");
+                case 'category':
+                    $count = $this->notificationService->createNotificationForCategory(
+                        $validated['category_id'],
+                        $validated['title'],
+                        $validated['message'],
+                        $validated['type'],
+                        $validated['body'] ?? null,
+                        $validated['alert_type'],
+                        [],
+                        $validated['priority'],
+                        $validated['action_url'] ?? null
+                    );
+                    break;
+
+                case 'all':
+                    $count = $this->notificationService->createNotificationForAll(
+                        $validated['title'],
+                        $validated['message'],
+                        $validated['type'],
+                        $validated['body'] ?? null,
+                        $validated['alert_type'],
+                        [],
+                        $validated['priority'],
+                        $validated['action_url'] ?? null,
+                        null,
+                        $validated['role_filter'] ?? null
+                    );
+                    break;
+            }
+
+            return redirect()->route('admin.notifications.index')
+                           ->with('success', "تم إرسال الإشعار بنجاح إلى {$count} مستخدم");
+
         } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'حدث خطأ: ' . $e->getMessage());
+            return redirect()->back()
+                           ->withErrors(['error' => 'حدث خطأ أثناء إرسال الإشعار: ' . $e->getMessage()])
+                           ->withInput();
         }
     }
 
     /**
      * Show notification details
      */
-    public function show(int $id): View
+    public function show(Notification $notification): View
     {
-        $notification = Notification::with('user')->findOrFail($id);
+        $notification->load(['user', 'userCategory']);
         return view('admin.notifications.show', compact('notification'));
     }
 
     /**
      * Delete notification
      */
-    public function destroy(int $id): RedirectResponse
+    public function destroy(Notification $notification): RedirectResponse
     {
         try {
-            $notification = Notification::findOrFail($id);
             $notification->delete();
-
-            return redirect()
-                ->route('admin.notifications.index')
-                ->with('success', 'تم حذف الإشعار بنجاح');
+            return redirect()->route('admin.notifications.index')
+                           ->with('success', 'تم حذف الإشعار بنجاح');
         } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'حدث خطأ: ' . $e->getMessage());
+            return redirect()->back()
+                           ->withErrors(['error' => 'حدث خطأ أثناء حذف الإشعار']);
         }
     }
 
@@ -130,42 +171,37 @@ class AdminNotificationController extends Controller
      */
     public function sendToAll(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'message' => 'required|string|max:1000',
-            'type' => 'required|in:shipment,offer,reward,general,order_status,payment',
-            'priority' => 'required|in:low,medium,high',
-            'action_url' => 'nullable|string|max:500',
+            'message' => 'required|string|max:500',
+            'body' => 'nullable|string|max:2000',
+            'type' => 'required|in:' . implode(',', array_keys(Notification::TYPES)),
+            'alert_type' => 'required|in:' . implode(',', array_keys(Notification::ALERT_TYPES)),
+            'priority' => 'required|in:' . implode(',', array_keys(Notification::PRIORITIES)),
+            'action_url' => 'nullable|url',
             'role_filter' => 'nullable|in:customer,merchant,admin',
         ]);
 
         try {
-            $query = User::where('is_active', true);
-            
-            if ($request->role_filter) {
-                $query->where('role', $request->role_filter);
-            }
-
-            $userIds = $query->pluck('id')->toArray();
-
-            $count = $this->notificationService->createBulkNotification(
-                $userIds,
-                $request->title,
-                $request->message,
-                $request->type,
+            $count = $this->notificationService->createNotificationForAll(
+                $validated['title'],
+                $validated['message'],
+                $validated['type'],
+                $validated['body'] ?? null,
+                $validated['alert_type'],
                 [],
-                $request->priority,
-                $request->action_url
+                $validated['priority'],
+                $validated['action_url'] ?? null,
+                null,
+                $validated['role_filter'] ?? null
             );
 
-            return redirect()
-                ->route('admin.notifications.index')
-                ->with('success', "تم إرسال الإشعار إلى {$count} مستخدم");
+            return redirect()->route('admin.notifications.index')
+                           ->with('success', "تم إرسال الإشعار إلى {$count} مستخدم");
+
         } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('error', 'حدث خطأ: ' . $e->getMessage());
+            return redirect()->back()
+                           ->withErrors(['error' => 'حدث خطأ أثناء إرسال الإشعار: ' . $e->getMessage()]);
         }
     }
 
@@ -174,33 +210,64 @@ class AdminNotificationController extends Controller
      */
     public function cleanOld(Request $request): RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'days_old' => 'required|integer|min:1|max:365',
         ]);
 
         try {
-            $deletedCount = $this->notificationService->cleanOldNotifications($request->days_old);
+            $count = $this->notificationService->cleanOldNotifications($validated['days_old']);
+            return redirect()->route('admin.notifications.index')
+                           ->with('success', "تم حذف {$count} إشعار قديم");
 
-            return redirect()
-                ->route('admin.notifications.index')
-                ->with('success', "تم حذف {$deletedCount} إشعار قديم");
         } catch (\Exception $e) {
-            return redirect()
-                ->back()
-                ->with('error', 'حدث خطأ: ' . $e->getMessage());
+            return redirect()->back()
+                           ->withErrors(['error' => 'حدث خطأ أثناء تنظيف الإشعارات']);
         }
     }
 
     /**
-     * Get notifications statistics (AJAX)
+     * Get notification statistics (AJAX)
      */
-    public function getStats(): \Illuminate\Http\JsonResponse
+    public function getStats(): JsonResponse
     {
         try {
             $stats = $this->notificationService->getAdminNotificationStats();
-            return response()->json($stats);
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء جلب الإحصائيات'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get users for specific category (AJAX)
+     */
+    public function getCategoryUsers(UserCategory $category): JsonResponse
+    {
+        try {
+            $users = User::where('user_category_id', $category->id)
+                        ->where('is_active', true)
+                        ->select('id', 'name', 'email')
+                        ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'category' => $category->display_name,
+                    'users' => $users,
+                    'count' => $users->count()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء جلب المستخدمين'
+            ], 500);
         }
     }
 }

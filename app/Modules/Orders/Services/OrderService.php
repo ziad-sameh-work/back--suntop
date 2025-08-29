@@ -14,6 +14,7 @@ use App\Modules\Users\Services\UserCategoryService;
 use App\Modules\Notifications\Services\NotificationService;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -337,7 +338,7 @@ class OrderService extends BaseService
     /**
      * Validate and calculate order items with carton/package support
      */
-    private function validateAndCalculateItemsWithCartons(array $items): Collection
+    private function validateAndCalculateItemsWithCartons(array $items): SupportCollection
     {
         $productIds = collect($items)->pluck('product_id');
         $products = $this->productService->getProductsByIds($productIds->toArray())->keyBy('id');
@@ -509,7 +510,7 @@ class OrderService extends BaseService
     /**
      * Legacy method: Validate and calculate order items
      */
-    private function validateAndCalculateItems(array $items): Collection
+    private function validateAndCalculateItems(array $items): SupportCollection
     {
         // Convert legacy format to new format and use new method
         $itemsWithSellingType = collect($items)->map(function ($item) {

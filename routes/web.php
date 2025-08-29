@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminUserController;
@@ -13,6 +14,11 @@ use App\Http\Controllers\AdminUserCategoryController;
 use App\Http\Controllers\AdminAnalyticsController;
 use App\Http\Controllers\AdminChatController;
 use App\Http\Controllers\AdminNotificationController;
+use App\Http\Controllers\AdminPusherChatController;
+use App\Http\Controllers\BroadcastingAuthController;
+use App\Events\NewChatMessage;
+use App\Models\ChatMessage;
+use App\Models\Chat;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +30,74 @@ use App\Http\Controllers\AdminNotificationController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+// Broadcasting Authentication Routes - Moved to API routes
+
+// Test Routes for Debugging Chat Events
+Route::get('/test-chat-event/{chat_id}', function ($chatId) {
+    try {
+        $chat = Chat::with('customer')->findOrFail($chatId);
+        
+        // Create a test message
+        $message = ChatMessage::create([
+            'chat_id' => $chat->id,
+            'sender_id' => $chat->customer->id,
+            'sender_type' => 'customer',
+            'message' => '🧪 Test message from route - ' . now()->format('H:i:s'),
+            'message_type' => 'text',
+            'metadata' => [
+                'sent_from' => 'test_route',
+                'test' => true
+            ]
+        ]);
+        
+        // Load relationships
+        $message->load(['sender', 'chat.customer']);
+        
+        // Trigger event
+        event(new NewChatMessage($message));
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Event triggered successfully',
+            'data' => [
+                'message_id' => $message->id,
+                'chat_id' => $chat->id,
+                'sender' => $message->sender->name,
+                'message_text' => $message->message,
+                'channels' => [
+                    "chat.{$chat->id}",
+                    "private-admin.chats"
+                ],
+                'event' => 'message.new'
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+// Test Pusher configuration
+Route::get('/test-pusher-config', function () {
+    return response()->json([
+        'broadcasting_driver' => config('broadcasting.default'),
+        'pusher_config' => [
+            'key' => config('broadcasting.connections.pusher.key'),
+            'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+            'app_id' => config('broadcasting.connections.pusher.app_id'),
+            'secret' => substr(config('broadcasting.connections.pusher.secret'), 0, 4) . '...',
+        ],
+        'env_vars' => [
+            'BROADCAST_DRIVER' => env('BROADCAST_DRIVER'),
+            'PUSHER_APP_KEY' => env('PUSHER_APP_KEY'),
+            'PUSHER_APP_CLUSTER' => env('PUSHER_APP_CLUSTER'),
+        ]
+    ]);
+});
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -158,15 +232,34 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('chats/{chat}/priority', [AdminChatController::class, 'updatePriority'])->name('chats.updatePriority');
     Route::get('chats-admins', [AdminChatController::class, 'getAdmins'])->name('chats.admins');
 
-    // Notification Routes
+    // Firebase Chat Routes for Admin Panel
+    Route::prefix('firebase-chats')->name('firebase-chats.')->group(function () {
+        Route::get('/', [AdminFirebaseChatController::class, 'index'])->name('index');
+        Route::get('/dashboard', [AdminFirebaseChatController::class, 'realtimeDashboard'])->name('dashboard');
+        Route::get('/{chat}', [AdminFirebaseChatController::class, 'show'])->name('show');
+    });
+    
+    // Firebase Chat API Routes for Admin
+    Route::prefix('api/firebase-chat')->group(function () {
+        Route::get('test-connection', [AdminFirebaseChatController::class, 'testFirebaseConnection'])->name('api.firebase-chats.test');
+        Route::post('send-message', [AdminFirebaseChatController::class, 'sendMessage'])->name('api.firebase-chats.send');
+        Route::post('{chat}/assign', [AdminFirebaseChatController::class, 'assignAdmin'])->name('api.firebase-chats.assign');
+        Route::post('{chat}/status', [AdminFirebaseChatController::class, 'updateStatus'])->name('api.firebase-chats.status');
+        Route::post('typing-indicator', [AdminFirebaseChatController::class, 'sendTypingIndicator'])->name('api.firebase-chats.typing');
+        Route::get('stats', [AdminFirebaseChatController::class, 'getStats'])->name('api.firebase-chats.stats');
+        Route::get('admins', [AdminFirebaseChatController::class, 'getAdmins'])->name('api.firebase-chats.admins');
+    });
+
+    // Enhanced Notification Routes
     Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
     Route::get('notifications/create', [AdminNotificationController::class, 'create'])->name('notifications.create');
     Route::post('notifications', [AdminNotificationController::class, 'store'])->name('notifications.store');
-    Route::get('notifications/{id}', [AdminNotificationController::class, 'show'])->name('notifications.show');
-    Route::delete('notifications/{id}', [AdminNotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::get('notifications/{notification}', [AdminNotificationController::class, 'show'])->name('notifications.show');
+    Route::delete('notifications/{notification}', [AdminNotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::post('notifications/send-to-all', [AdminNotificationController::class, 'sendToAll'])->name('notifications.send-to-all');
     Route::post('notifications/clean-old', [AdminNotificationController::class, 'cleanOld'])->name('notifications.clean-old');
     Route::get('notifications-stats', [AdminNotificationController::class, 'getStats'])->name('notifications.stats');
+    Route::get('notifications/categories/{category}/users', [AdminNotificationController::class, 'getCategoryUsers'])->name('notifications.category-users');
 
     // Featured Offers Management Routes
     Route::prefix('featured-offers')->group(function () {
@@ -180,5 +273,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/update-order', [App\Http\Controllers\AdminFeaturedOffersController::class, 'updateOrder'])->name('featured-offers.update-order');
         Route::get('/update-trends', [App\Http\Controllers\AdminFeaturedOffersController::class, 'updateTrendScores'])->name('featured-offers.update-trends');
         Route::get('/stats/data', [App\Http\Controllers\AdminFeaturedOffersController::class, 'getStats'])->name('featured-offers.stats');
+    });
+
+    // Broadcasting Auth for web interface
+    Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'auth'])->name('broadcasting.auth');
+    
+    // Pusher Chat Management Routes
+    Route::prefix('pusher-chat')->name('pusher-chat.')->group(function () {
+        Route::get('/', [AdminPusherChatController::class, 'index'])->name('index');
+        Route::get('/{chat}', [AdminPusherChatController::class, 'show'])->name('show');
+        Route::post('/{chat}/reply', [AdminPusherChatController::class, 'sendReply'])->name('reply');
+        Route::get('/{chat}/messages', [AdminPusherChatController::class, 'getMessages'])->name('messages');
+        Route::post('/{chat}/close', [AdminPusherChatController::class, 'closeChat'])->name('close');
+        Route::get('/stats/live', [AdminPusherChatController::class, 'getLiveStats'])->name('stats');
     });
 });

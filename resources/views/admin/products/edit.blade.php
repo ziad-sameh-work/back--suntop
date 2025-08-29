@@ -157,11 +157,10 @@
                 <div class="form-group">
                     <label class="form-label">لون خلفية المنتج</label>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="color" name="back_color" class="form-input" style="width: 60px; height: 40px; padding: 5px;"
+                        <input type="color" name="back_color" id="backColorPicker" class="form-input" style="width: 60px; height: 40px; padding: 5px;"
                                value="{{ old('back_color', $product->back_color ?? '#FFFFFF') }}">
                         <input type="text" class="form-input" id="backColorText" style="flex: 1;"
-                               value="{{ old('back_color', $product->back_color ?? '#FFFFFF') }}" placeholder="#FFFFFF"
-                               oninput="document.querySelector('input[name=back_color]').value = this.value">
+                               value="{{ old('back_color', $product->back_color ?? '#FFFFFF') }}" placeholder="#FFFFFF">
                     </div>
                     <div style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">اختر لون خلفية لعرض المنتج في التطبيق</div>
                     @error('back_color')<div class="form-error">{{ $message }}</div>@enderror
@@ -186,15 +185,72 @@
 
 @push('scripts')
 <script>
-document.getElementById('editProductForm').addEventListener('submit', function(e) {
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+document.addEventListener('DOMContentLoaded', function() {
+    // Color picker synchronization
+    const colorPicker = document.getElementById('backColorPicker');
+    const colorText = document.getElementById('backColorText');
     
-    setTimeout(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> حفظ التغييرات';
-    }, 10000);
+    // Sync color picker to text input
+    colorPicker.addEventListener('input', function() {
+        colorText.value = this.value.toUpperCase();
+    });
+    
+    // Sync text input to color picker
+    colorText.addEventListener('input', function() {
+        const colorValue = this.value;
+        // Check if it's a valid hex color
+        if (/^#[0-9A-Fa-f]{6}$/.test(colorValue)) {
+            colorPicker.value = colorValue;
+        }
+    });
+    
+    // Form submission handling
+    document.getElementById('editProductForm').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Ensure the color value is properly set before submission
+        if (colorText.value && /^#[0-9A-Fa-f]{6}$/i.test(colorText.value)) {
+            colorPicker.value = colorText.value;
+        } else if (colorPicker.value) {
+            colorText.value = colorPicker.value;
+        }
+        
+        // Debug: Log values being submitted
+        console.log('Form submission debug:', {
+            colorPickerValue: colorPicker.value,
+            colorTextValue: colorText.value,
+            colorPickerName: colorPicker.name,
+            formAction: this.action,
+            formMethod: this.method
+        });
+        
+        // Also log all form data
+        const formData = new FormData(this);
+        console.log('All form data:', Object.fromEntries(formData));
+        
+        // Create a hidden input as backup to ensure the value is sent
+        const existingHidden = document.querySelector('input[name="back_color_backup"]');
+        if (existingHidden) {
+            existingHidden.remove();
+        }
+        
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'back_color_backup';
+        const finalColor = colorPicker.value || colorText.value || '#FFFFFF';
+        hiddenInput.value = finalColor;
+        this.appendChild(hiddenInput);
+        
+        console.log('Added backup hidden input with value:', finalColor);
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+        
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> حفظ التغييرات';
+        }, 10000);
+    });
 });
 
 @if(session('success'))

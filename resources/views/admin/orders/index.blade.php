@@ -123,6 +123,59 @@
     .custom-checkbox .checkmark:after { content: ""; position: absolute; display: none; left: 5px; top: 2px; width: 6px; height: 10px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg); }
     .custom-checkbox input:checked ~ .checkmark:after { display: block; }
 
+    /* New order animation */
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .new-order-highlight {
+        animation: newOrderPulse 2s ease-in-out;
+        background: rgba(16, 185, 129, 0.1) !important;
+    }
+
+    @keyframes newOrderPulse {
+        0%, 100% { background: rgba(16, 185, 129, 0.1); }
+        50% { background: rgba(16, 185, 129, 0.2); }
+    }
+
+    .urgent-order {
+        border-right: 4px solid #EF4444 !important;
+        background: rgba(239, 68, 68, 0.05) !important;
+    }
+
+    .auto-refresh-indicator {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 25px;
+        padding: 8px 15px;
+        font-size: 12px;
+        color: var(--gray-600);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-badge {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .status-badge:hover {
+        transform: scale(1.05);
+    }
+
     @media (max-width: 768px) {
         .orders-container { padding: 15px; }
         .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
@@ -137,6 +190,8 @@
         .btn-secondary span { display: none; }
         .btn-secondary { padding: 8px 10px; }
         .table-actions { flex-direction: column; }
+        .filters-header { flex-direction: column; gap: 10px; }
+        .auto-refresh-indicator { bottom: 10px; left: 10px; }
     }
 </style>
 @endpush
@@ -226,13 +281,22 @@
         </div>
     </div>
 
-    <!-- Filters -->
+            <!-- Filters -->
     <div class="filters-card">
         <div class="filters-header">
             <h3 class="filters-title">
                 <i class="fas fa-filter" style="color: var(--suntop-orange);"></i>
                 البحث والتصفية
             </h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button type="button" onclick="checkForNewOrders()" class="btn-secondary" style="padding: 8px 12px; font-size: 13px;">
+                    <i class="fas fa-sync-alt"></i>
+                    تحديث
+                </button>
+                <div id="lastUpdate" style="font-size: 12px; color: var(--gray-500);">
+                    آخر تحديث: الآن
+                </div>
+            </div>
         </div>
 
         <form method="GET" action="{{ route('admin.orders.index') }}" id="filtersForm">
@@ -517,6 +581,12 @@
     </div>
 </div>
 
+<!-- Auto-refresh indicator -->
+<div class="auto-refresh-indicator" id="autoRefreshIndicator">
+    <i class="fas fa-sync-alt" id="refreshIcon" style="color: var(--success);"></i>
+    <span>تحديث تلقائي كل 30 ثانية</span>
+</div>
+
 <!-- Status Update Modal -->
 <div class="modal-overlay" id="statusModal">
     <div class="modal">
@@ -792,7 +862,122 @@ document.querySelector('input[name="search"]').addEventListener('input', functio
     }, 500);
 });
 
+// Real-time updates for new orders
+function checkForNewOrders() {
+    // Show loading animation
+    const refreshIcon = document.getElementById('refreshIcon');
+    if (refreshIcon) {
+        refreshIcon.style.animation = 'spin 1s linear infinite';
+    }
+    
+    fetch('/admin/orders/dashboard', {
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const pendingCount = data.data.dashboard.today.pending_orders;
+            const urgentCount = data.data.dashboard.urgent_pending;
+            
+            // Update pending orders badge in sidebar
+            updatePendingOrdersBadge(pendingCount);
+            
+            // Show notification for urgent orders
+            if (urgentCount > 0) {
+                showUrgentOrdersNotification(urgentCount);
+            }
+            
+            // Update last update time
+            updateLastUpdateTime();
+        }
+    })
+    .catch(error => console.log('Error checking for new orders:', error))
+    .finally(() => {
+        // Stop loading animation
+        if (refreshIcon) {
+            refreshIcon.style.animation = '';
+        }
+    });
+}
+
+function updateLastUpdateTime() {
+    const lastUpdate = document.getElementById('lastUpdate');
+    if (lastUpdate) {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('ar-EG', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        lastUpdate.textContent = `آخر تحديث: ${timeString}`;
+    }
+}
+
+function updatePendingOrdersBadge(count) {
+    const badge = document.querySelector('.nav-link .nav-badge');
+    if (count > 0) {
+        if (badge) {
+            badge.textContent = count;
+        } else {
+            // Create badge if it doesn't exist
+            const navLink = document.querySelector('a[href*="orders"] .nav-text');
+            if (navLink && navLink.parentNode) {
+                const newBadge = document.createElement('span');
+                newBadge.className = 'nav-badge';
+                newBadge.textContent = count;
+                navLink.parentNode.appendChild(newBadge);
+            }
+        }
+    } else if (badge) {
+        badge.remove();
+    }
+}
+
+function showUrgentOrdersNotification(count) {
+    // Create floating notification
+    const notification = document.createElement('div');
+    notification.innerHTML = `
+        <div style="position: fixed; top: 20px; right: 20px; background: linear-gradient(135deg, #EF4444, #DC2626); 
+                    color: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+                    z-index: 9999; animation: slideInRight 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-exclamation-triangle" style="font-size: 18px;"></i>
+                <div>
+                    <div style="font-weight: 600; margin-bottom: 5px;">طلبات عاجلة!</div>
+                    <div style="font-size: 14px; opacity: 0.9;">${count} طلب في انتظار التأكيد لأكثر من ساعتين</div>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" 
+                        style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; margin-right: 10px;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Auto-refresh every 30 seconds
+setInterval(checkForNewOrders, 30000);
+
+// Sound notification for new orders (optional)
+function playNewOrderSound() {
+    // Create audio element for notification sound
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUeBjiR2O/NeSsFJHfH8N2QQAoUXrTp66hVFAo=');
+    audio.volume = 0.3;
+    audio.play().catch(e => console.log('Could not play notification sound'));
+}
+
 // Initialize
 updateSelectedCount();
+checkForNewOrders();
 </script>
 @endpush

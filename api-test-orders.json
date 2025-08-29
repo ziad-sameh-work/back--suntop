@@ -1,0 +1,320 @@
+{
+  "postman_collection": {
+    "info": {
+      "name": "SunTop Orders API Tests",
+      "description": "مجموعة اختبارات شاملة لـ API الطلبات",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "🛒 إنشاء طلب جديد",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Accept", 
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"merchant_id\": \"1\",\n  \"items\": [\n    {\n      \"product_id\": \"1\",\n      \"quantity\": 2,\n      \"unit_price\": 25.50,\n      \"selling_type\": \"unit\"\n    },\n    {\n      \"product_id\": \"2\",\n      \"quantity\": 1,\n      \"unit_price\": 15.00,\n      \"selling_type\": \"package\"\n    }\n  ],\n  \"delivery_address\": {\n    \"street\": \"شارع التحرير\",\n    \"building\": \"123\",\n    \"apartment\": \"5\",\n    \"city\": \"القاهرة\",\n    \"district\": \"وسط البلد\",\n    \"postal_code\": \"11511\",\n    \"phone\": \"01012345678\",\n    \"notes\": \"أمام محطة البنزين\"\n  },\n  \"payment_method\": \"cash_on_delivery\",\n  \"notes\": \"تسليم سريع من فضلك\"\n}"
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "📋 عرض طلبات المستخدم",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization", 
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders?status=all&limit=20",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders"],
+            "query": [
+              {
+                "key": "status",
+                "value": "all"
+              },
+              {
+                "key": "limit", 
+                "value": "20"
+              }
+            ]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "🔍 تفاصيل طلب محدد",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders/{{order_id}}",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders", "{{order_id}}"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "📊 حالة الطلب الحالية",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders/{{order_id}}/status",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders", "{{order_id}}", "status"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "🚚 تتبع الطلب",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders/{{order_id}}/tracking",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders", "{{order_id}}", "tracking"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "📚 تاريخ الطلبات",
+        "request": {
+          "method": "GET",
+          "header": [
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders/history",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders", "history"]
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "❌ إلغاء الطلب",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders/{{order_id}}/cancel",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders", "{{order_id}}", "cancel"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"cancellation_reason\": \"تغيير في الظروف\"\n}"
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "🔄 إعادة طلب",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders/{{order_id}}/reorder",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders", "{{order_id}}", "reorder"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"delivery_address\": {\n    \"street\": \"شارع جديد\",\n    \"building\": \"456\",\n    \"city\": \"الجيزة\",\n    \"district\": \"الدقي\",\n    \"phone\": \"01098765432\"\n  }\n}"
+          }
+        },
+        "response": []
+      },
+      {
+        "name": "⭐ تقييم الطلب",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Accept",
+              "value": "application/json"
+            },
+            {
+              "key": "Authorization",
+              "value": "Bearer {{user_token}}"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/api/orders/{{order_id}}/rate",
+            "host": ["{{base_url}}"],
+            "path": ["api", "orders", "{{order_id}}", "rate"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"rating\": 5,\n  \"review\": \"خدمة ممتازة وتسليم سريع\"\n}"
+          }
+        },
+        "response": []
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://127.0.0.1:8000"
+      },
+      {
+        "key": "user_token",
+        "value": "YOUR_USER_TOKEN_HERE"
+      },
+      {
+        "key": "order_id",
+        "value": "1"
+      }
+    ]
+  },
+  "expected_responses": {
+    "create_order_success": {
+      "success": true,
+      "message": "تم إنشاء الطلب بنجاح",
+      "data": {
+        "order": {
+          "id": "1",
+          "order_number": "ORD-2025-001",
+          "status": "pending",
+          "total_amount": 66.0,
+          "items": [
+            {
+              "product_name": "منتج تجريبي",
+              "quantity": 2,
+              "unit_price": 25.50
+            }
+          ]
+        }
+      }
+    },
+    "get_orders_success": {
+      "success": true,
+      "data": {
+        "orders": [],
+        "pagination": {
+          "current_page": 1,
+          "total": 0
+        },
+        "summary": {
+          "pending_count": 0,
+          "confirmed_count": 0
+        }
+      }
+    }
+  },
+  "test_instructions": {
+    "ar": [
+      "1. قم بإنشاء مستخدم جديد أو استخدم مستخدم موجود",
+      "2. احصل على Bearer Token من endpoint تسجيل الدخول",
+      "3. استبدل {{user_token}} بالـ token الحقيقي",
+      "4. تأكد من وجود merchant_id و product_id صحيحين",
+      "5. اختبر إنشاء طلب جديد أولاً",
+      "6. استخدم الـ order_id المُرجع لاختبار باقي الـ endpoints",
+      "7. اختبر جميع الحالات: نجاح، فشل، validation errors"
+    ],
+    "en": [
+      "1. Create a new user or use existing user",
+      "2. Get Bearer Token from login endpoint", 
+      "3. Replace {{user_token}} with actual token",
+      "4. Ensure valid merchant_id and product_id exist",
+      "5. Test creating new order first",
+      "6. Use returned order_id to test other endpoints",
+      "7. Test all scenarios: success, failure, validation errors"
+    ]
+  }
+}

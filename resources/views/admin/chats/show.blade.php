@@ -6,8 +6,8 @@
 @livewireStyles
 @endsection
 
-@section('content')
-<div class="dashboard-content">
+    @section('content')
+<div class="chat-container">
     <!-- مؤشر تحديث الشات -->
     @livewire('chat-updates-indicator')
     <div class="chat-layout">
@@ -152,11 +152,11 @@
 </div>
 
 <style>
-/* Dashboard Content */
-.dashboard-content {
-    padding: 20px;
+/* Chat Container */
+.chat-container {
     background: #f8f9fa;
-    min-height: 100vh;
+    min-height: calc(100vh - var(--header-height));
+    padding: 0;
 }
 
 /* Chat Layout */
@@ -164,25 +164,27 @@
     display: grid;
     grid-template-columns: 350px 1fr;
     gap: 20px;
-    height: calc(100vh - 40px);
-    max-width: 1600px;
-    margin: 0 auto;
+    height: calc(100vh - var(--header-height));
+    padding: 20px;
+    max-width: none;
 }
 
 /* Sidebar */
 .chat-sidebar {
     background: white;
-    border-radius: 15px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid #e3e6f0;
     display: flex;
     flex-direction: column;
+    height: fit-content;
 }
 
 .sidebar-header {
-    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+    background: linear-gradient(135deg, var(--suntop-orange) 0%, var(--suntop-orange-light) 100%);
     color: white;
-    padding: 25px;
+    padding: 20px 25px;
 }
 
 .customer-info {
@@ -330,8 +332,13 @@
 }
 
 .btn-primary {
-    background: #FF6B35;
+    background: var(--suntop-orange);
     color: white;
+}
+
+.btn-primary:hover {
+    background: var(--suntop-orange-dark);
+    transform: translateY(-1px);
 }
 
 .btn-success {
@@ -364,17 +371,19 @@
 /* Main Chat */
 .chat-main {
     background: white;
-    border-radius: 15px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid #e3e6f0;
     display: flex;
     flex-direction: column;
+    height: calc(100vh - var(--header-height) - 40px);
 }
 
 .chat-header {
-    background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
+    background: linear-gradient(135deg, var(--suntop-orange) 0%, var(--suntop-orange-light) 100%);
     color: white;
-    padding: 25px 30px;
+    padding: 20px 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -512,11 +521,58 @@
     }
     
     .chat-header {
-        padding: 20px;
+        padding: 15px 20px;
     }
     
     .messages-container {
         padding: 15px;
+    }
+    
+    .customer-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.2rem;
+    }
+    
+    .customer-name {
+        font-size: 1.1rem;
+    }
+    
+    .chat-title {
+        font-size: 1.2rem;
+    }
+    
+    .chat-sidebar {
+        order: 2;
+        height: auto;
+    }
+    
+    .chat-main {
+        order: 1;
+        height: 60vh;
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chat-layout {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .chat-main {
+        height: 50vh;
+        min-height: 350px;
+    }
+    
+    .sidebar-header,
+    .chat-header {
+        padding: 12px 15px;
+    }
+    
+    .customer-name,
+    .chat-title {
+        font-size: 1rem;
     }
 }
 </style>
@@ -524,6 +580,8 @@
 
 @section('scripts')
 @livewireScripts
+<!-- Pusher JavaScript Library -->
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-scroll to bottom on page load
@@ -531,6 +589,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (messagesContainer) {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+    
+    // Initialize Pusher for real-time chat updates
+    initializePusherChat();
     
     // Handle scroll to bottom event
     window.addEventListener('scrollToBottom', function() {
@@ -574,5 +635,289 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+let pusher = null;
+let chatChannel = null;
+const chatId = {{ $chat->id }};
+
+function initializePusherChat() {
+    try {
+        // Initialize Pusher with your credentials
+        pusher = new Pusher('44911da009b5537ffae1', {
+            cluster: 'eu',
+            forceTLS: true,
+            authEndpoint: '/api/broadcasting/auth',
+            auth: {
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Authorization': 'Bearer {{ auth()->user()->createToken("chat-individual")->plainTextToken }}'
+                }
+            }
+        });
+
+        // Subscribe to specific chat channel (regular chat uses public channel)
+        chatChannel = pusher.subscribe(`chat.${chatId}`);
+        
+        // Listen for new messages (regular chat uses 'message.new' event)
+        chatChannel.bind('message.new', function(data) {
+            console.log('🔔 New regular chat message received:', data);
+            addMessageToChat(data.message);
+            showMessageNotification(data.message);
+            
+            // Also refresh Livewire component
+            Livewire.emit('refreshMessages');
+        });
+
+        // Also subscribe to private admin channel for potential admin messages
+        const adminChannel = pusher.subscribe('private-admin.chats');
+        adminChannel.bind('message.new', function(data) {
+            if (data.message.chat_id == chatId) {
+                console.log('🔔 Admin message received:', data);
+                addMessageToChat(data.message);
+                showMessageNotification(data.message);
+                
+                // Also refresh Livewire component
+                Livewire.emit('refreshMessages');
+            }
+        });
+
+        // Connection status handling
+        pusher.connection.bind('connected', function() {
+            console.log('✅ Pusher connected successfully for chat');
+            showConnectionStatus('connected');
+        });
+
+        pusher.connection.bind('disconnected', function() {
+            console.log('❌ Pusher disconnected from chat');
+            showConnectionStatus('disconnected');
+        });
+
+        chatChannel.bind('pusher:subscription_succeeded', function() {
+            console.log('✅ Successfully subscribed to chat channel');
+            showConnectionStatus('subscribed');
+        });
+
+        chatChannel.bind('pusher:subscription_error', function(error) {
+            console.error('🔴 Chat channel subscription error:', error);
+            showConnectionStatus('subscription_error');
+        });
+
+    } catch (error) {
+        console.error('Failed to initialize Pusher for chat:', error);
+        showConnectionStatus('init_error');
+    }
+}
+
+function addMessageToChat(message) {
+    const messagesContainer = document.querySelector('.messages-container');
+    if (!messagesContainer) {
+        console.log('Messages container not found');
+        return;
+    }
+
+    // Check if message already exists
+    if (document.querySelector(`[data-message-id="${message.id}"]`)) {
+        return; // Message already exists
+    }
+
+    const isAdmin = message.sender_type === 'admin';
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${message.sender_type}`;
+    messageDiv.setAttribute('data-message-id', message.id);
+    
+    const timeStamp = message.formatted_time || new Date().toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'});
+    const senderName = message.sender ? message.sender.name : (isAdmin ? 'الإدارة' : 'عميل');
+    
+    messageDiv.innerHTML = `
+        <div class="message-bubble">
+            <div class="message-header">
+                <span class="message-sender">
+                    ${isAdmin ? senderName + ' (الإدارة)' : senderName}
+                </span>
+                <span class="message-time">${timeStamp}</span>
+            </div>
+            <div class="message-content">${message.message}</div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    
+    // Animate new message
+    messageDiv.style.opacity = '0';
+    messageDiv.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+        messageDiv.style.transition = 'all 0.3s ease';
+        messageDiv.style.opacity = '1';
+        messageDiv.style.transform = 'translateY(0)';
+    }, 50);
+    
+    // Scroll to bottom
+    scrollToBottom();
+    
+    console.log('Message added to chat:', message);
+}
+
+function scrollToBottom() {
+    const messagesContainer = document.querySelector('.messages-container');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+
+function showMessageNotification(message) {
+    // Only show notification if message is not from current admin
+    if (message.sender_type === 'admin' && message.user.id === {{ auth()->id() }}) {
+        return; // Don't show notification for own messages
+    }
+
+    const senderName = message.sender_type === 'customer' ? 'العميل' : 'الإدارة';
+    const title = `رسالة جديدة من ${senderName}`;
+    
+    // Browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+            body: message.message.substring(0, 100),
+            icon: '/favicon.ico'
+        });
+    }
+    
+    // In-page notification
+    showInPageNotification(title, message.message);
+}
+
+function showInPageNotification(title, message) {
+    const notification = document.createElement('div');
+    notification.className = 'chat-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <strong>${title}</strong>
+            <p>${message.substring(0, 80)}...</p>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #17a2b8;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        max-width: 400px;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 4000);
+}
+
+function showConnectionStatus(status) {
+    let statusText = '';
+    let statusColor = '';
+    
+    switch (status) {
+        case 'connected':
+            statusText = '🟢 متصل';
+            statusColor = '#28a745';
+            break;
+        case 'subscribed':
+            statusText = '🟢 شات مباشر';
+            statusColor = '#28a745';
+            break;
+        case 'disconnected':
+            statusText = '🟡 منقطع';
+            statusColor = '#ffc107';
+            break;
+        case 'error':
+        case 'subscription_error':
+        case 'init_error':
+            statusText = '🔴 خطأ';
+            statusColor = '#dc3545';
+            break;
+    }
+    
+    // Create or update status indicator
+    let statusIndicator = document.getElementById('chat-status');
+    if (!statusIndicator) {
+        statusIndicator = document.createElement('div');
+        statusIndicator.id = 'chat-status';
+        statusIndicator.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 1000;
+            border: 2px solid;
+        `;
+        document.body.appendChild(statusIndicator);
+    }
+    
+    statusIndicator.textContent = statusText;
+    statusIndicator.style.borderColor = statusColor;
+    statusIndicator.style.color = statusColor;
+}
+
+// Request notification permission
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+
+// Add CSS for animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .notification-close {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+    
+    .notification-close:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .chat-notification .notification-content p {
+        margin: 5px 0 0 0;
+        font-size: 13px;
+        opacity: 0.9;
+    }
+`;
+document.head.appendChild(style);
 </script>
 @endsection

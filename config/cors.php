@@ -15,11 +15,11 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'uploads/*', 'images/*', '*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['*'], // أو لو عايز تحدد: ['http://localhost:62926']
 
     'allowed_origins_patterns' => [],
 

@@ -39,6 +39,7 @@ class AdminProductResource extends JsonResource
             'is_featured' => $this->is_featured,
             'featured_status' => $this->is_featured ? 'مميز' : 'عادي',
             'sort_order' => $this->sort_order,
+            'back_color' => $this->back_color ?? '#FFFFFF',
             'total_sold' => $this->whenLoaded('orderItems', function () {
                 return $this->orderItems->sum('quantity');
             }),
