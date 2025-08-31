@@ -182,69 +182,36 @@ class AdminProductController extends Controller
 
             // Handle images upload
             $images = [];
-            \Log::info("=== IMAGE UPLOAD DEBUG START ===");
-            \Log::info("Request has files: " . ($request->hasFile('images') ? 'YES' : 'NO'));
-            
             if ($request->hasFile('images')) {
-                \Log::info("Number of files uploaded: " . count($request->file('images')));
-                
                 // Create uploads/products directory if it doesn't exist
                 $uploadPath = public_path('uploads/products');
-                \Log::info("Upload path: " . $uploadPath);
-                
                 if (!file_exists($uploadPath)) {
-                    \Log::info("Creating upload directory...");
                     mkdir($uploadPath, 0755, true);
                 }
-                \Log::info("Upload directory exists: " . (file_exists($uploadPath) ? 'YES' : 'NO'));
 
                 foreach ($request->file('images') as $index => $image) {
                     try {
-                        \Log::info("Processing image $index:");
-                        \Log::info("- Original name: " . $image->getClientOriginalName());
-                        \Log::info("- Size: " . $image->getSize() . " bytes");
-                        \Log::info("- MIME: " . $image->getMimeType());
-                        \Log::info("- Is valid: " . ($image->isValid() ? 'YES' : 'NO'));
-                        
                         // Validate image
                         if (!$image->isValid()) {
-                            \Log::warning("Image $index is invalid - skipping");
                             continue;
                         }
                         
                         // Generate unique filename
                         $imageName = time() . '_' . $index . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                        \Log::info("- Generated filename: " . $imageName);
                         
                         // Move the uploaded file
                         $moved = $image->move($uploadPath, $imageName);
-                        \Log::info("- Move result: " . ($moved ? 'SUCCESS' : 'FAILED'));
-                        
                         if ($moved) {
-                            $finalPath = 'uploads/products/' . $imageName;
-                            $images[] = $finalPath;
-                            \Log::info("- Saved to array: " . $finalPath);
-                            \Log::info("- File exists after move: " . (file_exists(public_path($finalPath)) ? 'YES' : 'NO'));
+                            $images[] = 'uploads/products/' . $imageName;
                         }
                     } catch (\Exception $imageError) {
-                        // Log the error but continue with other images
                         \Log::error("Image upload failed for image $index: " . $imageError->getMessage());
-                        \Log::error("Stack trace: " . $imageError->getTraceAsString());
                     }
                 }
             }
-            
-            \Log::info("Final images array: " . json_encode($images));
-            \Log::info("=== IMAGE UPLOAD DEBUG END ===");
             $productData['images'] = $images;
 
             $product = Product::create($productData);
-            
-            \Log::info("=== PRODUCT CREATION DEBUG ===");
-            \Log::info("Product created with ID: " . $product->id);
-            \Log::info("Product images in DB: " . json_encode($product->images));
-            \Log::info("Product first_image: " . $product->first_image);
-            \Log::info("=== PRODUCT CREATION DEBUG END ===");
 
             DB::commit();
 

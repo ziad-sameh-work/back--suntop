@@ -52,26 +52,6 @@ class ProductDetailResource extends JsonResource
             }
         }
         
-        // Add legacy gallery images if no new images
-        if (empty($allImages) && $this->gallery && is_array($this->gallery)) {
-            foreach ($this->gallery as $image) {
-                if (str_starts_with($image, 'http')) {
-                    $allImages[] = $image;
-                } else {
-                    $allImages[] = url('storage/' . $image);
-                }
-            }
-        }
-        
-        // Add legacy image_url if still no images
-        if (empty($allImages) && $this->image_url) {
-            if (str_starts_with($this->image_url, 'http')) {
-                $allImages[] = $this->image_url;
-            } else {
-                $allImages[] = url('storage/' . $this->image_url);
-            }
-        }
-        
         return $allImages;
     }
     
