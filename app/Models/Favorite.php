@@ -48,7 +48,7 @@ class Favorite extends Model
     public function scopeWithProduct($query)
     {
         return $query->with(['product' => function($q) {
-            $q->select('id', 'name', 'description', 'price', 'image_url', 'category_id', 'is_available')
+            $q->select('id', 'name', 'description', 'price', 'images', 'back_color', 'category_id', 'is_available')
               ->with('category:id,name');
         }]);
     }
