@@ -30,33 +30,8 @@ class ProductDetailResource extends JsonResource
      */
     private function getMainImageUrl(): ?string
     {
-        // Try new images array first
-        if ($this->images && is_array($this->images) && count($this->images) > 0) {
-            $firstImage = $this->images[0];
-            if (str_starts_with($firstImage, 'http')) {
-                return $firstImage;
-            }
-            return url($firstImage);
-        }
-        
-        // Fallback to legacy image_url
-        if ($this->image_url) {
-            if (str_starts_with($this->image_url, 'http')) {
-                return $this->image_url;
-            }
-            return url('storage/' . $this->image_url);
-        }
-        
-        // Fallback to legacy gallery
-        if ($this->gallery && is_array($this->gallery) && count($this->gallery) > 0) {
-            $firstGalleryImage = $this->gallery[0];
-            if (str_starts_with($firstGalleryImage, 'http')) {
-                return $firstGalleryImage;
-            }
-            return url('storage/' . $firstGalleryImage);
-        }
-        
-        return url('images/no-product.png');
+        // Use the model's first_image attribute which handles all the logic
+        return $this->first_image;
     }
     
     /**

@@ -39,7 +39,7 @@
 <div class="edit-product-container">
     <div class="form-card">
         <div class="form-header">
-            <img src="{{ ($product->images && count($product->images) > 0) ? asset($product->images[0]) : asset('images/no-product.png') }}" 
+            <img src="{{ $product->first_image }}" 
                  alt="صورة المنتج" class="product-avatar"
                  onerror="this.src='{{ asset('images/no-product.png') }}'">
             <div>

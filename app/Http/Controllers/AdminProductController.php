@@ -183,51 +183,32 @@ class AdminProductController extends Controller
             // Handle images upload
             $images = [];
             if ($request->hasFile('images')) {
-                \Log::info('Starting image upload process...');
-                
                 // Create uploads/products directory if it doesn't exist
                 $uploadPath = public_path('uploads/products');
                 if (!file_exists($uploadPath)) {
-                    \Log::info('Creating upload directory: ' . $uploadPath);
                     mkdir($uploadPath, 0755, true);
                 }
 
-                \Log::info('Upload path: ' . $uploadPath);
-                \Log::info('Number of images to upload: ' . count($request->file('images')));
-
                 foreach ($request->file('images') as $index => $image) {
                     try {
-                        \Log::info("Processing image $index");
-                        \Log::info("Original name: " . $image->getClientOriginalName());
-                        \Log::info("Size: " . $image->getSize() . " bytes");
-                        \Log::info("MIME type: " . $image->getMimeType());
-                        
                         // Validate image
                         if (!$image->isValid()) {
-                            \Log::error("Image $index is not valid");
                             continue;
                         }
                         
                         // Generate unique filename
                         $imageName = time() . '_' . $index . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-                        \Log::info("Generated filename: " . $imageName);
                         
                         // Move the uploaded file
                         $moved = $image->move($uploadPath, $imageName);
                         if ($moved) {
                             $images[] = 'uploads/products/' . $imageName;
-                            \Log::info("Image $index uploaded successfully: " . $imageName);
-                        } else {
-                            \Log::error("Failed to move image $index");
                         }
                     } catch (\Exception $imageError) {
                         // Log the error but continue with other images
                         \Log::error("Image upload failed for image $index: " . $imageError->getMessage());
-                        \Log::error("Stack trace: " . $imageError->getTraceAsString());
                     }
                 }
-                
-                \Log::info('Total images uploaded: ' . count($images));
             }
             $productData['images'] = $images;
 

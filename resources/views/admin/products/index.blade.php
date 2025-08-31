@@ -680,7 +680,7 @@
                         </td>
                         <td>
                             <div class="product-info">
-                                <img src="{{ $product->images && count($product->images) > 0 ? asset($product->images[0]) : asset('images/no-product.png') }}" 
+                                <img src="{{ $product->first_image }}" 
                                      alt="صورة المنتج" class="product-image"
                                      onerror="this.src='{{ asset('images/no-product.png') }}'">
                                 <div class="product-details">

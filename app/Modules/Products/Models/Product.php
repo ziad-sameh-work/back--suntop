@@ -33,11 +33,24 @@ class Product extends Model
     {
         if ($this->images && is_array($this->images) && count($this->images) > 0) {
             $firstImage = $this->images[0];
+            
+            // If it's already a full URL, return it
             if (filter_var($firstImage, FILTER_VALIDATE_URL)) {
                 return $firstImage;
             }
-            return asset($firstImage);
+            
+            // Check if file exists and return asset URL
+            if (file_exists(public_path($firstImage))) {
+                return asset($firstImage);
+            }
+            
+            // If file doesn't exist, try with different path formats
+            $alternativePath = 'uploads/products/' . basename($firstImage);
+            if (file_exists(public_path($alternativePath))) {
+                return asset($alternativePath);
+            }
         }
+        
         return asset('images/no-product.png');
     }
 

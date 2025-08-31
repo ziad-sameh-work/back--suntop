@@ -72,7 +72,7 @@
     <!-- Product Header -->
     <div class="product-header">
         <div class="product-header-content">
-            <img src="{{ ($product->images && count($product->images) > 0) ? asset($product->images[0]) : asset('images/no-product.png') }}" 
+            <img src="{{ $product->first_image }}" 
                  alt="صورة المنتج" class="product-main-image"
                  onerror="this.src='{{ asset('images/no-product.png') }}'">
             
