@@ -27,7 +27,7 @@ class Product extends Model
     ];
 
     /**
-     * Get the first image URL with full base URL
+     * Get the first image URL from storage
      */
     public function getFirstImageAttribute(): ?string
     {
@@ -39,13 +39,12 @@ class Product extends Model
                 return $firstImage;
             }
             
-            // Build full URL with base URL
-            $fullUrl = url($firstImage);
-            return $fullUrl;
+            // Return storage URL (this will be: https://domain.com/storage/products/filename.ext)
+            return \Storage::disk('public')->url($firstImage);
         }
         
         // Return default image with full URL
-        return url('images/no-product.png');
+        return asset('images/no-product.png');
     }
 
     /**

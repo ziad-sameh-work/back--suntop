@@ -35,7 +35,7 @@ class ProductDetailResource extends JsonResource
     }
     
     /**
-     * Get all image URLs
+     * Get all image URLs from storage
      */
     private function getAllImageUrls(): array
     {
@@ -47,7 +47,7 @@ class ProductDetailResource extends JsonResource
                 if (str_starts_with($image, 'http')) {
                     $allImages[] = $image;
                 } else {
-                    $allImages[] = url($image);
+                    $allImages[] = \Storage::disk('public')->url($image);
                 }
             }
         }

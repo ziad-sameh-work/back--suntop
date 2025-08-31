@@ -180,15 +180,9 @@ class AdminProductController extends Controller
                 $productData['category_id'] = $validated['category_id'];
             }
 
-            // Handle images upload
+            // Handle images upload using Storage
             $images = [];
             if ($request->hasFile('images')) {
-                // Create uploads/products directory if it doesn't exist
-                $uploadPath = public_path('uploads/products');
-                if (!file_exists($uploadPath)) {
-                    mkdir($uploadPath, 0755, true);
-                }
-
                 foreach ($request->file('images') as $index => $image) {
                     try {
                         // Validate image
@@ -199,10 +193,11 @@ class AdminProductController extends Controller
                         // Generate unique filename
                         $imageName = time() . '_' . $index . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
                         
-                        // Move the uploaded file
-                        $moved = $image->move($uploadPath, $imageName);
-                        if ($moved) {
-                            $images[] = 'uploads/products/' . $imageName;
+                        // Store in storage/app/public/products directory
+                        $path = $image->storeAs('products', $imageName, 'public');
+                        
+                        if ($path) {
+                            $images[] = $path; // This will be 'products/filename.ext'
                         }
                     } catch (\Exception $imageError) {
                         \Log::error("Image upload failed for image $index: " . $imageError->getMessage());
@@ -350,9 +345,9 @@ class AdminProductController extends Controller
                     $removedIndexes = explode(',', $request->removed_images);
                     foreach ($removedIndexes as $index) {
                         if (isset($currentImages[$index])) {
-                            // Delete physical file
-                            if (file_exists(public_path($currentImages[$index]))) {
-                                unlink(public_path($currentImages[$index]));
+                            // Delete physical file from storage
+                            if (Storage::disk('public')->exists($currentImages[$index])) {
+                                Storage::disk('public')->delete($currentImages[$index]);
                             }
                             // Remove from array
                             unset($currentImages[$index]);
@@ -361,13 +356,28 @@ class AdminProductController extends Controller
                     $currentImages = array_values($currentImages); // Re-index array
                 }
                 
-                // Handle new images
+                // Handle new images using Storage
                 if ($request->hasFile('images')) {
                     $newImages = [];
                     foreach ($request->file('images') as $index => $image) {
-                        $imageName = time() . '_' . $index . '_' . $image->getClientOriginalName();
-                        $image->move(public_path('uploads/products'), $imageName);
-                        $newImages[] = 'uploads/products/' . $imageName;
+                        try {
+                            // Validate image
+                            if (!$image->isValid()) {
+                                continue;
+                            }
+                            
+                            // Generate unique filename
+                            $imageName = time() . '_' . $index . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                            
+                            // Store in storage/app/public/products directory
+                            $path = $image->storeAs('products', $imageName, 'public');
+                            
+                            if ($path) {
+                                $newImages[] = $path; // This will be 'products/filename.ext'
+                            }
+                        } catch (\Exception $imageError) {
+                            \Log::error("Image upload failed for image $index: " . $imageError->getMessage());
+                        }
                     }
                     
                     // Merge current and new images (max 5 total)
