@@ -158,7 +158,7 @@ class AdminProductController extends Controller
         }
         if (Schema::hasColumn('products', 'images')) {
             $rules['images'] = 'nullable|array|max:5';
-            $rules['images.*'] = 'image|mimes:jpeg,png,jpg,gif|max:2048';
+            $rules['images.*'] = 'image|mimes:jpeg,png,jpg,gif,webp|max:10240'; // Increased to 10MB
         }
         
         $validated = $request->validate($rules);
@@ -166,23 +166,72 @@ class AdminProductController extends Controller
         try {
             DB::beginTransaction();
 
-            // Generate slug
-            $validated['slug'] = Str::slug($validated['name']) . '-' . Str::random(6);
-            $validated['is_available'] = $request->has('is_available');
-            $validated['is_featured'] = $request->has('is_featured');
+            // Clean validated data - remove non-fillable fields
+            $productData = [
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'price' => $validated['price'],
+                'back_color' => $validated['back_color'],
+                'is_available' => $request->has('is_available'),
+            ];
+
+            // Add category_id if it exists
+            if (isset($validated['category_id'])) {
+                $productData['category_id'] = $validated['category_id'];
+            }
 
             // Handle images upload
             $images = [];
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $image) {
-                    $imageName = time() . '_' . $index . '_' . $image->getClientOriginalName();
-                    $image->move(public_path('uploads/products'), $imageName);
-                    $images[] = 'uploads/products/' . $imageName;
+                \Log::info('Starting image upload process...');
+                
+                // Create uploads/products directory if it doesn't exist
+                $uploadPath = public_path('uploads/products');
+                if (!file_exists($uploadPath)) {
+                    \Log::info('Creating upload directory: ' . $uploadPath);
+                    mkdir($uploadPath, 0755, true);
                 }
-            }
-            $validated['images'] = $images;
 
-            $product = Product::create($validated);
+                \Log::info('Upload path: ' . $uploadPath);
+                \Log::info('Number of images to upload: ' . count($request->file('images')));
+
+                foreach ($request->file('images') as $index => $image) {
+                    try {
+                        \Log::info("Processing image $index");
+                        \Log::info("Original name: " . $image->getClientOriginalName());
+                        \Log::info("Size: " . $image->getSize() . " bytes");
+                        \Log::info("MIME type: " . $image->getMimeType());
+                        
+                        // Validate image
+                        if (!$image->isValid()) {
+                            \Log::error("Image $index is not valid");
+                            continue;
+                        }
+                        
+                        // Generate unique filename
+                        $imageName = time() . '_' . $index . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+                        \Log::info("Generated filename: " . $imageName);
+                        
+                        // Move the uploaded file
+                        $moved = $image->move($uploadPath, $imageName);
+                        if ($moved) {
+                            $images[] = 'uploads/products/' . $imageName;
+                            \Log::info("Image $index uploaded successfully: " . $imageName);
+                        } else {
+                            \Log::error("Failed to move image $index");
+                        }
+                    } catch (\Exception $imageError) {
+                        // Log the error but continue with other images
+                        \Log::error("Image upload failed for image $index: " . $imageError->getMessage());
+                        \Log::error("Stack trace: " . $imageError->getTraceAsString());
+                    }
+                }
+                
+                \Log::info('Total images uploaded: ' . count($images));
+            }
+            $productData['images'] = $images;
+
+            $product = Product::create($productData);
 
             DB::commit();
 
@@ -191,6 +240,7 @@ class AdminProductController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
+            \Log::error('Product creation failed: ' . $e->getMessage());
             return back()->withInput()
                 ->with('error', 'حدث خطأ أثناء إنشاء المنتج: ' . $e->getMessage());
         }
@@ -452,44 +502,14 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Update product stock
+     * Update product stock - DISABLED (stock_quantity column no longer exists)
      */
     public function updateStock(Request $request, $id)
     {
-        $validated = $request->validate([
-            'stock_quantity' => 'required|integer|min:0',
-            'action' => 'required|in:set,add,subtract'
-        ]);
-
-        try {
-            $product = Product::findOrFail($id);
-            
-            switch ($validated['action']) {
-                case 'set':
-                    $product->stock_quantity = $validated['stock_quantity'];
-                    break;
-                case 'add':
-                    $product->stock_quantity += $validated['stock_quantity'];
-                    break;
-                case 'subtract':
-                    $product->stock_quantity = max(0, $product->stock_quantity - $validated['stock_quantity']);
-                    break;
-            }
-            
-            $product->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'تم تحديث المخزون بنجاح',
-                'new_stock' => $product->stock_quantity
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'حدث خطأ أثناء تحديث المخزون: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'ميزة تحديث المخزون لم تعد متاحة - تم تبسيط نظام المنتجات'
+        ], 404);
     }
 
     /**

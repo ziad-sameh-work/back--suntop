@@ -104,7 +104,7 @@ class AdminDashboardController extends Controller
             'orders_growth' => $ordersGrowth,
             'revenue_growth' => $revenueGrowth,
             'pending_orders' => Order::where('status', 'pending')->count(),
-            'low_stock_products' => Product::where('stock_quantity', '<=', 10)->count(),
+            'low_stock_products' => 0, // Disabled - stock_quantity column no longer exists
         ];
     }
 
@@ -141,11 +141,18 @@ class AdminDashboardController extends Controller
         $userCategories = UserCategory::withCount('users')->get();
 
         // أكثر المنتجات مبيعاً
-        $topProducts = Product::select('products.*', DB::raw('SUM(order_items.quantity) as total_sold'))
+        $topProducts = Product::select(
+                'products.id',
+                'products.name', 
+                'products.price',
+                'products.images',
+                'products.back_color',
+                DB::raw('SUM(order_items.quantity) as total_sold')
+            )
             ->join('order_items', 'products.id', '=', 'order_items.product_id')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->where('orders.status', 'completed')
-            ->groupBy('products.id')
+            ->groupBy('products.id', 'products.name', 'products.price', 'products.images', 'products.back_color')
             ->orderBy('total_sold', 'desc')
             ->limit(5)
             ->get();
@@ -174,11 +181,18 @@ class AdminDashboardController extends Controller
      */
     private function getTopProducts()
     {
-        return Product::select('products.*', DB::raw('SUM(order_items.quantity) as total_sold'))
+        return Product::select(
+                'products.id',
+                'products.name', 
+                'products.price',
+                'products.images',
+                'products.back_color',
+                DB::raw('SUM(order_items.quantity) as total_sold')
+            )
             ->join('order_items', 'products.id', '=', 'order_items.product_id')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->where('orders.status', 'completed')
-            ->groupBy('products.id')
+            ->groupBy('products.id', 'products.name', 'products.price', 'products.images', 'products.back_color')
             ->orderBy('total_sold', 'desc')
             ->limit(5)
             ->get();
@@ -191,16 +205,8 @@ class AdminDashboardController extends Controller
     {
         $alerts = [];
 
-        // تنبيه المنتجات منخفضة المخزون
-        $lowStockCount = Product::where('stock_quantity', '<=', 10)->count();
-        if ($lowStockCount > 0) {
-            $alerts[] = [
-                'type' => 'warning',
-                'title' => 'مخزون منخفض',
-                'message' => "يوجد {$lowStockCount} منتج بمخزون منخفض",
-                'icon' => 'fas fa-exclamation-triangle'
-            ];
-        }
+        // تنبيه المنتجات منخفضة المخزون - معطل (عمود stock_quantity لم يعد موجوداً)
+        // $lowStockCount = Product::where('stock_quantity', '<=', 10)->count();
 
         // تنبيه الطلبات المعلقة
         $pendingOrdersCount = Order::where('status', 'pending')->count();
@@ -214,7 +220,7 @@ class AdminDashboardController extends Controller
         }
 
         // تنبيه المنتجات غير المتوفرة
-        $outOfStockCount = Product::where('stock_quantity', 0)->count();
+        $outOfStockCount = Product::where('is_available', false)->count();
         if ($outOfStockCount > 0) {
             $alerts[] = [
                 'type' => 'danger',

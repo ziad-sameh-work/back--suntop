@@ -128,8 +128,8 @@ class AdminAnalyticsController extends Controller
         return [
             'total_products' => Product::count(),
             'active_products' => Product::where('is_available', true)->count(),
-            'out_of_stock' => Product::where('stock_quantity', '<=', 0)->count(),
-            'low_stock' => Product::where('stock_quantity', '>', 0)->where('stock_quantity', '<=', 10)->count(),
+            'inactive_products' => Product::where('is_available', false)->count(),
+            'recent_products' => Product::where('created_at', '>=', $startDate)->count(),
         ];
     }
 
