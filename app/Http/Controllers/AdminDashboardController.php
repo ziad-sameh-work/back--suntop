@@ -9,6 +9,7 @@ use App\Modules\Merchants\Models\Merchant;
 use App\Modules\Users\Models\UserCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Carbon\Carbon;
 
 class AdminDashboardController extends Controller
@@ -93,7 +94,7 @@ class AdminDashboardController extends Controller
             'total_products' => Product::count(),
             'total_merchants' => Merchant::count(),
             'total_offers' => \App\Modules\Offers\Models\Offer::count(),
-            'total_loyalty_users' => \App\Modules\Loyalty\Models\LoyaltyPoint::distinct('user_id')->count(),
+            'total_loyalty_users' => 0, // Disabled - loyalty_points table doesn't exist
             'total_user_categories' => \App\Modules\Users\Models\UserCategory::count(),
             'total_orders' => Order::count(),
             'today_orders' => $todayOrders,
@@ -270,11 +271,14 @@ class AdminDashboardController extends Controller
             ];
         }
 
-        // تنبيه نقاط الولاء المنتهية قريباً
-        $expiringSoonPointsCount = \App\Modules\Loyalty\Models\LoyaltyPoint::where('expires_at', '>', now())
-            ->where('expires_at', '<=', now()->addDays(7))
-            ->where('points', '>', 0)
-            ->sum('points');
+        // تنبيه نقاط الولاء المنتهية قريباً (معطل حتى إنشاء الجدول)
+        $expiringSoonPointsCount = 0; // Disabled - loyalty_points table doesn't exist
+        if (\Illuminate\Support\Facades\Schema::hasTable('loyalty_points')) {
+            $expiringSoonPointsCount = \App\Modules\Loyalty\Models\LoyaltyPoint::where('expires_at', '>', now())
+                ->where('expires_at', '<=', now()->addDays(7))
+                ->where('points', '>', 0)
+                ->sum('points');
+        }
         if ($expiringSoonPointsCount > 0) {
             $alerts[] = [
                 'type' => 'warning',
@@ -284,9 +288,12 @@ class AdminDashboardController extends Controller
             ];
         }
 
-                // تنبيه المستخدمين غير النشطين في برنامج الولاء
+                // تنبيه المستخدمين غير النشطين في برنامج الولاء (معطل حتى إنشاء الجدول)
         $totalUsersCount = User::where('role', 'customer')->count();
-        $loyaltyUsersCount = \App\Modules\Loyalty\Models\LoyaltyPoint::distinct('user_id')->count();
+        $loyaltyUsersCount = 0; // Disabled - loyalty_points table doesn't exist
+        if (\Illuminate\Support\Facades\Schema::hasTable('loyalty_points')) {
+            $loyaltyUsersCount = \App\Modules\Loyalty\Models\LoyaltyPoint::distinct('user_id')->count();
+        }
         $inactiveLoyaltyRate = $totalUsersCount > 0 ? round((($totalUsersCount - $loyaltyUsersCount) / $totalUsersCount) * 100, 1) : 0;
 
         if ($inactiveLoyaltyRate > 50) {

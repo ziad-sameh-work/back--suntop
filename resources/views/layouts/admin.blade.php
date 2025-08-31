@@ -527,7 +527,10 @@
                         <i class="fas fa-comments"></i>
                         <span class="nav-text">الدردشة والدعم</span>
                         @php
-                            $unreadChats = \App\Models\Chat::where('admin_unread_count', '>', 0)->count();
+                            $unreadChats = 0; // Disabled - chats table doesn't exist
+                            if (\Illuminate\Support\Facades\Schema::hasTable('chats')) {
+                                $unreadChats = \App\Models\Chat::where('admin_unread_count', '>', 0)->count();
+                            }
                         @endphp
                         @if($unreadChats > 0)
                             <span class="nav-badge">{{ $unreadChats }}</span>

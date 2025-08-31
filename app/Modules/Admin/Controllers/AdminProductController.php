@@ -334,28 +334,20 @@ class AdminProductController extends BaseController
     public function categories(): JsonResponse
     {
         try {
-            $categories = Product::select('category')
-                               ->distinct()
-                               ->whereNotNull('category')
-                               ->pluck('category');
-
-            $volumeCategories = Product::select('volume_category')
-                                     ->distinct()
-                                     ->whereNotNull('volume_category')
-                                     ->pluck('volume_category');
-
-            $allCategories = $categories->merge($volumeCategories)->unique()->values();
-
+            $allCategories = collect([]);
             $categoryStats = [];
-            foreach ($allCategories as $category) {
-                $count = Product::where('category', $category)
-                              ->orWhere('volume_category', $category)
-                              ->count();
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('product_categories')) {
+                $categories = \App\Modules\Products\Models\ProductCategory::withCount('products')->get();
                 
-                $categoryStats[] = [
-                    'name' => $category,
-                    'count' => $count,
-                ];
+                $allCategories = $categories->pluck('display_name');
+                
+                foreach ($categories as $category) {
+                    $categoryStats[] = [
+                        'name' => $category->display_name,
+                        'count' => $category->products_count,
+                    ];
+                }
             }
 
             return $this->successResponse([

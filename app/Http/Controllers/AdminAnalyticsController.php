@@ -135,6 +135,17 @@ class AdminAnalyticsController extends Controller
 
     private function getLoyaltyStats($startDate, $endDate)
     {
+        // Check if loyalty_points table exists
+        if (!\Illuminate\Support\Facades\Schema::hasTable('loyalty_points')) {
+            return [
+                'total_points_awarded' => 0,
+                'total_points_redeemed' => 0,
+                'active_users_with_points' => 0,
+                'avg_points_per_user' => 0,
+                'points_transactions' => 0,
+            ];
+        }
+
         $loyaltyPoints = LoyaltyPoint::whereBetween('created_at', [$startDate, $endDate]);
 
         return [

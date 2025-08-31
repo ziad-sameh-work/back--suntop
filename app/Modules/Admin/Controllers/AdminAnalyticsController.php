@@ -219,13 +219,18 @@ class AdminAnalyticsController extends BaseController
 
     private function getProductStats($dateFrom, $dateTo)
     {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('product_categories')) {
+            return collect([]);
+        }
+
         return DB::table('order_items')
                  ->join('orders', 'order_items.order_id', '=', 'orders.id')
                  ->join('products', 'order_items.product_id', '=', 'products.id')
+                 ->leftJoin('product_categories', 'products.category_id', '=', 'product_categories.id')
                  ->whereBetween('orders.created_at', [$dateFrom, $dateTo])
                  ->where('orders.status', 'delivered')
-                 ->selectRaw('products.category, SUM(order_items.quantity) as total_sold, SUM(order_items.total_price) as revenue')
-                 ->groupBy('products.category')
+                 ->selectRaw('product_categories.display_name as category, SUM(order_items.quantity) as total_sold, SUM(order_items.total_price) as revenue')
+                 ->groupBy('product_categories.display_name')
                  ->get();
     }
 

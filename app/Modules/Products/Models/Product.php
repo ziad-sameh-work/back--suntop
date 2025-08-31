@@ -13,97 +13,32 @@ class Product extends Model
     protected $fillable = [
         'name',
         'description',
-        'short_description',
-        'sku',
-        'slug',
-        'images',
-        'price',
-        'discount_price',
-        'stock_quantity',
-        'min_quantity',
-        'weight',
-        'dimensions',
-        'merchant_id',
         'category_id',
-        'is_available',
-        'is_featured',
+        'price',
         'back_color',
-        'meta_title',
-        'meta_description',
-        // Carton and Package fields
-        'carton_size',
-        'carton_price',
-        'is_full_carton',
-        'package_size',
-        'package_price',
-        'is_full_package',
-        'allow_individual_units',
-        'carton_loyalty_points',
-        'package_loyalty_points',
-        'unit_loyalty_points',
-        // Legacy fields
-        'image_url',
-        'gallery',
-        'original_price',
-        'currency',
-        'category',
-        'size',
-        'volume_category',
-        'rating',
-        'review_count',
-        'tags',
-        'ingredients',
-        'nutrition_facts',
-        'storage_instructions',
-        'expiry_info',
-        'barcode',
-        'sort_order',
+        'images',
+        'is_available',
     ];
 
     protected $casts = [
         'images' => 'array',
         'price' => 'decimal:2',
-        'discount_price' => 'decimal:2',
-        'weight' => 'decimal:2',
         'is_available' => 'boolean',
-        'is_featured' => 'boolean',
-        // Carton and Package casts
-        'carton_price' => 'decimal:2',
-        'is_full_carton' => 'boolean',
-        'package_price' => 'decimal:2',
-        'is_full_package' => 'boolean',
-        'allow_individual_units' => 'boolean',
-        // Legacy casts
-        'gallery' => 'array',
-        'tags' => 'array',
-        'ingredients' => 'array',
-        'nutrition_facts' => 'array',
-        'original_price' => 'decimal:2',
-        'rating' => 'decimal:1',
     ];
 
-    protected $appends = ['image_full_url', 'gallery_full_urls'];
-
     /**
-     * Get full image URL
+     * Get the first image URL
      */
-    public function getImageFullUrlAttribute(): ?string
+    public function getFirstImageAttribute(): ?string
     {
-        return $this->image_url ? url('storage/' . $this->image_url) : null;
-    }
-
-    /**
-     * Get full gallery URLs
-     */
-    public function getGalleryFullUrlsAttribute(): array
-    {
-        if (!$this->gallery) {
-            return [];
+        if ($this->images && is_array($this->images) && count($this->images) > 0) {
+            $firstImage = $this->images[0];
+            if (filter_var($firstImage, FILTER_VALIDATE_URL)) {
+                return $firstImage;
+            }
+            return asset($firstImage);
         }
-
-        return array_map(function ($image) {
-            return url('storage/' . $image);
-        }, $this->gallery);
+        return asset('images/no-product.png');
     }
 
     /**
@@ -111,16 +46,7 @@ class Product extends Model
      */
     public function scopeAvailable($query)
     {
-        return $query->where('is_available', true)
-                    ->where('stock_quantity', '>', 0);
-    }
-
-    /**
-     * Scope for featured products
-     */
-    public function scopeFeatured($query)
-    {
-        return $query->where('is_featured', true);
+        return $query->where('is_available', true);
     }
 
     /**
@@ -128,19 +54,13 @@ class Product extends Model
      */
     public function scopeByCategory($query, $category)
     {
-        // إذا كان المعرف رقمي، نبحث في category_id
         if (is_numeric($category)) {
             return $query->where('category_id', $category);
         }
         
-        // إذا كان نص، نبحث في الحقول القديمة أو في جدول الفئات
-        return $query->where(function($q) use ($category) {
-            $q->where('category', $category)
-              ->orWhere('volume_category', $category)
-              ->orWhereHas('category', function($q2) use ($category) {
-                  $q2->where('name', $category)
-                     ->orWhere('display_name', 'LIKE', "%{$category}%");
-              });
+        return $query->whereHas('category', function($q) use ($category) {
+            $q->where('name', $category)
+              ->orWhere('display_name', 'LIKE', "%{$category}%");
         });
     }
 
@@ -152,17 +72,14 @@ class Product extends Model
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'LIKE', "%{$search}%")
               ->orWhere('description', 'LIKE', "%{$search}%")
-              ->orWhere('category', 'LIKE', "%{$search}%");
+              ->orWhereHas('category', function($q2) use ($search) {
+                  $q2->where('name', 'LIKE', "%{$search}%")
+                     ->orWhere('display_name', 'LIKE', "%{$search}%");
+              });
         });
     }
 
-    /**
-     * Merchant relationship
-     */
-    public function merchant()
-    {
-        return $this->belongsTo(\App\Modules\Merchants\Models\Merchant::class);
-    }
+
     
     /**
      * Category relationship
@@ -209,114 +126,7 @@ class Product extends Model
                    });
     }
 
-    /**
-     * Check if product can be sold as individual units
-     */
-    public function canSellIndividualUnits(): bool
-    {
-        return $this->allow_individual_units;
-    }
 
-    /**
-     * Check if product can be sold as cartons
-     */
-    public function canSellAsCarton(): bool
-    {
-        return $this->carton_size > 0 && $this->carton_price > 0;
-    }
-
-    /**
-     * Check if product can be sold as packages
-     */
-    public function canSellAsPackage(): bool
-    {
-        return $this->package_size > 0 && $this->package_price > 0;
-    }
-
-    /**
-     * Get effective price based on selling type
-     */
-    public function getEffectivePrice(string $sellingType = 'unit'): float
-    {
-        switch ($sellingType) {
-            case 'carton':
-                return $this->carton_price ?? $this->price;
-            case 'package':
-                return $this->package_price ?? $this->price;
-            default:
-                return $this->price;
-        }
-    }
-
-    /**
-     * Get loyalty points for specific selling type
-     */
-    public function getLoyaltyPoints(string $sellingType = 'unit'): int
-    {
-        switch ($sellingType) {
-            case 'carton':
-                return $this->carton_loyalty_points;
-            case 'package':
-                return $this->package_loyalty_points;
-            default:
-                return $this->unit_loyalty_points;
-        }
-    }
-
-    /**
-     * Calculate quantity based on selling type
-     */
-    public function calculateActualQuantity(int $requestedQuantity, string $sellingType = 'unit'): int
-    {
-        switch ($sellingType) {
-            case 'carton':
-                return $requestedQuantity * ($this->carton_size ?? 1);
-            case 'package':
-                return $requestedQuantity * ($this->package_size ?? 1);
-            default:
-                return $requestedQuantity;
-        }
-    }
-
-    /**
-     * Get available selling types
-     */
-    public function getAvailableSellingTypes(): array
-    {
-        $types = [];
-        
-        if ($this->canSellIndividualUnits()) {
-            $types[] = 'unit';
-        }
-        
-        if ($this->canSellAsPackage()) {
-            $types[] = 'package';
-        }
-        
-        if ($this->canSellAsCarton()) {
-            $types[] = 'carton';
-        }
-        
-        return $types;
-    }
-
-    /**
-     * Check if product requires minimum carton/package purchase
-     */
-    public function requiresMinimumPurchase(): array
-    {
-        $requirements = [];
-        
-        if ($this->is_full_carton) {
-            $requirements[] = 'carton';
-        }
-        
-        if ($this->is_full_package) {
-            $requirements[] = 'package';
-        }
-        
-        return $requirements;
-    }
 
     /**
      * Favorites relationship

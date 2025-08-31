@@ -37,9 +37,10 @@ class ProductService extends BaseService
             $query->available();
         }
 
-        if (isset($filters['is_featured']) && $filters['is_featured']) {
-            $query->featured();
-        }
+        // إزالة فلتر is_featured - لم يعد موجوداً
+        // if (isset($filters['is_featured']) && $filters['is_featured']) {
+        //     $query->featured();
+        // }
 
         // Apply sorting
         $query->orderBy($sortBy, $sortOrder);
@@ -61,14 +62,13 @@ class ProductService extends BaseService
     }
 
     /**
-     * Get featured products
+     * Get featured products - DISABLED (feature removed)
      */
     public function getFeaturedProducts(int $limit = 10): Collection
     {
+        // إرجاع أحدث المنتجات المتاحة بدلاً من المميزة
         return $this->model->with(['category'])
-                          ->featured()
                           ->available()
-                          ->orderBy('sort_order')
                           ->orderBy('created_at', 'desc')
                           ->take($limit)
                           ->get();
@@ -81,7 +81,6 @@ class ProductService extends BaseService
     {
         return $this->model->search($query)
                           ->available()
-                          ->orderBy('rating', 'desc')
                           ->orderBy('created_at', 'desc')
                           ->paginate($perPage);
     }
@@ -91,19 +90,14 @@ class ProductService extends BaseService
      */
     public function getCategories(): array
     {
-        $categories = $this->model->select('category')
-                                 ->distinct()
-                                 ->whereNotNull('category')
-                                 ->pluck('category')
-                                 ->toArray();
+        if (!\Illuminate\Support\Facades\Schema::hasTable('product_categories')) {
+            return [];
+        }
 
-        $volumeCategories = $this->model->select('volume_category')
-                                       ->distinct()
-                                       ->whereNotNull('volume_category')
-                                       ->pluck('volume_category')
-                                       ->toArray();
-
-        return array_unique(array_merge($categories, $volumeCategories));
+        return \App\Modules\Products\Models\ProductCategory::select('name', 'display_name')
+                                                           ->get()
+                                                           ->pluck('display_name', 'name')
+                                                           ->toArray();
     }
 
     /**

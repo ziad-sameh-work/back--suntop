@@ -15,6 +15,12 @@ class RewardTierSeeder extends Seeder
      */
     public function run()
     {
+        // تحقق من وجود مستويات مكافآت مسبقاً
+        if (\App\Modules\Loyalty\Models\RewardTier::count() > 0) {
+            $this->command->info('مستويات المكافآت موجودة بالفعل، تم تخطي عملية إنشاء البيانات التجريبية.');
+            return;
+        }
+
         $this->command->info('🏆 إنشاء مستويات المكافآت...');
 
         $tiers = [

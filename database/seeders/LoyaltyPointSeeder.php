@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 use App\Modules\Loyalty\Models\LoyaltyPoint;
 use App\Models\User;
 use App\Modules\Orders\Models\Order;
@@ -17,7 +18,12 @@ class LoyaltyPointSeeder extends Seeder
      */
     public function run()
     {
-        // تحقق من وجود نقاط ولاء مسبقاً
+        // تحقق من وجود جدول loyalty_points ونقاط ولاء مسبقاً
+        if (!Schema::hasTable('loyalty_points')) {
+            $this->command->warn('جدول loyalty_points غير موجود، تم تخطي عملية إنشاء البيانات التجريبية.');
+            return;
+        }
+        
         if (LoyaltyPoint::count() > 0) {
             $this->command->info('نقاط الولاء موجودة بالفعل، تم تخطي عملية إنشاء البيانات التجريبية.');
             return;

@@ -567,24 +567,15 @@
         <div class="stat-card">
             <div class="stat-header">
                 <div class="stat-icon green">
-                    <i class="fas fa-star"></i>
+                    <i class="fas fa-calendar-plus"></i>
                 </div>
-                <h3 class="stat-title">المنتجات المميزة</h3>
+                <h3 class="stat-title">المنتجات الحديثة</h3>
             </div>
-            <div class="stat-value">{{ number_format($stats['featured_products']) }}</div>
-            <div class="stat-change">منتج مميز</div>
+            <div class="stat-value">{{ number_format($stats['recent_products']) }}</div>
+            <div class="stat-change">خلال آخر 30 يوم</div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-header">
-                <div class="stat-icon red">
-                    <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <h3 class="stat-title">مخزون منخفض</h3>
-            </div>
-            <div class="stat-value">{{ number_format($stats['low_stock']) }}</div>
-            <div class="stat-change">{{ number_format($stats['out_of_stock']) }} غير متوفر</div>
-        </div>
+
     </div>
 
     <!-- Filters & Actions -->
@@ -606,17 +597,7 @@
                            value="{{ $search }}">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">التاجر</label>
-                    <select name="merchant_id" class="form-select">
-                        <option value="">جميع التجار</option>
-                        @foreach($merchants as $merchant)
-                            <option value="{{ $merchant->id }}" {{ $merchant_id == $merchant->id ? 'selected' : '' }}>
-                                {{ $merchant->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+
 
                 <div class="form-group">
                     <label class="form-label">الإتاحة</label>
@@ -627,15 +608,7 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">حالة المخزون</label>
-                    <select name="stock_status" class="form-select">
-                        <option value="">جميع الحالات</option>
-                        <option value="in_stock" {{ $stock_status === 'in_stock' ? 'selected' : '' }}>متوفر</option>
-                        <option value="low_stock" {{ $stock_status === 'low_stock' ? 'selected' : '' }}>مخزون منخفض</option>
-                        <option value="out_of_stock" {{ $stock_status === 'out_of_stock' ? 'selected' : '' }}>غير متوفر</option>
-                    </select>
-                </div>
+
 
                 <div class="form-group">
                     <label class="form-label">نطاق السعر</label>
@@ -677,8 +650,6 @@
                     <option value="">إجراءات جماعية</option>
                     <option value="activate">تفعيل المحدد</option>
                     <option value="deactivate">إخفاء المحدد</option>
-                    <option value="feature">إضافة للمميزة</option>
-                    <option value="unfeature">إزالة من المميزة</option>
                     <option value="delete">حذف المحدد</option>
                 </select>
                 <button type="button" class="btn-secondary" onclick="executeBulkAction()">تنفيذ</button>
@@ -688,20 +659,19 @@
         @if($products->count() > 0)
         <div style="overflow-x: auto;">
             <table class="products-table">
-                <thead>
-                    <tr>
-                        <th style="width: 40px;">
-                            <input type="checkbox" id="selectAll" onchange="toggleAllProducts()">
-                        </th>
-                        <th>المنتج</th>
-                        <th>التاجر</th>
-                        <th>السعر</th>
-                        <th>المخزون</th>
-                        <th>الحالة</th>
-                        <th>تاريخ الإضافة</th>
-                        <th style="width: 120px;">الإجراءات</th>
-                    </tr>
-                </thead>
+                                        <thead>
+                            <tr>
+                                <th style="width: 40px;">
+                                    <input type="checkbox" id="selectAll" onchange="toggleAllProducts()">
+                                </th>
+                                <th>المنتج</th>
+                                <th>الفئة</th>
+                                <th>السعر</th>
+                                <th>الحالة</th>
+                                <th>تاريخ الإضافة</th>
+                                <th style="width: 120px;">الإجراءات</th>
+                            </tr>
+                        </thead>
                 <tbody>
                     @foreach($products as $product)
                     <tr>
@@ -715,50 +685,35 @@
                                      onerror="this.src='{{ asset('images/no-product.png') }}'">
                                 <div class="product-details">
                                     <h4>{{ $product->name }}</h4>
-                                    <p>{{ Str::limit($product->short_description ?? $product->description, 50) }}</p>
-                                    @if(isset($product->sku))
-                                        <span class="product-sku">{{ $product->sku }}</span>
+                                    <p>{{ Str::limit($product->description, 50) }}</p>
+                                    <span class="product-id">#{{ $product->id }}</span>
+                                    @if($product->back_color)
+                                        <div class="product-color" style="background-color: {{ $product->back_color }}; width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-top: 5px;"></div>
                                     @endif
                                 </div>
                             </div>
                         </td>
+                        
                         <td>
-                            @if(isset($product->merchant) && $product->merchant)
-                                <span>{{ $product->merchant->name }}</span>
+                            @if($product->category)
+                                <span class="category-badge">{{ $product->category->display_name }}</span>
                             @else
-                                <span style="color: var(--gray-400);">غير محدد</span>
+                                <span class="text-muted">غير محدد</span>
                             @endif
                         </td>
+
                         <td>
                             <div class="price-display">
-                                <span class="current-price">
-                                    @if(isset($product->discount_price) && $product->discount_price)
-                                        {{ number_format($product->discount_price, 2) }} ج.م
-                                    @else
-                                        {{ number_format($product->price, 2) }} ج.م
-                                    @endif
-                                </span>
-                                @if(isset($product->discount_price) && $product->discount_price && $product->discount_price < $product->price)
-                                    <span class="original-price">{{ number_format($product->price, 2) }} ج.م</span>
-                                    <span class="discount-badge">
-                                        -{{ round((($product->price - $product->discount_price) / $product->price) * 100) }}%
-                                    </span>
-                                @endif
+                                <span class="current-price">{{ number_format($product->price, 2) }} ج.م</span>
                             </div>
                         </td>
-                        <td>
-                            <span class="stock-badge stock-{{ $product->stock_quantity > 10 ? 'in' : ($product->stock_quantity > 0 ? 'low' : 'out') }}">
-                                {{ $product->stock_quantity }} قطعة
-                            </span>
-                        </td>
+
                         <td>
                             <div style="display: flex; flex-direction: column; gap: 4px;">
                                 <span class="status-badge status-{{ $product->is_available ? 'available' : 'unavailable' }}">
                                     {{ $product->is_available ? 'متاح' : 'غير متاح' }}
                                 </span>
-                                @if($product->is_featured)
-                                    <span class="status-badge status-featured">مميز</span>
-                                @endif
+                                {{-- إزالة عرض حالة المنتج المميز --}}
                             </div>
                         </td>
                         <td>{{ $product->created_at->format('Y/m/d') }}</td>
@@ -774,17 +729,6 @@
                                     <a href="{{ route('admin.products.edit', $product->id) }}">
                                         <i class="fas fa-edit"></i> تعديل
                                     </a>
-                                    <button onclick="toggleAvailability({{ $product->id }})">
-                                        <i class="fas fa-{{ $product->is_available ? 'eye-slash' : 'eye' }}"></i>
-                                        {{ $product->is_available ? 'إخفاء' : 'إظهار' }}
-                                    </button>
-                                    <button onclick="toggleFeatured({{ $product->id }})">
-                                        <i class="fas fa-{{ $product->is_featured ? 'star-half-alt' : 'star' }}"></i>
-                                        {{ $product->is_featured ? 'إزالة من المميزة' : 'إضافة للمميزة' }}
-                                    </button>
-                                    <button onclick="openStockModal({{ $product->id }}, {{ $product->stock_quantity }})">
-                                        <i class="fas fa-boxes"></i> تحديث المخزون
-                                    </button>
                                     <button class="danger" onclick="deleteProduct({{ $product->id }})">
                                         <i class="fas fa-trash"></i> حذف
                                     </button>
@@ -919,32 +863,9 @@ async function toggleAvailability(productId) {
     }
 }
 
-// Toggle Product Featured
+// Toggle Product Featured - DISABLED (feature removed)
 async function toggleFeatured(productId) {
-    showLoading();
-    
-    try {
-        const response = await fetch(`{{ route('admin.products.index') }}/${productId}/toggle-featured`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showNotification(data.message, 'success');
-            setTimeout(() => window.location.reload(), 1000);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    } catch (error) {
-        showNotification('حدث خطأ أثناء تحديث الحالة', 'error');
-    } finally {
-        hideLoading();
-    }
+    showNotification('ميزة المنتجات المميزة لم تعد متاحة', 'error');
 }
 
 // Stock Modal Functions

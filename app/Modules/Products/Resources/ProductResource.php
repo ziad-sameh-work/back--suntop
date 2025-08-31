@@ -11,14 +11,14 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'description' => $this->description,
             'price' => (float) $this->price,
             'image_url' => $this->getMainImageUrl(),
             'images' => $this->getAllImageUrls(),
             'category' => $this->getCategoryName(),
             'category_id' => $this->category_id,
-            'back_color' => $this->back_color ?? '#FFFFFF',
+            'back_color' => $this->back_color ?? '#FF6B35',
             'is_available' => $this->is_available,
-            'stock_quantity' => $this->stock_quantity,
         ];
     }
     
@@ -122,7 +122,7 @@ class ProductResource extends JsonResource
             }
         }
         
-        // Fallback to legacy fields
-        return $this->volume_category ?? $this->category ?? $this->size;
+        // Return null if no category found
+        return null;
     }
 }

@@ -232,7 +232,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('chats/{chat}/priority', [AdminChatController::class, 'updatePriority'])->name('chats.updatePriority');
     Route::get('chats-admins', [AdminChatController::class, 'getAdmins'])->name('chats.admins');
 
-    // Firebase Chat Routes for Admin Panel
+    // Firebase Chat Routes for Admin Panel - Disabled (Controller not found)
+    /*
     Route::prefix('firebase-chats')->name('firebase-chats.')->group(function () {
         Route::get('/', [AdminFirebaseChatController::class, 'index'])->name('index');
         Route::get('/dashboard', [AdminFirebaseChatController::class, 'realtimeDashboard'])->name('dashboard');
@@ -249,6 +250,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('stats', [AdminFirebaseChatController::class, 'getStats'])->name('api.firebase-chats.stats');
         Route::get('admins', [AdminFirebaseChatController::class, 'getAdmins'])->name('api.firebase-chats.admins');
     });
+    */
 
     // Enhanced Notification Routes
     Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');

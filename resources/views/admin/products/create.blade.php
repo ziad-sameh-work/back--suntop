@@ -419,44 +419,9 @@
                             @enderror
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">
-                                كود المنتج (SKU) <span class="required">*</span>
-                            </label>
-                            <input type="text" name="sku" class="form-input" 
-                                   value="{{ old('sku') }}" required
-                                   placeholder="مثل: PRD-001">
-                            <div class="form-help">يجب أن يكون فريداً لكل منتج</div>
-                            @error('sku')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
 
-                        @if(count($merchants) > 0)
-                        <div class="form-group">
-                            <label class="form-label">
-                                التاجر <span class="required">*</span>
-                            </label>
-                            <select name="merchant_id" class="form-select" required>
-                                <option value="">اختر التاجر</option>
-                                @foreach($merchants as $merchant)
-                                    <option value="{{ $merchant->id }}" {{ old('merchant_id') == $merchant->id ? 'selected' : '' }}>
-                                        {{ $merchant->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('merchant_id')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        @else
-                        <div class="form-group">
-                            <div style="background: #FEF3CD; border: 1px solid #F59E0B; color: #92400E; padding: 12px; border-radius: 8px; font-size: 14px;">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                لا يوجد تجار مسجلين في النظام. يمكنك المتابعة بدون تحديد تاجر.
-                            </div>
-                        </div>
-                        @endif
+
+
                         
                         @if(count($categories) > 0)
                         <div class="form-group">
@@ -487,21 +452,10 @@
 
                         <div class="form-group full-width">
                             <label class="form-label">
-                                وصف مختصر
-                            </label>
-                            <textarea name="short_description" class="form-textarea" 
-                                      placeholder="وصف مختصر للمنتج (اختياري)">{{ old('short_description') }}</textarea>
-                            @error('short_description')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group full-width">
-                            <label class="form-label">
-                                الوصف التفصيلي <span class="required">*</span>
+                                وصف المنتج <span class="required">*</span>
                             </label>
                             <textarea name="description" class="form-textarea" 
-                                      required placeholder="اكتب وصفاً تفصيلياً للمنتج">{{ old('description') }}</textarea>
+                                      required placeholder="اكتب وصفاً للمنتج">{{ old('description') }}</textarea>
                             @error('description')
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
@@ -515,83 +469,29 @@
                         <div class="section-icon">
                             <i class="fas fa-tag"></i>
                         </div>
-                        الأسعار والمخزون
+                        الأسعار
                     </h3>
 
-                    <div class="price-grid">
+                    <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label">
                                 السعر الأساسي <span class="required">*</span>
                             </label>
                             <input type="number" name="price" class="form-input" 
                                    value="{{ old('price') }}" required step="0.01" min="0"
-                                   placeholder="0.00" onchange="calculateDiscount()">
+                                   placeholder="0.00">
                             @error('price')
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">سعر الخصم</label>
-                            <input type="number" name="discount_price" class="form-input" 
-                                   value="{{ old('discount_price') }}" step="0.01" min="0"
-                                   placeholder="0.00 (اختياري)" onchange="calculateDiscount()">
-                            @error('discount_price')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <div class="discount-calculator" id="discountCalculator" style="display: none;">
-                                <div class="discount-result" id="discountResult"></div>
-                                <div class="savings-amount" id="savingsAmount"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group">
                             <label class="form-label">
-                                كمية المخزون <span class="required">*</span>
+                                لون الخلفية <span class="required">*</span>
                             </label>
-                            <input type="number" name="stock_quantity" class="form-input" 
-                                   value="{{ old('stock_quantity', 0) }}" required min="0"
-                                   placeholder="0" onchange="checkStock()">
-                            <div class="stock-alert" id="stockAlert">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                تحذير: المخزون منخفض (أقل من 10 قطع)
-                            </div>
-                            @error('stock_quantity')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">الحد الأدنى للطلب</label>
-                            <input type="number" name="min_quantity" class="form-input" 
-                                   value="{{ old('min_quantity', 1) }}" min="1"
-                                   placeholder="1">
-                            @error('min_quantity')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">الوزن (كجم)</label>
-                            <input type="number" name="weight" class="form-input" 
-                                   value="{{ old('weight') }}" step="0.01" min="0"
-                                   placeholder="0.00">
-                            @error('weight')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">الأبعاد</label>
-                            <input type="text" name="dimensions" class="form-input" 
-                                   value="{{ old('dimensions') }}"
-                                   placeholder="مثل: 20x15x10 سم">
-                            @error('dimensions')
+                            <input type="color" name="back_color" class="form-input" 
+                                   value="{{ old('back_color', '#FF6B35') }}" required>
+                            @error('back_color')
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
@@ -627,35 +527,16 @@
                     </div>
                 </div>
 
-                <!-- SEO & Settings -->
+                <!-- Settings -->
                 <div class="form-section">
                     <h3 class="section-title">
                         <div class="section-icon">
                             <i class="fas fa-cog"></i>
                         </div>
-                        إعدادات وتحسين محركات البحث
+                        إعدادات المنتج
                     </h3>
 
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label class="form-label">عنوان SEO</label>
-                            <input type="text" name="meta_title" class="form-input" 
-                                   value="{{ old('meta_title') }}"
-                                   placeholder="عنوان محسن لمحركات البحث">
-                            @error('meta_title')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">وصف SEO</label>
-                            <textarea name="meta_description" class="form-textarea" 
-                                      placeholder="وصف محسن لمحركات البحث">{{ old('meta_description') }}</textarea>
-                            @error('meta_description')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
-                        </div>
-
                         <div class="form-group">
                             <label class="form-label">حالة المنتج</label>
                             <div class="toggle-group">
@@ -666,33 +547,6 @@
                                 </label>
                                 <span>المنتج متاح للعرض</span>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">منتج مميز</label>
-                            <div class="toggle-group">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" name="is_featured" value="1" 
-                                           {{ old('is_featured', false) ? 'checked' : '' }}>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <span>عرض في المنتجات المميزة</span>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">لون خلفية المنتج</label>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <input type="color" name="back_color" class="form-input" style="width: 60px; height: 40px; padding: 5px;"
-                                       value="{{ old('back_color', '#FFFFFF') }}">
-                                <input type="text" class="form-input" id="backColorText" style="flex: 1;"
-                                       value="{{ old('back_color', '#FFFFFF') }}" placeholder="#FFFFFF"
-                                       oninput="document.querySelector('input[name=back_color]').value = this.value">
-                            </div>
-                            <div class="form-help">اختر لون خلفية لعرض المنتج في التطبيق</div>
-                            @error('back_color')
-                                <div class="form-error">{{ $message }}</div>
-                            @enderror
                         </div>
                     </div>
                 </div>

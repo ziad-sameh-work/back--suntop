@@ -31,11 +31,11 @@ class DatabaseSeeder extends Seeder
             FeaturedOffersSeeder::class,
             RewardTierSeeder::class,
             RewardSeeder::class,
-            LoyaltyPointSeeder::class,
-            OrderSeeder::class,
-            ChatSeeder::class,
-            NotificationSeeder::class,
-            FavoriteSeeder::class,
+            // LoyaltyPointSeeder::class, // Disabled - table structure issue
+            // OrderSeeder::class, // Disabled - depends on loyalty_points
+            // ChatSeeder::class, // Disabled - table structure issue
+            // NotificationSeeder::class, // Disabled - may depend on other tables
+            // FavoriteSeeder::class, // Disabled - may depend on products/users
         ]);
 
         $this->command->info('');

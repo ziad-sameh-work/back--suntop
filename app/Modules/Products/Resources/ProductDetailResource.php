@@ -12,35 +12,14 @@ class ProductDetailResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'short_description' => $this->short_description,
             'image_url' => $this->getMainImageUrl(),
             'images' => $this->getAllImageUrls(),
-            'gallery' => $this->getAllImageUrls(), // Legacy compatibility
             'price' => (float) $this->price,
-            'discount_price' => $this->discount_price ? (float) $this->discount_price : null,
-            'original_price' => $this->original_price ? (float) $this->original_price : null,
-            'currency' => $this->currency ?? 'EGP',
             'category' => $this->getCategoryInfo(),
             'category_name' => $this->getCategoryName(),
             'category_id' => $this->category_id,
-            'size' => $this->size,
-            'volume_category' => $this->volume_category,
             'is_available' => $this->is_available,
-            'stock_quantity' => $this->stock_quantity,
-            'rating' => (float) $this->rating,
-            'review_count' => $this->review_count,
-            'tags' => $this->tags ?? [],
-            'ingredients' => $this->ingredients ?? [],
-            'nutrition_facts' => $this->nutrition_facts ?? [],
-            'storage_instructions' => $this->storage_instructions,
-            'expiry_info' => $this->expiry_info,
-            'barcode' => $this->barcode,
-            'sku' => $this->sku,
-            'weight' => $this->weight,
-            'dimensions' => $this->dimensions,
-            'reviews' => $this->recent_reviews,
-            'back_color' => $this->back_color ?? '#FFFFFF',
-            'is_featured' => $this->is_featured,
+            'back_color' => $this->back_color ?? '#FF6B35',
             'created_at' => $this->created_at->toISOString(),
             'updated_at' => $this->updated_at->toISOString(),
         ];
@@ -143,8 +122,8 @@ class ProductDetailResource extends JsonResource
             }
         }
         
-        // Fallback to legacy fields
-        return $this->volume_category ?? $this->category ?? $this->size;
+        // Return null if no category found
+        return null;
     }
     
     /**
@@ -179,18 +158,6 @@ class ProductDetailResource extends JsonResource
             } catch (\Exception $e) {
                 // Category relationship might not exist
             }
-        }
-        
-        // Fallback to legacy string field
-        $legacyCategory = $this->volume_category ?? $this->category ?? $this->size;
-        if ($legacyCategory) {
-            return [
-                'id' => null,
-                'name' => $legacyCategory,
-                'display_name' => $legacyCategory,
-                'description' => null,
-                'icon' => null,
-            ];
         }
         
         return null;

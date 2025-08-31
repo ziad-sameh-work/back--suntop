@@ -60,52 +60,27 @@
                     @error('name')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                @if(isset($product->sku))
-                <div class="form-group">
-                    <label class="form-label">كود المنتج (SKU)</label>
-                    <input type="text" name="sku" class="form-input" 
-                           value="{{ old('sku', $product->sku) }}" placeholder="كود المنتج">
-                    @error('sku')<div class="form-error">{{ $message }}</div>@enderror
-                </div>
-                @endif
+
 
                 <div class="form-group">
-                    <label class="form-label">السعر <span class="required">*</span></label>
+                    <label class="form-label">السعر الأساسي <span class="required">*</span></label>
                     <input type="number" name="price" class="form-input" 
                            value="{{ old('price', $product->price) }}" required step="0.01" min="0" placeholder="0.00">
                     @error('price')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                @if(isset($product->discount_price))
                 <div class="form-group">
-                    <label class="form-label">سعر الخصم</label>
-                    <input type="number" name="discount_price" class="form-input" 
-                           value="{{ old('discount_price', $product->discount_price) }}" step="0.01" min="0" placeholder="0.00">
-                    @error('discount_price')<div class="form-error">{{ $message }}</div>@enderror
-                </div>
-                @endif
-
-                <div class="form-group">
-                    <label class="form-label">كمية المخزون <span class="required">*</span></label>
-                    <input type="number" name="stock_quantity" class="form-input" 
-                           value="{{ old('stock_quantity', $product->stock_quantity) }}" required min="0" placeholder="0">
-                    @error('stock_quantity')<div class="form-error">{{ $message }}</div>@enderror
+                    <label class="form-label">لون الخلفية <span class="required">*</span></label>
+                    <input type="color" name="back_color" class="form-input" 
+                           value="{{ old('back_color', $product->back_color ?? '#FF6B35') }}" required>
+                    @error('back_color')<div class="form-error">{{ $message }}</div>@enderror
                 </div>
 
-                @if(count($merchants) > 0)
-                <div class="form-group">
-                    <label class="form-label">التاجر</label>
-                    <select name="merchant_id" class="form-select">
-                        <option value="">اختر التاجر</option>
-                        @foreach($merchants as $merchant)
-                            <option value="{{ $merchant->id }}" {{ old('merchant_id', $product->merchant_id) == $merchant->id ? 'selected' : '' }}>
-                                {{ $merchant->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('merchant_id')<div class="form-error">{{ $message }}</div>@enderror
-                </div>
-                @endif
+
+
+
+
+
                 
                 @if(count($categories) > 0)
                 <div class="form-group">
@@ -142,29 +117,9 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">منتج مميز</label>
-                    <div class="toggle-group">
-                        <label class="toggle-switch">
-                            <input type="checkbox" name="is_featured" value="1" 
-                                   {{ old('is_featured', $product->is_featured) ? 'checked' : '' }}>
-                            <span class="toggle-slider"></span>
-                        </label>
-                        <span>عرض في المنتجات المميزة</span>
-                    </div>
-                </div>
 
-                <div class="form-group">
-                    <label class="form-label">لون خلفية المنتج</label>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="color" name="back_color" id="backColorPicker" class="form-input" style="width: 60px; height: 40px; padding: 5px;"
-                               value="{{ old('back_color', $product->back_color ?? '#FFFFFF') }}">
-                        <input type="text" class="form-input" id="backColorText" style="flex: 1;"
-                               value="{{ old('back_color', $product->back_color ?? '#FFFFFF') }}" placeholder="#FFFFFF">
-                    </div>
-                    <div style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">اختر لون خلفية لعرض المنتج في التطبيق</div>
-                    @error('back_color')<div class="form-error">{{ $message }}</div>@enderror
-                </div>
+
+
             </div>
 
             <div class="form-actions">

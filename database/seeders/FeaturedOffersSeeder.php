@@ -15,6 +15,12 @@ class FeaturedOffersSeeder extends Seeder
      */
     public function run()
     {
+        // تحقق من وجود عروض مميزة مسبقاً
+        if (Offer::where('code', 'CITRUS30')->exists()) {
+            $this->command->info('العروض المميزة موجودة بالفعل، تم تخطي عملية إنشاء البيانات التجريبية.');
+            return;
+        }
+
         $this->command->info('🌟 إنشاء العروض المميزة...');
 
         $featuredOffers = [
@@ -23,7 +29,7 @@ class FeaturedOffersSeeder extends Seeder
                 'description' => 'احصل على خصم هائل 30% على جميع عصائر سن توب الحمضية بما في ذلك البرتقال والليمون والجريب فروت',
                 'short_description' => 'خصم 30% على جميع العصائر الحمضية',
                 'code' => 'CITRUS30',
-                'type' => 'discount',
+                'type' => 'percentage',
                 'discount_percentage' => 30,
                 'minimum_amount' => 50,
                 'maximum_discount' => 100,
@@ -44,7 +50,7 @@ class FeaturedOffersSeeder extends Seeder
                 'description' => 'تذوق نكهة المانجو الاستوائية الطبيعية مع خصم خاص 25% على جميع عصائر المانجو',
                 'short_description' => 'خصم 25% على عصائر المانجو الاستوائية',
                 'code' => 'MANGO25',
-                'type' => 'discount',
+                'type' => 'percentage',
                 'discount_percentage' => 25,
                 'minimum_amount' => 30,
                 'maximum_discount' => 75,
@@ -65,7 +71,7 @@ class FeaturedOffersSeeder extends Seeder
                 'description' => 'احصل على توصيل مجاني تماماً لجميع الطلبات بقيمة 100 جنيه أو أكثر في جميع أنحاء الجمهورية',
                 'short_description' => 'شحن مجاني للطلبات أكثر من 100 جنيه',
                 'code' => 'FREESHIP100',
-                'type' => 'freebie',
+                'type' => 'fixed_amount',
                 'min_purchase_amount' => 100,
                 'valid_from' => now(),
                 'valid_until' => now()->addDays(60),
@@ -82,7 +88,7 @@ class FeaturedOffersSeeder extends Seeder
                 'description' => 'عرض رائع! اشتري 3 عبوات من أي نوع عصير سن توب واحصل على الرابعة مجاناً تماماً',
                 'short_description' => 'اشتري 3 واحصل على 1 مجاناً',
                 'code' => 'BUY3GET1',
-                'type' => 'bogo',
+                'type' => 'percentage',
                 'discount_percentage' => 25,
                 'minimum_amount' => 75,
                 'valid_from' => now(),
@@ -101,7 +107,7 @@ class FeaturedOffersSeeder extends Seeder
                 'description' => 'احصل على استرداد نقدي بنسبة 15% من قيمة طلبك ليتم إضافته إلى محفظتك الرقمية',
                 'short_description' => 'استرداد نقدي 15% في محفظتك',
                 'code' => 'CASHBACK15',
-                'type' => 'cashback',
+                'type' => 'fixed_amount',
                 'discount_percentage' => 15,
                 'minimum_amount' => 150,
                 'maximum_discount' => 200,

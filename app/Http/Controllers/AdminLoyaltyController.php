@@ -15,6 +15,19 @@ class AdminLoyaltyController extends Controller
      */
     public function index(Request $request)
     {
+        // Check if loyalty_points table exists
+        if (!\Illuminate\Support\Facades\Schema::hasTable('loyalty_points')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'error' => 'Loyalty points system is not available',
+                    'transactions' => [],
+                    'stats' => [],
+                    'topUsers' => []
+                ]);
+            }
+            return view('admin.loyalty.index')->with('error', 'جدول نقاط الولاء غير متوفر حالياً');
+        }
+
         $query = LoyaltyPoint::with(['user', 'order']);
 
         // Search functionality

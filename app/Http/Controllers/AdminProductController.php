@@ -21,9 +21,7 @@ class AdminProductController extends Controller
     {
         // Get filters from request
         $search = $request->get('search', '');
-        $merchant_id = $request->get('merchant_id', '');
         $availability = $request->get('availability', '');
-        $stock_status = $request->get('stock_status', '');
         $price_range = $request->get('price_range', '');
         $featured = $request->get('featured', '');
         $perPage = $request->get('per_page', 15);
@@ -32,12 +30,7 @@ class AdminProductController extends Controller
         $query = Product::query()
             ->withCount(['orderItems']);
             
-        // Only load merchant relationship if it exists
-        try {
-            $query->with(['merchant']);
-        } catch (\Exception $e) {
-            // Merchant relationship might not exist yet
-        }
+
 
         // Apply filters
         if ($search) {
@@ -51,31 +44,18 @@ class AdminProductController extends Controller
             });
         }
 
-        if ($merchant_id && Schema::hasColumn('products', 'merchant_id')) {
-            $query->where('merchant_id', $merchant_id);
-        }
+
 
         if ($availability !== '') {
             $query->where('is_available', $availability == 'available');
         }
 
-        if ($featured !== '') {
-            $query->where('is_featured', $featured == 'featured');
-        }
+        // إزالة فلتر is_featured - لم يعد موجوداً في الجدول
+        // if ($featured !== '') {
+        //     $query->where('is_featured', $featured == 'featured');
+        // }
 
-        if ($stock_status) {
-            switch ($stock_status) {
-                case 'in_stock':
-                    $query->where('stock_quantity', '>', 10);
-                    break;
-                case 'low_stock':
-                    $query->whereBetween('stock_quantity', [1, 10]);
-                    break;
-                case 'out_of_stock':
-                    $query->where('stock_quantity', 0);
-                    break;
-            }
-        }
+
 
         if ($price_range && Schema::hasColumn('products', 'price')) {
             // Use discount_price if available, otherwise use price
@@ -104,26 +84,21 @@ class AdminProductController extends Controller
         // Get statistics
         $stats = $this->getProductsStats();
 
-        // Get filter options
-        $merchants = [];
-        try {
-            if (Schema::hasTable('merchants')) {
-                $merchants = Merchant::where('is_active', true)->get();
-            }
-        } catch (\Exception $e) {
-            // Merchants table might not exist yet
+
+
+        // Get categories for filter
+        $categories = [];
+        if (Schema::hasTable('product_categories')) {
+            $categories = \App\Modules\Products\Models\ProductCategory::all();
         }
 
         return view('admin.products.index', compact(
             'products',
             'stats',
-            'merchants',
+            'categories',
             'search',
-            'merchant_id',
             'availability',
-            'stock_status',
             'price_range',
-            'featured',
             'perPage'
         ));
     }
@@ -135,14 +110,7 @@ class AdminProductController extends Controller
     {
         $product = Product::findOrFail($id);
         
-        // Load merchant relationship if it exists
-        try {
-            if (Schema::hasColumn('products', 'merchant_id')) {
-                $product->load('merchant');
-            }
-        } catch (\Exception $e) {
-            // Merchant relationship might not exist yet
-        }
+
         
         // Get product statistics
         $productStats = $this->getProductDetailsStats($product);
@@ -155,16 +123,7 @@ class AdminProductController extends Controller
      */
     public function create()
     {
-        $merchants = [];
         $categories = [];
-        
-        try {
-            if (Schema::hasTable('merchants')) {
-                $merchants = Merchant::where('is_active', true)->get();
-            }
-        } catch (\Exception $e) {
-            // Merchants table might not exist yet
-        }
         
         try {
             if (Schema::hasTable('product_categories')) {
@@ -176,7 +135,7 @@ class AdminProductController extends Controller
             // Product Categories table might not exist yet
         }
         
-        return view('admin.products.create', compact('merchants', 'categories'));
+        return view('admin.products.create', compact('categories'));
     }
 
     /**
@@ -189,46 +148,17 @@ class AdminProductController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
+            'back_color' => 'required|string|max:20',
             'is_available' => 'boolean',
-            'is_featured' => 'boolean',
-            'back_color' => 'nullable|string|max:20',
         ];
         
         // Add conditional validation rules
-        if (Schema::hasColumn('products', 'short_description')) {
-            $rules['short_description'] = 'nullable|string|max:500';
-        }
-        if (Schema::hasColumn('products', 'sku')) {
-            $rules['sku'] = 'required|string|max:100|unique:products';
-        }
-        if (Schema::hasColumn('products', 'discount_price')) {
-            $rules['discount_price'] = 'nullable|numeric|min:0|lt:price';
-        }
-        if (Schema::hasColumn('products', 'min_quantity')) {
-            $rules['min_quantity'] = 'nullable|integer|min:1';
-        }
-        if (Schema::hasColumn('products', 'weight')) {
-            $rules['weight'] = 'nullable|numeric|min:0';
-        }
-        if (Schema::hasColumn('products', 'dimensions')) {
-            $rules['dimensions'] = 'nullable|string|max:100';
-        }
-        if (Schema::hasColumn('products', 'merchant_id') && Schema::hasTable('merchants')) {
-            $rules['merchant_id'] = 'required|exists:merchants,id';
-        }
         if (Schema::hasColumn('products', 'category_id') && Schema::hasTable('product_categories')) {
-            $rules['category_id'] = 'nullable|exists:product_categories,id';
+            $rules['category_id'] = 'required|exists:product_categories,id';
         }
         if (Schema::hasColumn('products', 'images')) {
             $rules['images'] = 'nullable|array|max:5';
             $rules['images.*'] = 'image|mimes:jpeg,png,jpg,gif|max:2048';
-        }
-        if (Schema::hasColumn('products', 'meta_title')) {
-            $rules['meta_title'] = 'nullable|string|max:255';
-        }
-        if (Schema::hasColumn('products', 'meta_description')) {
-            $rules['meta_description'] = 'nullable|string|max:500';
         }
         
         $validated = $request->validate($rules);
@@ -274,27 +204,14 @@ class AdminProductController extends Controller
         $product = Product::findOrFail($id);
         
         // Load merchant and category relationships if they exist
+        $categories = [];
+        
         try {
-            if (Schema::hasColumn('products', 'merchant_id')) {
-                $product->load('merchant');
-            }
-            
             if (Schema::hasColumn('products', 'category_id')) {
                 $product->load('category');
             }
         } catch (\Exception $e) {
             // Relationships might not exist yet
-        }
-        
-        $merchants = [];
-        $categories = [];
-        
-        try {
-            if (Schema::hasTable('merchants')) {
-                $merchants = Merchant::where('is_active', true)->get();
-            }
-        } catch (\Exception $e) {
-            // Merchants table might not exist yet
         }
         
         try {
@@ -307,7 +224,7 @@ class AdminProductController extends Controller
             // Product Categories table might not exist yet
         }
         
-        return view('admin.products.edit', compact('product', 'merchants', 'categories'));
+        return view('admin.products.edit', compact('product', 'categories'));
     }
 
     /**
@@ -322,13 +239,11 @@ class AdminProductController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
+            'back_color' => 'required|string|max:20',
             'is_available' => 'boolean',
-            'is_featured' => 'boolean',
         ];
         
-        // Add back_color validation (always allow it)
-        $rules['back_color'] = 'nullable|string|max:20';
+
         
         // Add conditional validation rules
         if (Schema::hasColumn('products', 'short_description')) {
@@ -526,28 +441,14 @@ class AdminProductController extends Controller
     }
 
     /**
-     * Toggle product featured status
+     * Toggle product featured status - DISABLED (feature removed)
      */
     public function toggleFeatured($id)
     {
-        try {
-            $product = Product::findOrFail($id);
-            
-            $product->is_featured = !$product->is_featured;
-            $product->save();
-
-            return response()->json([
-                'success' => true,
-                'message' => $product->is_featured ? 'تم إضافة المنتج للمميزة' : 'تم إزالة المنتج من المميزة',
-                'is_featured' => $product->is_featured
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'حدث خطأ أثناء تحديث الحالة: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'ميزة المنتجات المميزة لم تعد متاحة'
+        ], 404);
     }
 
     /**
@@ -597,7 +498,7 @@ class AdminProductController extends Controller
     public function bulkAction(Request $request)
     {
         $validated = $request->validate([
-            'action' => 'required|in:activate,deactivate,feature,unfeature,delete',
+            'action' => 'required|in:activate,deactivate,delete',
             'product_ids' => 'required|array',
             'product_ids.*' => 'exists:products,id'
         ]);
@@ -614,14 +515,6 @@ class AdminProductController extends Controller
                         break;
                     case 'deactivate':
                         $product->update(['is_available' => false]);
-                        $count++;
-                        break;
-                    case 'feature':
-                        $product->update(['is_featured' => true]);
-                        $count++;
-                        break;
-                    case 'unfeature':
-                        $product->update(['is_featured' => false]);
                         $count++;
                         break;
                     case 'delete':
@@ -642,8 +535,6 @@ class AdminProductController extends Controller
             $actionText = [
                 'activate' => 'تفعيل',
                 'deactivate' => 'إخفاء',
-                'feature' => 'إضافة للمميزة',
-                'unfeature' => 'إزالة من المميزة',
                 'delete' => 'حذف'
             ];
 
@@ -667,18 +558,19 @@ class AdminProductController extends Controller
     {
         $totalProducts = Product::count();
         $availableProducts = Product::where('is_available', true)->count();
-        $featuredProducts = Product::where('is_featured', true)->count();
-        $outOfStock = Product::where('stock_quantity', 0)->count();
-        $lowStock = Product::whereBetween('stock_quantity', [1, 10])->count();
         $recentProducts = Product::where('created_at', '>=', Carbon::now()->subDays(30))->count();
+
+        // حساب إحصائيات الفئات
+        $categoriesStats = [];
+        if (Schema::hasTable('product_categories')) {
+            $categoriesStats = \App\Modules\Products\Models\ProductCategory::withCount('products')->get();
+        }
 
         return [
             'total_products' => $totalProducts,
             'available_products' => $availableProducts,
-            'featured_products' => $featuredProducts,
-            'out_of_stock' => $outOfStock,
-            'low_stock' => $lowStock,
             'recent_products' => $recentProducts,
+            'categories_stats' => $categoriesStats,
             'availability_percentage' => $totalProducts > 0 ? round(($availableProducts / $totalProducts) * 100, 1) : 0
         ];
     }
@@ -692,8 +584,7 @@ class AdminProductController extends Controller
         return [
             'total_sales' => 0, // OrderItem::where('product_id', $product->id)->sum('quantity'),
             'total_revenue' => 0, // OrderItem::where('product_id', $product->id)->sum('total_price'),
-            'avg_rating' => 0, // Product reviews average
-            'total_views' => rand(50, 500), // Product page views
+
             'stock_movements' => [],
             'recent_orders' => []
         ];

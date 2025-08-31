@@ -122,12 +122,7 @@
                         <span class="info-value">{{ $product->sku }}</span>
                     </li>
                     @endif
-                    @if(isset($product->merchant) && $product->merchant)
-                    <li class="info-item">
-                        <span class="info-label">التاجر:</span>
-                        <span class="info-value">{{ $product->merchant->name }}</span>
-                    </li>
-                    @endif
+
                     <li class="info-item">
                         <span class="info-label">تاريخ الإضافة:</span>
                         <span class="info-value">{{ $product->created_at->format('Y/m/d H:i') }}</span>
@@ -200,15 +195,7 @@
                 @endif
             </div>
 
-            <!-- Stock Status -->
-            <div class="stock-status stock-{{ $product->stock_quantity > 10 ? 'in' : ($product->stock_quantity > 0 ? 'low' : 'out') }}">
-                <div class="stock-quantity">{{ $product->stock_quantity }}</div>
-                <div class="stock-label">
-                    @if($product->stock_quantity > 10) متوفر في المخزون
-                    @elseif($product->stock_quantity > 0) مخزون منخفض
-                    @else غير متوفر @endif
-                </div>
-            </div>
+
 
             <!-- Product Statistics -->
             <div class="content-card">
@@ -225,14 +212,7 @@
                         <div class="stat-value-small">{{ number_format($productStats['total_revenue'], 2) }}</div>
                         <div class="stat-label-small">إجمالي الإيرادات</div>
                     </div>
-                    <div class="stat-card-small">
-                        <div class="stat-value-small">{{ number_format($productStats['total_views']) }}</div>
-                        <div class="stat-label-small">المشاهدات</div>
-                    </div>
-                    <div class="stat-card-small">
-                        <div class="stat-value-small">{{ number_format($productStats['avg_rating'], 1) }}</div>
-                        <div class="stat-label-small">متوسط التقييم</div>
-                    </div>
+
                 </div>
                 <ul class="info-list">
                     @if(isset($product->min_quantity) && $product->min_quantity)
@@ -249,14 +229,7 @@
                             </span>
                         </span>
                     </li>
-                    @if($product->is_featured)
-                    <li class="info-item">
-                        <span class="info-label">المميزات:</span>
-                        <span class="info-value">
-                            <span class="status-badge status-featured">منتج مميز</span>
-                        </span>
-                    </li>
-                    @endif
+                    {{-- إزالة عرض حالة المنتج المميز --}}
                 </ul>
             </div>
 
