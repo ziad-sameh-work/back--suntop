@@ -157,22 +157,7 @@
                 </div>
             </div>
 
-            <!-- Product Images -->
-            @if(isset($product->images) && count($product->images) > 0)
-            <div class="content-card">
-                <div class="card-header">
-                    <div class="card-icon purple"><i class="fas fa-images"></i></div>
-                    <h3 class="card-title">صور المنتج ({{ count($product->images) }})</h3>
-                </div>
-                <div class="image-gallery">
-                    @foreach($product->images as $image)
-                        <img src="{{ asset($image) }}" alt="صورة المنتج" class="gallery-image"
-                             onclick="openImageModal('{{ asset($image) }}')"
-                             onerror="this.src='{{ asset('images/no-product.png') }}'">
-                    @endforeach
-                </div>
-            </div>
-            @endif
+
         </div>
 
         <!-- Sidebar -->
