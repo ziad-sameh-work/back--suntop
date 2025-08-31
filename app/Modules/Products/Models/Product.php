@@ -31,27 +31,62 @@ class Product extends Model
      */
     public function getFirstImageAttribute(): ?string
     {
+        \Log::info("=== Product first_image DEBUG START ===");
+        \Log::info("Product ID: " . $this->id);
+        \Log::info("Product Name: " . $this->name);
+        
+        // Check if images array exists
+        \Log::info("Images exists: " . ($this->images ? 'YES' : 'NO'));
+        \Log::info("Images is array: " . (is_array($this->images) ? 'YES' : 'NO'));
+        \Log::info("Images count: " . (is_array($this->images) ? count($this->images) : 'N/A'));
+        
+        if ($this->images) {
+            \Log::info("Raw images data: " . json_encode($this->images));
+        }
+        
         if ($this->images && is_array($this->images) && count($this->images) > 0) {
             $firstImage = $this->images[0];
+            \Log::info("First image path: " . $firstImage);
             
             // If it's already a full URL, return it
             if (filter_var($firstImage, FILTER_VALIDATE_URL)) {
+                \Log::info("✅ First image is full URL - returning: " . $firstImage);
                 return $firstImage;
             }
             
             // Check if file exists and return asset URL
-            if (file_exists(public_path($firstImage))) {
-                return asset($firstImage);
+            $fullPath = public_path($firstImage);
+            \Log::info("Checking file path: " . $fullPath);
+            \Log::info("File exists: " . (file_exists($fullPath) ? 'YES' : 'NO'));
+            
+            if (file_exists($fullPath)) {
+                $assetUrl = asset($firstImage);
+                \Log::info("✅ File exists - returning asset URL: " . $assetUrl);
+                return $assetUrl;
             }
             
             // If file doesn't exist, try with different path formats
             $alternativePath = 'uploads/products/' . basename($firstImage);
-            if (file_exists(public_path($alternativePath))) {
-                return asset($alternativePath);
+            $alternativeFullPath = public_path($alternativePath);
+            \Log::info("Trying alternative path: " . $alternativeFullPath);
+            \Log::info("Alternative file exists: " . (file_exists($alternativeFullPath) ? 'YES' : 'NO'));
+            
+            if (file_exists($alternativeFullPath)) {
+                $alternativeAssetUrl = asset($alternativePath);
+                \Log::info("✅ Alternative path works - returning: " . $alternativeAssetUrl);
+                return $alternativeAssetUrl;
             }
+            
+            \Log::warning("❌ No valid image path found for: " . $firstImage);
+        } else {
+            \Log::info("❌ No images array or empty images");
         }
         
-        return asset('images/no-product.png');
+        $defaultImage = asset('images/no-product.png');
+        \Log::info("❌ Returning default image: " . $defaultImage);
+        \Log::info("=== Product first_image DEBUG END ===");
+        
+        return $defaultImage;
     }
 
     /**
