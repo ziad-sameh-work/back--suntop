@@ -24,7 +24,7 @@ php artisan serve
 ### 3. الحصول على Auth Token
 ```bash
 # تسجيل دخول عميل
-POST http://127.0.0.1:8000/api/auth/login
+POST https://suntop-eg.com/api/auth/login
 Content-Type: application/json
 
 {
@@ -41,7 +41,7 @@ Content-Type: application/json
 
 ### **1. اختبار الاتصال مع Firebase**
 ```bash
-GET http://127.0.0.1:8000/api/firebase-chat/test-connection
+GET https://suntop-eg.com/api/firebase-chat/test-connection
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -57,7 +57,7 @@ Authorization: Bearer YOUR_TOKEN
 
 ### **2. بدء شات جديد**
 ```bash
-POST http://127.0.0.1:8000/api/firebase-chat/start
+POST https://suntop-eg.com/api/firebase-chat/start
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -92,7 +92,7 @@ Content-Type: application/json
 
 ### **3. إرسال رسالة**
 ```bash
-POST http://127.0.0.1:8000/api/firebase-chat/send
+POST https://suntop-eg.com/api/firebase-chat/send
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -104,7 +104,7 @@ Content-Type: application/json
 
 ### **4. إرسال Typing Indicator**
 ```bash
-POST http://127.0.0.1:8000/api/firebase-chat/typing-indicator
+POST https://suntop-eg.com/api/firebase-chat/typing-indicator
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -116,13 +116,13 @@ Content-Type: application/json
 
 ### **5. الحصول على الرسائل**
 ```bash
-GET http://127.0.0.1:8000/api/firebase-chat/1/messages?per_page=20&page=1
+GET https://suntop-eg.com/api/firebase-chat/1/messages?per_page=20&page=1
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### **6. تمييز كمقروء**
 ```bash
-POST http://127.0.0.1:8000/api/firebase-chat/1/read
+POST https://suntop-eg.com/api/firebase-chat/1/read
 Authorization: Bearer YOUR_TOKEN
 ```
 
@@ -132,14 +132,14 @@ Authorization: Bearer YOUR_TOKEN
 
 ### **1. فتح لوحة الإدارة Real-Time**
 ```
-http://127.0.0.1:8000/admin/chats/realtime-dashboard
+https://suntop-eg.com/admin/chats/realtime-dashboard
 ```
 
 ### **2. اختبار APIs الإدارية**
 
 #### إرسال رسالة من الإدارة:
 ```bash
-POST http://127.0.0.1:8000/admin/api/firebase-chat/send-message
+POST https://suntop-eg.com/admin/api/firebase-chat/send-message
 Content-Type: application/json
 X-CSRF-TOKEN: YOUR_CSRF_TOKEN
 
@@ -151,7 +151,7 @@ X-CSRF-TOKEN: YOUR_CSRF_TOKEN
 
 #### تحديث حالة المحادثة:
 ```bash
-POST http://127.0.0.1:8000/admin/api/firebase-chat/1/status
+POST https://suntop-eg.com/admin/api/firebase-chat/1/status
 Content-Type: application/json
 X-CSRF-TOKEN: YOUR_CSRF_TOKEN
 
@@ -162,7 +162,7 @@ X-CSRF-TOKEN: YOUR_CSRF_TOKEN
 
 #### إرسال Typing Indicator من الإدارة:
 ```bash
-POST http://127.0.0.1:8000/admin/api/firebase-chat/typing-indicator
+POST https://suntop-eg.com/admin/api/firebase-chat/typing-indicator
 Content-Type: application/json
 X-CSRF-TOKEN: YOUR_CSRF_TOKEN
 
@@ -174,7 +174,7 @@ X-CSRF-TOKEN: YOUR_CSRF_TOKEN
 
 #### الحصول على الإحصائيات:
 ```bash
-GET http://127.0.0.1:8000/admin/api/firebase-chat/stats
+GET https://suntop-eg.com/admin/api/firebase-chat/stats
 X-Requested-With: XMLHttpRequest
 ```
 
@@ -371,7 +371,7 @@ curl "https://suntop-609f9-default-rtdb.europe-west1.firebasedatabase.app/test.j
 #### 2. Auth Token غير صحيح
 ```bash
 # تحقق من صحة التوكن
-POST http://127.0.0.1:8000/api/user/profile
+POST https://suntop-eg.com/api/user/profile
 Authorization: Bearer YOUR_TOKEN
 ```
 

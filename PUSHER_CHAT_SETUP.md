@@ -107,14 +107,14 @@ POST /api/pusher-chat/chats/{chat_id}/close
 
 **Start a chat (Customer):**
 ```bash
-curl -X GET http://127.0.0.1:8000/api/pusher-chat/start \
+curl -X GET https://suntop-eg.com/api/pusher-chat/start \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Accept: application/json"
 ```
 
 **Send a message:**
 ```bash
-curl -X POST http://127.0.0.1:8000/api/pusher-chat/messages \
+curl -X POST https://suntop-eg.com/api/pusher-chat/messages \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat_id": 1, "message": "Hello support!"}'
@@ -152,7 +152,7 @@ const chat = new PusherChatCustomer({
     pusherCluster: 'mt1',
     csrfToken: document.querySelector('meta[name="csrf-token"]').content,
     apiToken: userApiToken,
-    baseUrl: 'http://127.0.0.1:8000',
+    baseUrl: 'https://suntop-eg.com',
     containerId: 'chat-container'
 });
 ```

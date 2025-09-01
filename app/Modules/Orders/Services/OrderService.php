@@ -7,7 +7,7 @@ use App\Modules\Orders\Models\Order;
 use App\Modules\Orders\Models\OrderItem;
 use App\Modules\Orders\Models\OrderTracking;
 use App\Modules\Products\Services\ProductService;
-use App\Modules\Merchants\Services\MerchantService;
+
 use App\Modules\Loyalty\Services\LoyaltyService;
 use App\Modules\Offers\Services\OfferService;
 use App\Modules\Users\Services\UserCategoryService;
@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\DB;
 class OrderService extends BaseService
 {
     protected $productService;
-    protected $merchantService;
     protected $loyaltyService;
     protected $offerService;
     protected $userCategoryService;
@@ -30,7 +29,6 @@ class OrderService extends BaseService
     public function __construct(
         Order $order,
         ProductService $productService,
-        MerchantService $merchantService,
         LoyaltyService $loyaltyService,
         OfferService $offerService,
         UserCategoryService $userCategoryService,
@@ -38,7 +36,6 @@ class OrderService extends BaseService
     ) {
         $this->model = $order;
         $this->productService = $productService;
-        $this->merchantService = $merchantService;
         $this->loyaltyService = $loyaltyService;
         $this->offerService = $offerService;
         $this->userCategoryService = $userCategoryService;
@@ -53,16 +50,13 @@ class OrderService extends BaseService
         return DB::transaction(function () use ($data) {
             // Get user for category discount
             $user = User::findOrFail($data['user_id']);
-            
-            // Validate merchant
-            $merchant = $this->merchantService->findByIdOrFail($data['merchant_id']);
 
             // Validate products and calculate totals with carton/package support
             $orderItems = $this->validateAndCalculateItemsWithCartons($data['items']);
             $subtotal = $orderItems->sum('total_price');
 
-            // Calculate delivery fee
-            $deliveryFee = $merchant->delivery_fee ?? 15.0;
+            // Calculate delivery fee (fixed rate since no merchants)
+            $deliveryFee = 15.0; // Default delivery fee
 
             // Apply offers if any
             $discount = 0;
@@ -93,7 +87,6 @@ class OrderService extends BaseService
             $order = $this->create([
                 'order_number' => Order::generateOrderNumber(),
                 'user_id' => $data['user_id'],
-                'merchant_id' => $data['merchant_id'],
                 'status' => Order::STATUS_PENDING,
                 'subtotal' => $subtotal,
                 'delivery_fee' => $deliveryFee,
@@ -107,7 +100,7 @@ class OrderService extends BaseService
                 'payment_status' => 'pending',
                 'delivery_address' => $data['delivery_address'],
                 'tracking_number' => Order::generateTrackingNumber(),
-                'estimated_delivery_time' => now()->addMinutes($merchant->estimated_delivery_time ?? 45),
+                'estimated_delivery_time' => now()->addMinutes(45), // Default 45 minutes delivery
                 'notes' => $data['notes'] ?? null,
             ]);
 
@@ -169,7 +162,7 @@ class OrderService extends BaseService
                         'order_id' => $order->id,
                         'tracking_number' => $order->tracking_number,
                         'total_amount' => $order->total_amount,
-                        'merchant_name' => $merchant->name,
+                        'merchant_name' => 'سن توب',
                         'estimated_delivery' => $order->estimated_delivery_time,
                     ]
                 );
@@ -178,7 +171,7 @@ class OrderService extends BaseService
                 \Log::error('Failed to send order confirmation notification: ' . $e->getMessage());
             }
 
-            return $order->load(['items', 'merchant']);
+            return $order->load(['items']);
         });
     }
 
@@ -187,7 +180,7 @@ class OrderService extends BaseService
      */
     public function getUserOrders(array $filters, int $perPage = 20): LengthAwarePaginator
     {
-        $query = $this->model->with(['merchant:id,name', 'items'])
+        $query = $this->model->with(['items'])
                             ->forUser($filters['user_id']);
 
         if ($filters['status']) {
@@ -202,7 +195,7 @@ class OrderService extends BaseService
      */
     public function getOrderById(string $id, int $userId): ?Order
     {
-        return $this->model->with(['items.product', 'merchant', 'trackings'])
+        return $this->model->with(['items.product', 'trackings'])
                           ->forUser($userId)
                           ->find($id);
     }

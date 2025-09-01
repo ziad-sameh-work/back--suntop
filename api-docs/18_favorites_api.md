@@ -7,7 +7,7 @@ The Favorites API provides comprehensive wishlist/favorites functionality for th
 ## Base URL
 
 ```
-http://127.0.0.1:8000/api
+https://suntop-eg.com/api
 ```
 
 ## Authentication
@@ -62,7 +62,7 @@ Retrieve paginated list of user's favorite products with advanced filtering.
           "name": "سن توب برتقال طازج",
           "description": "عصير برتقال طبيعي 100% بدون إضافات",
           "price": 2.99,
-          "image_url": "http://127.0.0.1:8000/storage/products/orange-juice.jpg",
+          "image_url": "https://suntop-eg.com/storage/products/orange-juice.jpg",
           "category": {
             "id": "1",
             "name": "عصائر حمضية"
@@ -196,7 +196,7 @@ Toggle the favorite status of a product (add if not favorited, remove if favorit
       "id": "5",
       "name": "سن توب برتقال طازج",
       "price": 2.99,
-      "image_url": "http://127.0.0.1:8000/storage/products/orange-juice.jpg"
+      "image_url": "https://suntop-eg.com/storage/products/orange-juice.jpg"
     }
   }
 }
@@ -214,7 +214,7 @@ Toggle the favorite status of a product (add if not favorited, remove if favorit
       "id": "5",
       "name": "سن توب برتقال طازج",
       "price": 2.99,
-      "image_url": "http://127.0.0.1:8000/storage/products/orange-juice.jpg"
+      "image_url": "https://suntop-eg.com/storage/products/orange-juice.jpg"
     }
   }
 }
@@ -407,7 +407,7 @@ Get the most favorited products across all users.
           "name": "سن توب مانجو استوائي",
           "description": "عصير مانجو طبيعي بنكهة استوائية",
           "price": 3.50,
-          "image_url": "http://127.0.0.1:8000/storage/products/mango-juice.jpg",
+          "image_url": "https://suntop-eg.com/storage/products/mango-juice.jpg",
           "category": {
             "id": "2",
             "name": "عصائر استوائية"
@@ -422,7 +422,7 @@ Get the most favorited products across all users.
           "name": "سن توب برتقال طازج",
           "description": "عصير برتقال طبيعي 100%",
           "price": 2.99,
-          "image_url": "http://127.0.0.1:8000/storage/products/orange-juice.jpg",
+          "image_url": "https://suntop-eg.com/storage/products/orange-juice.jpg",
           "category": {
             "id": "1",
             "name": "عصائر حمضية"
@@ -464,7 +464,7 @@ Get product recommendations based on user's favorite categories and preferences.
         "name": "سن توب ليمون نعناع",
         "description": "مزيج منعش من الليمون والنعناع الطبيعي",
         "price": 3.25,
-        "image_url": "http://127.0.0.1:8000/storage/products/lemon-mint.jpg",
+        "image_url": "https://suntop-eg.com/storage/products/lemon-mint.jpg",
         "category": {
           "id": "1",
           "name": "عصائر حمضية"
@@ -566,7 +566,7 @@ When fetching products, you can now include favorite status:
         "id": "1",
         "name": "سن توب برتقال طازج",
         "price": 2.99,
-        "image_url": "http://127.0.0.1:8000/storage/products/orange-juice.jpg",
+        "image_url": "https://suntop-eg.com/storage/products/orange-juice.jpg",
         "is_available": true,
         "is_favorited": true,
         "favorites_count": 22
@@ -583,7 +583,7 @@ When fetching products, you can now include favorite status:
 ### FavoritesService Class
 ```dart
 class FavoritesService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'https://suntop-eg.com/api';
   
   // Get user favorites
   Future<FavoritesResponse> getFavorites({

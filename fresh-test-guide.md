@@ -77,7 +77,7 @@ php artisan tinker
 
 ### 1. Open Admin Panel:
 ```
-http://127.0.0.1:8000/admin/chats
+https://suntop-eg.com/admin/chats
 ```
 
 ### 2. Open Browser Console (F12)
@@ -93,7 +93,7 @@ Look for these messages:
 ### 4. Send Test Message:
 ```bash
 # Replace 1 with your actual chat ID
-http://127.0.0.1:8000/test-chat-event/1
+https://suntop-eg.com/test-chat-event/1
 ```
 
 ### 5. Expected Results:
@@ -108,7 +108,7 @@ http://127.0.0.1:8000/test-chat-event/1
 
 ### 1. Open Individual Chat:
 ```
-http://127.0.0.1:8000/admin/chats/1
+https://suntop-eg.com/admin/chats/1
 ```
 
 ### 2. Check Console for:
@@ -119,7 +119,7 @@ http://127.0.0.1:8000/admin/chats/1
 
 ### 3. Send Another Test Message:
 ```bash
-http://127.0.0.1:8000/test-chat-event/1
+https://suntop-eg.com/test-chat-event/1
 ```
 
 ### 4. Expected Results:
@@ -141,10 +141,10 @@ php artisan tinker
 >>> exit
 
 # 3. Open admin panel
-# http://127.0.0.1:8000/admin/chats
+# https://suntop-eg.com/admin/chats
 
 # 4. Test real-time
-# http://127.0.0.1:8000/test-chat-event/1
+# https://suntop-eg.com/test-chat-event/1
 
 # 5. Check logs
 tail -f storage/logs/laravel.log
@@ -163,10 +163,10 @@ php artisan tinker
 ### If Events Don't Work:
 ```bash
 # Check Pusher config
-http://127.0.0.1:8000/test-pusher-config
+https://suntop-eg.com/test-pusher-config
 
 # Check connection
-http://127.0.0.1:8000/test-pusher-debug.html
+https://suntop-eg.com/test-pusher-debug.html
 ```
 
 ### If Database Issues:

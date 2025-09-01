@@ -82,9 +82,9 @@ class CheckChatData extends Command
         $this->info('🔗 Admin Panel Links:');
         if ($chatCount > 0) {
             $firstChat = Chat::first();
-            $this->line("   - All Chats: http://127.0.0.1:8000/admin/chats");
-            $this->line("   - First Chat: http://127.0.0.1:8000/admin/chats/{$firstChat->id}");
-            $this->line("   - Test Event: http://127.0.0.1:8000/test-chat-event/{$firstChat->id}");
+            $this->line("   - All Chats: https://suntop-eg.com/admin/chats");
+            $this->line("   - First Chat: https://suntop-eg.com/admin/chats/{$firstChat->id}");
+            $this->line("   - Test Event: https://suntop-eg.com/test-chat-event/{$firstChat->id}");
         }
 
         $this->line('');
@@ -97,8 +97,8 @@ class CheckChatData extends Command
         } else {
             $firstChat = Chat::first();
             $this->line("   1. Test real-time: php artisan chat:test-real-data --chat_id={$firstChat->id}");
-            $this->line("   2. Open admin panel: http://127.0.0.1:8000/admin/chats");
-            $this->line("   3. Send test message: curl 'http://127.0.0.1:8000/test-chat-event/{$firstChat->id}'");
+            $this->line("   2. Open admin panel: https://suntop-eg.com/admin/chats");
+            $this->line("   3. Send test message: curl 'https://suntop-eg.com/test-chat-event/{$firstChat->id}'");
             $this->line("   4. Watch for real-time updates!");
         }
 

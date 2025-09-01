@@ -36,7 +36,7 @@ php artisan pusher:test-relationships
 
 ### **Step 3: Try Admin Panel Again**
 ```bash
-# Open: http://127.0.0.1:8000/admin/chats
+# Open: https://suntop-eg.com/admin/chats
 ```
 
 ## 🎯 If Still Having Issues
@@ -79,7 +79,7 @@ php artisan pusher:test-relationships
 php artisan pusher-chat:test --reset
 
 # 3. Check admin panel
-# http://127.0.0.1:8000/admin/chats
+# https://suntop-eg.com/admin/chats
 ```
 
 ### **If Migration Fails:**

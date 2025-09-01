@@ -21,7 +21,7 @@ class CreateUserRequest extends FormRequest
             'full_name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|unique:users,phone',
             'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', Rule::in(['user', 'admin', 'merchant'])],
+            'role' => ['required', Rule::in(['customer', 'admin'])],
             'is_active' => 'boolean',
             'profile_image' => 'nullable|string|max:255',
         ];

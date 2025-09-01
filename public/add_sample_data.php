@@ -1,7 +1,7 @@
 <?php
 /*
  * Add sample images and categories to products
- * Access via: http://127.0.0.1:8000/add_sample_data.php
+ * Access via: https://suntop-eg.com/add_sample_data.php
  */
 
 echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Add Sample Data</title>";

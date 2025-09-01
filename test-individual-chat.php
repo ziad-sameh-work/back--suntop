@@ -3,7 +3,7 @@
 // Test script for individual chat page real-time updates
 echo "🧪 Testing Individual Chat Page Real-time...\n";
 
-$baseUrl = 'http://127.0.0.1:8000';
+$baseUrl = 'https://suntop-eg.com';
 
 echo "📋 Testing Steps:\n\n";
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * Debug script to check back_color column and data
- * Place this in project root and access via browser: http://127.0.0.1:8000/debug_back_color.php
+ * Place this in project root and access via browser: https://suntop-eg.com/debug_back_color.php
  */
 
 require_once 'vendor/autoload.php';

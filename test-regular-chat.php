@@ -3,7 +3,7 @@
 // Test script for regular chat API
 echo "🧪 Testing Regular Chat API...\n";
 
-$baseUrl = 'http://127.0.0.1:8000';
+$baseUrl = 'https://suntop-eg.com';
 
 // Test data
 $testData = [

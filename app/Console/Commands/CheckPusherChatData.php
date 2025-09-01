@@ -125,7 +125,7 @@ class CheckPusherChatData extends Command
 
         // Admin panel status
         $this->info('🔗 Admin Panel Status:');
-        $this->line("   - Admin Panel: http://127.0.0.1:8000/admin/chats");
+        $this->line("   - Admin Panel: https://suntop-eg.com/admin/chats");
         $this->line("   - Should show: Combined chats (Regular + Pusher)");
         $this->line("   - Total visible: " . ($regularChatCount + $pusherChatCount) . " chats");
 
@@ -139,7 +139,7 @@ class CheckPusherChatData extends Command
             $this->line('   2. Or create regular data: php artisan chat:force-reset --create-sample');
         } elseif ($pusherChatCount === 0) {
             $this->line('   1. Create pusher test data: php artisan pusher-chat:test --reset');
-            $this->line('   2. Test real-time with pusher: http://127.0.0.1:8000/api/pusher-chat/start');
+            $this->line('   2. Test real-time with pusher: https://suntop-eg.com/api/pusher-chat/start');
         } elseif ($regularChatCount === 0) {
             $this->line('   1. Create regular test data: php artisan chat:force-reset --create-sample');
             $this->line('   2. Both systems will be visible in admin panel');

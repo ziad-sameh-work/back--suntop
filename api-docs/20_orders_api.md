@@ -7,7 +7,7 @@
 ## Base URL
 
 ```
-http://127.0.0.1:8000/api
+https://suntop-eg.com/api
 ```
 
 ## Authentication
@@ -209,7 +209,7 @@ Authorization: Bearer {access_token}
         "product": {
           "id": "5",
           "name": "سن توب برتقال طازج",
-          "image_url": "http://127.0.0.1:8000/storage/products/orange.jpg",
+          "image_url": "https://suntop-eg.com/storage/products/orange.jpg",
           "price": 2.99
         },
         "quantity": 2,
@@ -943,7 +943,7 @@ cancelled  cancelled  cancelled
 ### Flutter Service Example:
 ```dart
 class OrderService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'https://suntop-eg.com/api';
   
   // Create order
   Future<OrderResponse> createOrder(CreateOrderRequest request) async {

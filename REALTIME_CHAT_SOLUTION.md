@@ -27,12 +27,12 @@
 
 ### 1. اختبار الاتصال الأساسي:
 ```http
-GET http://127.0.0.1:8000/api/test-firebase/connection
+GET https://suntop-eg.com/api/test-firebase/connection
 ```
 
 ### 2. اختبار الشات الكامل:
 ```http
-GET http://127.0.0.1:8000/api/test-firebase/full-chat
+GET https://suntop-eg.com/api/test-firebase/full-chat
 ```
 
 ## 📱 **Firebase Chat Endpoints (الآن تعمل Real-Time):**

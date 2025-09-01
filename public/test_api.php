@@ -1,7 +1,7 @@
 <?php
 /*
  * Test API endpoints for products with back_color
- * Access via: http://127.0.0.1:8000/test_api.php
+ * Access via: https://suntop-eg.com/test_api.php
  */
 
 echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>API Test</title>";
@@ -122,7 +122,7 @@ $postmanCollection = [
     'item' => []
 ];
 
-$baseUrl = 'http://127.0.0.1:8000';
+$baseUrl = 'https://suntop-eg.com';
 
 foreach ($endpoints as $endpoint) {
     $postmanCollection['item'][] = [

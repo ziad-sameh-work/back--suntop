@@ -52,14 +52,14 @@ try {
 ### استخدام Postman:
 1. استيراد `api-test-orders.json` إلى Postman
 2. تعيين المتغيرات:
-   - `base_url`: `http://127.0.0.1:8000`
+   - `base_url`: `https://suntop-eg.com`
    - `user_token`: [البوله من endpoint تسجيل الدخول]
    - `order_id`: [معرف الطلب للاختبار]
 
 ### استخدام cURL:
 ```bash
 # إنشاء طلب جديد
-curl -X POST http://127.0.0.1:8000/api/orders \
+curl -X POST https://suntop-eg.com/api/orders \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -195,7 +195,7 @@ php artisan serve
 ```javascript
 const createOrder = async (orderData) => {
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/orders', {
+    const response = await fetch('https://suntop-eg.com/api/orders', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

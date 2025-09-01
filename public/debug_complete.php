@@ -1,7 +1,7 @@
 <?php
 /*
  * Complete diagnostic tool for back_color issue
- * Access via: http://127.0.0.1:8000/debug_complete.php
+ * Access via: https://suntop-eg.com/debug_complete.php
  */
 
 // HTML header

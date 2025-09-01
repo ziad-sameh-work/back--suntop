@@ -41,7 +41,7 @@ class UpdateUserRequest extends FormRequest
                 Rule::unique('users', 'phone')->ignore($userId)
             ],
             'password' => 'sometimes|string|min:8|confirmed',
-            'role' => ['sometimes', 'required', Rule::in(['user', 'admin', 'merchant'])],
+            'role' => ['sometimes', 'required', Rule::in(['customer', 'admin'])],
             'is_active' => 'sometimes|boolean',
             'profile_image' => 'sometimes|nullable|string|max:255',
         ];

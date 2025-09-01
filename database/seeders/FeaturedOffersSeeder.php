@@ -16,8 +16,12 @@ class FeaturedOffersSeeder extends Seeder
     public function run()
     {
         // تحقق من وجود عروض مميزة مسبقاً
-        if (Offer::where('code', 'CITRUS30')->exists()) {
-            $this->command->info('العروض المميزة موجودة بالفعل، تم تخطي عملية إنشاء البيانات التجريبية.');
+        $existingCodes = ['CITRUS30', 'MANGO25', 'FREESHIP100', 'BUY3GET1', 'CASHBACK15'];
+        $hasExistingOffers = Offer::whereIn('code', $existingCodes)->exists();
+        
+        if ($hasExistingOffers) {
+            $this->command->info('العروض المميزة موجودة بالفعل، سيتم تحديث العروض الموجودة...');
+            $this->updateExistingOffers();
             return;
         }
 
@@ -139,6 +143,62 @@ class FeaturedOffersSeeder extends Seeder
         }
 
         $this->command->info('✅ تم تحديث نقاط الرواج بنجاح');
+    }
+
+    /**
+     * Update existing featured offers
+     */
+    private function updateExistingOffers()
+    {
+        $this->command->info('🔄 تحديث العروض المميزة الموجودة...');
+
+        $offerUpdates = [
+            'CITRUS30' => [
+                'title' => 'خصم 30% على عصائر الحمضيات',
+                'valid_until' => now()->addDays(30),
+                'is_active' => true,
+                'is_featured' => true,
+                'trend_score' => 85,
+            ],
+            'MANGO25' => [
+                'title' => 'عرض المانجو الاستوائي',
+                'valid_until' => now()->addDays(45),
+                'is_active' => true,
+                'is_featured' => true,
+                'trend_score' => 78,
+            ],
+            'FREESHIP100' => [
+                'title' => 'شحن مجاني للطلبات +100 جنيه',
+                'valid_until' => now()->addDays(60),
+                'is_active' => true,
+                'is_featured' => true,
+                'trend_score' => 92,
+            ],
+            'BUY3GET1' => [
+                'title' => 'اشتري 3 واحصل على 1 مجاناً',
+                'valid_until' => now()->addDays(21),
+                'is_active' => true,
+                'is_featured' => true,
+                'trend_score' => 67,
+            ],
+            'CASHBACK15' => [
+                'title' => 'استرداد نقدي 15%',
+                'valid_until' => now()->addDays(35),
+                'is_active' => true,
+                'is_featured' => true,
+                'trend_score' => 71,
+            ],
+        ];
+
+        foreach ($offerUpdates as $code => $updateData) {
+            $offer = Offer::where('code', $code)->first();
+            if ($offer) {
+                $offer->update($updateData);
+                $this->command->info("✅ تم تحديث العرض: {$offer->title}");
+            }
+        }
+
+        $this->command->info('🔄 تم تحديث جميع العروض المميزة بنجاح!');
     }
 }
 

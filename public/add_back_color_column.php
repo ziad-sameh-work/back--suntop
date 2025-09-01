@@ -1,7 +1,7 @@
 <?php
 /*
  * Add back_color column to products table if missing
- * Access via: http://127.0.0.1:8000/add_back_color_column.php
+ * Access via: https://suntop-eg.com/add_back_color_column.php
  */
 
 echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Add Back Color Column</title>";

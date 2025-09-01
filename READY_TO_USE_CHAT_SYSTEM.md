@@ -71,7 +71,7 @@ POST /api/pusher-chat/chats/{id}/close      # إغلاق الشات
 ### ✅ Admin Panel
 
 ```
-http://127.0.0.1:8000/admin/pusher-chat     # لوحة إدارة الشات
+https://suntop-eg.com/admin/pusher-chat     # لوحة إدارة الشات
 ```
 
 ميزات لوحة الإدارة:
@@ -84,7 +84,7 @@ http://127.0.0.1:8000/admin/pusher-chat     # لوحة إدارة الشات
 ### ✅ Customer Interface
 
 ```
-http://127.0.0.1:8000/customer-chat-demo.html    # واجهة العميل التجريبية
+https://suntop-eg.com/customer-chat-demo.html    # واجهة العميل التجريبية
 ```
 
 ## 🧪 اختبار النظام
@@ -106,11 +106,11 @@ php artisan pusher:test --channel="chat-test" --message="مرحبا من Laravel
 
 ```bash
 # للعملاء - بدء شات
-curl -X GET http://127.0.0.1:8000/api/pusher-chat/start \
+curl -X GET https://suntop-eg.com/api/pusher-chat/start \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # إرسال رسالة
-curl -X POST http://127.0.0.1:8000/api/pusher-chat/messages \
+curl -X POST https://suntop-eg.com/api/pusher-chat/messages \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat_id": 1, "message": "مرحبا!"}'

@@ -100,7 +100,7 @@ class TestRealChatWithData extends Command
                 'Authorization' => 'Bearer ' . $token,
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json'
-            ])->post('http://127.0.0.1:8000/api/chat/send', [
+            ])->post('https://suntop-eg.com/api/chat/send', [
                 'chat_id' => $chat->id,
                 'message' => '🚀 رسالة اختبار من API endpoint - ' . now()->format('H:i:s')
             ]);
@@ -167,9 +167,9 @@ class TestRealChatWithData extends Command
 
         // Test URLs and expected results
         $this->info('🎯 Test URLs:');
-        $this->line("   - Admin Chat List: http://127.0.0.1:8000/admin/chats");
-        $this->line("   - Individual Chat: http://127.0.0.1:8000/admin/chats/{$chat->id}");
-        $this->line("   - Test Event: http://127.0.0.1:8000/test-chat-event/{$chat->id}");
+        $this->line("   - Admin Chat List: https://suntop-eg.com/admin/chats");
+        $this->line("   - Individual Chat: https://suntop-eg.com/admin/chats/{$chat->id}");
+        $this->line("   - Test Event: https://suntop-eg.com/test-chat-event/{$chat->id}");
 
         $this->line('');
         
@@ -190,7 +190,7 @@ class TestRealChatWithData extends Command
         $this->line("   php artisan chat:test-real-data --reset");
         $this->line('');
         $this->line("   # Test via route:");
-        $this->line("   curl 'http://127.0.0.1:8000/test-chat-event/{$chat->id}'");
+        $this->line("   curl 'https://suntop-eg.com/test-chat-event/{$chat->id}'");
 
         return 0;
     }

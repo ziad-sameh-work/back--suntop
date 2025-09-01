@@ -3,7 +3,7 @@
 /**
  * SunTop API Client - PHP
  * Complete API client for SunTop Backend with HMVC architecture
- * Base URL: http://127.0.0.1:8000
+ * Base URL: https://suntop-eg.com
  * 
  * @author SunTop Development Team
  * @version 1.0.0
@@ -21,7 +21,7 @@ class SunTopAPIClient
      * @param string $baseURL API base URL
      * @param string|null $token JWT access token
      */
-    public function __construct($baseURL = 'http://127.0.0.1:8000', $token = null)
+    public function __construct($baseURL = 'https://suntop-eg.com', $token = null)
     {
         $this->baseURL = rtrim($baseURL, '/');
         $this->token = $token;

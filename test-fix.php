@@ -17,7 +17,7 @@ echo "4. 🎯 Create Test Data:\n";
 echo "   php artisan pusher-chat:test --reset\n\n";
 
 echo "5. 🌐 Open Admin Panel:\n";
-echo "   http://127.0.0.1:8000/admin/chats\n\n";
+echo "   https://suntop-eg.com/admin/chats\n\n";
 
 echo "Expected Results:\n";
 echo "✅ No parse errors\n";

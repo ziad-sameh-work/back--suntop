@@ -257,6 +257,21 @@
         border: 2px solid var(--gray-200);
     }
 
+    .user-avatar-fallback {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-blue));
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 16px;
+        border: 2px solid var(--gray-200);
+        flex-shrink: 0;
+    }
+
     .user-info {
         display: flex;
         align-items: center;
@@ -305,9 +320,9 @@
         color: #2563EB;
     }
 
-    .role-merchant {
-        background: rgba(255, 107, 53, 0.1);
-        color: #EA580C;
+    .role-admin {
+        background: rgba(124, 58, 237, 0.1);
+        color: #7C3AED;
     }
 
     .actions-dropdown {
@@ -495,12 +510,12 @@
         <div class="stat-card">
             <div class="stat-header">
                 <div class="stat-icon purple">
-                    <i class="fas fa-store"></i>
+                    <i class="fas fa-user-shield"></i>
                 </div>
-                <h3 class="stat-title">التجار</h3>
+                <h3 class="stat-title">المديرين</h3>
             </div>
-            <div class="stat-value">{{ number_format($stats['merchants']) }}</div>
-            <div class="stat-change">حساب تاجر</div>
+            <div class="stat-value">{{ number_format($stats['admins']) }}</div>
+            <div class="stat-change">حساب مدير</div>
         </div>
     </div>
 
@@ -528,7 +543,7 @@
                     <select name="role" class="form-select">
                         <option value="">جميع الأنواع</option>
                         <option value="customer" {{ $role === 'customer' ? 'selected' : '' }}>عميل</option>
-                        <option value="merchant" {{ $role === 'merchant' ? 'selected' : '' }}>تاجر</option>
+                        <option value="admin" {{ $role === 'admin' ? 'selected' : '' }}>مدير</option>
                     </select>
                 </div>
 
@@ -613,9 +628,12 @@
                         </td>
                         <td>
                             <div class="user-info">
-                                <img src="{{ $user->profile_image ? asset($user->profile_image) : asset('images/default-avatar.png') }}" 
+                                <img src="{{ $user->profile_image_url }}" 
                                      alt="صورة المستخدم" class="user-avatar"
-                                     onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="user-avatar-fallback">
+                                    {{ $user->initial }}
+                                </div>
                                 <div class="user-details">
                                     <h4>{{ $user->name }}</h4>
                                     <p>{{ $user->email }}</p>
@@ -627,7 +645,7 @@
                         </td>
                         <td>
                             <span class="role-badge role-{{ $user->role }}">
-                                {{ $user->role === 'customer' ? 'عميل' : 'تاجر' }}
+                                {{ $user->role === 'customer' ? 'عميل' : 'مدير' }}
                             </span>
                         </td>
                         <td>

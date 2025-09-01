@@ -1,7 +1,7 @@
 <?php
 /*
  * Test images and categories in API responses
- * Access via: http://127.0.0.1:8000/test_images_categories.php
+ * Access via: https://suntop-eg.com/test_images_categories.php
  */
 
 echo "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Images & Categories Test</title>";

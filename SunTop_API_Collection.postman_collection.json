@@ -1122,7 +1122,7 @@
 				"exec": [
 					"// Set base URL if not already set",
 					"if (!pm.environment.get('base_url')) {",
-					"    pm.environment.set('base_url', 'http://127.0.0.1:8000');",
+					"    pm.environment.set('base_url', 'https://suntop-eg.com');",
 					"}",
 					"",
 					"// Log the request being made",
@@ -1155,7 +1155,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://127.0.0.1:8000",
+			"value": "https://suntop-eg.com",
 			"type": "string"
 		},
 		{

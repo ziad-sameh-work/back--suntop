@@ -7,7 +7,7 @@ The Offers & Loyalty System API provides comprehensive management for promotiona
 ## Base URL
 
 ```
-http://127.0.0.1:8000/api
+https://suntop-eg.com/api
 ```
 
 ## Authentication
@@ -61,7 +61,7 @@ Retrieve paginated list of active offers with advanced filtering.
         "discount_amount": null,
         "minimum_amount": 30,
         "maximum_discount": 50,
-        "image_url": "http://127.0.0.1:8000/storage/offers/morning-fresh.jpg",
+        "image_url": "https://suntop-eg.com/storage/offers/morning-fresh.jpg",
         "valid_from": "2024-01-20T00:00:00Z",
         "valid_until": "2024-02-19T23:59:59Z",
         "usage_limit": 500,
@@ -431,7 +431,7 @@ Retrieve comprehensive loyalty points information including tier status.
       "display_name": "الفضي",
       "points_required": 500,
       "color": "#C0C0C0",
-      "icon_url": "http://127.0.0.1:8000/storage/tiers/silver.png",
+      "icon_url": "https://suntop-eg.com/storage/tiers/silver.png",
       "benefits": [
         "خصم 5% على جميع المنتجات",
         "نقاط إضافية 20% مع كل شراء",
@@ -447,7 +447,7 @@ Retrieve comprehensive loyalty points information including tier status.
       "points_required": 1000,
       "points_needed": 150,
       "color": "#FFD700",
-      "icon_url": "http://127.0.0.1:8000/storage/tiers/gold.png"
+      "icon_url": "https://suntop-eg.com/storage/tiers/gold.png"
     },
     "progress_percentage": 85.0
   }
@@ -791,7 +791,7 @@ Retrieve information about loyalty tier system and user's current status.
         "display_name": "البرونزي",
         "description": "مستوى البداية مع مكافآت أساسية",
         "points_required": 0,
-        "icon_url": "http://127.0.0.1:8000/storage/tiers/bronze.png",
+        "icon_url": "https://suntop-eg.com/storage/tiers/bronze.png",
         "color": "#CD7F32",
         "discount_percentage": 0,
         "bonus_multiplier": 1,
@@ -809,7 +809,7 @@ Retrieve information about loyalty tier system and user's current status.
         "display_name": "الفضي",
         "description": "مستوى متقدم مع مكافآت محسّنة",
         "points_required": 500,
-        "icon_url": "http://127.0.0.1:8000/storage/tiers/silver.png",
+        "icon_url": "https://suntop-eg.com/storage/tiers/silver.png",
         "color": "#C0C0C0",
         "discount_percentage": 5,
         "bonus_multiplier": 1.2,
@@ -980,7 +980,7 @@ Manually add loyalty points to a customer account.
 ### Getting Offers
 ```dart
 class OffersService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'https://suntop-eg.com/api';
   
   Future<OffersResponse> getOffers({
     String? category,

@@ -38,7 +38,7 @@ Creates fresh pusher chats with real messages.
 
 ### **Step 3: View Combined Results**
 ```
-http://127.0.0.1:8000/admin/chats
+https://suntop-eg.com/admin/chats
 ```
 Should now show:
 - Regular chats (if any) with `📝 عادي` badge
@@ -48,7 +48,7 @@ Should now show:
 ### **Step 4: Test Real-time with Pusher Data**
 ```bash
 # Test pusher chat API
-curl -X POST "http://127.0.0.1:8000/api/pusher-chat/messages" \
+curl -X POST "https://suntop-eg.com/api/pusher-chat/messages" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat_id": 1, "message": "Test pusher message"}'
@@ -122,7 +122,7 @@ php artisan chat:force-reset --create-sample
 php artisan pusher-chat:check
 
 # 5. Open admin panel
-# http://127.0.0.1:8000/admin/chats
+# https://suntop-eg.com/admin/chats
 
 # 6. Test real-time with pusher
 php artisan pusher-chat:test --chat_id=1

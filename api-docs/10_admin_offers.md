@@ -1,6 +1,6 @@
 # API Documentation - Admin Offers Management
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Admin Offers Management Endpoints
 All endpoints in this section require admin authentication.

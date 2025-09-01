@@ -3,7 +3,7 @@
 // Test script for dynamic chat messages
 echo "🧪 Testing Dynamic Chat Messages...\n";
 
-$baseUrl = 'http://127.0.0.1:8000';
+$baseUrl = 'https://suntop-eg.com';
 
 // Different test messages to see dynamic updates
 $testMessages = [

@@ -9,6 +9,7 @@
     .form-card { background: var(--white); border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); border: 1px solid var(--gray-100); margin-bottom: 25px; }
     .form-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--gray-100); }
     .product-avatar { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 3px solid var(--gray-200); }
+    .product-avatar-fallback { width: 80px; height: 80px; border-radius: 8px; background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-blue)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 32px; border: 3px solid var(--gray-200); flex-shrink: 0; }
     .form-header h2 { font-size: 24px; font-weight: 600; color: var(--gray-800); margin: 0; }
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px; }
     .form-group { display: flex; flex-direction: column; gap: 8px; }
@@ -39,9 +40,14 @@
 <div class="edit-product-container">
     <div class="form-card">
         <div class="form-header">
-            <img src="{{ $product->first_image }}" 
-                 alt="صورة المنتج" class="product-avatar"
-                 onerror="this.src='{{ asset('images/no-product.png') }}'">
+            @if($product->hasValidImage())
+                <img src="{{ $product->first_image }}" 
+                     alt="صورة المنتج" class="product-avatar"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            @endif
+            <div class="product-avatar-fallback" style="display:{{ $product->hasValidImage() ? 'none' : 'flex' }};">
+                {{ $product->initial }}
+            </div>
             <div>
                 <h2>تعديل: {{ $product->name }}</h2>
                 <p style="color: var(--gray-600); margin: 0;">آخر تحديث: {{ $product->updated_at->format('Y/m/d H:i') }}</p>

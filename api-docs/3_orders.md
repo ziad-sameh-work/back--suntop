@@ -1,6 +1,6 @@
 # API Documentation - Orders
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Orders Endpoints
 
@@ -105,7 +105,7 @@ Base URL: `http://127.0.0.1:8000`
         {
           "product_id": "1",
           "product_name": "سن توب برتقال طازج",
-          "product_image": "http://127.0.0.1:8000/storage/products/j1.jpg",
+          "product_image": "https://suntop-eg.com/storage/products/j1.jpg",
           "quantity": 2,
           "unit_price": 2.50,
           "total_price": 5.00
@@ -160,7 +160,7 @@ Base URL: `http://127.0.0.1:8000`
       {
         "product_id": "1",
         "product_name": "سن توب برتقال طازج",
-        "product_image": "http://127.0.0.1:8000/storage/products/j1.jpg",
+        "product_image": "https://suntop-eg.com/storage/products/j1.jpg",
         "quantity": 2,
         "unit_price": 2.50,
         "total_price": 5.00

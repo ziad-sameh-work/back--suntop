@@ -3,7 +3,7 @@
 // Debug script to test chat events
 echo "🔧 Testing Chat Events and Data Structure...\n\n";
 
-$baseUrl = 'http://127.0.0.1:8000';
+$baseUrl = 'https://suntop-eg.com';
 
 echo "📋 Debug Steps:\n\n";
 

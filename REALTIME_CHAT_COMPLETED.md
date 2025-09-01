@@ -100,10 +100,10 @@ pusher = new Pusher('44911da009b5537ffae1', {
 ### 1. اختبار قائمة الشاتات:
 ```bash
 # افتح صفحة الإدارة
-http://127.0.0.1:8000/admin/chats
+https://suntop-eg.com/admin/chats
 
 # أرسل رسالة من العميل عبر API
-curl -X POST http://127.0.0.1:8000/api/pusher-chat/messages \
+curl -X POST https://suntop-eg.com/api/pusher-chat/messages \
   -H "Authorization: Bearer CUSTOMER_TOKEN" \
   -d '{"chat_id": 1, "message": "test message"}'
 
@@ -113,7 +113,7 @@ curl -X POST http://127.0.0.1:8000/api/pusher-chat/messages \
 ### 2. اختبار الشات الفردي:
 ```bash
 # افتح شات محدد
-http://127.0.0.1:8000/admin/chats/1
+https://suntop-eg.com/admin/chats/1
 
 # أرسل رسالة من عميل آخر
 # ستظهر الرسالة فوراً في شاشة الإدارة

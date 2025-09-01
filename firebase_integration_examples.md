@@ -254,13 +254,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 ### 1. اختبار الاتصال مع Firebase
 ```bash
-GET http://127.0.0.1:8000/api/firebase-chat/test-connection
+GET https://suntop-eg.com/api/firebase-chat/test-connection
 Authorization: Bearer YOUR_TOKEN
 ```
 
 ### 2. بدء شات جديد
 ```bash
-POST http://127.0.0.1:8000/api/firebase-chat/start
+POST https://suntop-eg.com/api/firebase-chat/start
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
@@ -272,7 +272,7 @@ Content-Type: application/json
 
 ### 3. إرسال رسالة
 ```bash
-POST http://127.0.0.1:8000/api/firebase-chat/send
+POST https://suntop-eg.com/api/firebase-chat/send
 Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 

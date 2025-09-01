@@ -14,7 +14,6 @@ class CreateOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'merchant_id' => 'required|string|exists:merchants,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|string|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -38,8 +37,6 @@ class CreateOrderRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'merchant_id.required' => 'معرف التاجر مطلوب',
-            'merchant_id.exists' => 'التاجر غير موجود',
             'items.required' => 'عناصر الطلب مطلوبة',
             'items.min' => 'يجب أن يحتوي الطلب على عنصر واحد على الأقل',
             'items.*.product_id.required' => 'معرف المنتج مطلوب',

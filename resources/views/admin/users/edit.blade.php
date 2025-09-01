@@ -37,6 +37,36 @@
         border: 3px solid var(--gray-200);
     }
 
+    .user-avatar-edit-fallback {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-blue));
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 32px;
+        border: 3px solid var(--gray-200);
+        flex-shrink: 0;
+    }
+
+    .current-image-fallback {
+        width: 150px;
+        height: 150px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-blue));
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 48px;
+        border: 2px solid var(--gray-200);
+        margin: 0 auto;
+    }
+
     .form-header-content h2 {
         font-size: 24px;
         font-weight: 600;
@@ -365,9 +395,12 @@
 <div class="edit-user-container">
     <div class="form-card">
         <div class="form-header">
-            <img src="{{ $user->profile_image ? asset($user->profile_image) : asset('images/default-avatar.png') }}" 
+            <img src="{{ $user->profile_image_url }}" 
                  alt="صورة المستخدم" class="user-avatar-edit"
-                 onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="user-avatar-edit-fallback">
+                {{ $user->initial }}
+            </div>
             
             <div class="form-header-content">
                 <h2>تعديل بيانات: {{ $user->name }}</h2>
@@ -446,7 +479,7 @@
                     <select name="role" class="form-select" required>
                         <option value="">اختر نوع الحساب</option>
                         <option value="customer" {{ old('role', $user->role) === 'customer' ? 'selected' : '' }}>عميل</option>
-                        <option value="merchant" {{ old('role', $user->role) === 'merchant' ? 'selected' : '' }}>تاجر</option>
+                        <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>مدير</option>
                     </select>
                     @error('role')
                         <div class="form-error">{{ $message }}</div>
@@ -510,10 +543,14 @@
             <div class="form-group full-width">
                 <label class="form-label">صورة الملف الشخصي</label>
                 
-                @if($user->profile_image)
+                @if($user->hasValidProfileImage())
                     <div class="current-image">
                         <p style="margin-bottom: 10px; color: var(--gray-600); font-size: 14px;">الصورة الحالية:</p>
-                        <img src="{{ asset($user->profile_image) }}" alt="الصورة الحالية">
+                        <img src="{{ $user->profile_image_url }}" alt="الصورة الحالية"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="current-image-fallback">
+                            {{ $user->initial }}
+                        </div>
                     </div>
                 @endif
 

@@ -7,7 +7,7 @@ This API provides specialized endpoints for the home page special offers section
 ## Base URL
 
 ```
-http://127.0.0.1:8000/api
+https://suntop-eg.com/api
 ```
 
 ## Authentication
@@ -41,7 +41,7 @@ Retrieve featured offers specifically formatted for the home page special offers
 
 **Example Request:**
 ```bash
-curl -X GET "http://127.0.0.1:8000/api/offers/featured?limit=5&category_id=1" \
+curl -X GET "https://suntop-eg.com/api/offers/featured?limit=5&category_id=1" \
   -H "Accept: application/json"
 ```
 
@@ -57,7 +57,7 @@ curl -X GET "http://127.0.0.1:8000/api/offers/featured?limit=5&category_id=1" \
         "description": "خصم 30% على جميع العصائر الحمضية",
         "discount_percentage": 30,
         "discount_amount": null,
-        "image_url": "http://127.0.0.1:8000/storage/offers/citrus-offer.jpg",
+        "image_url": "https://suntop-eg.com/storage/offers/citrus-offer.jpg",
         "background_color": "#FF6B35",
         "text_color": "#FFFFFF",
         "offer_type": {
@@ -72,7 +72,7 @@ curl -X GET "http://127.0.0.1:8000/api/offers/featured?limit=5&category_id=1" \
         "merchant": {
           "id": "1",
           "name": "سن توب",
-          "logo_url": "http://127.0.0.1:8000/storage/merchants/suntop-logo.jpg"
+          "logo_url": "https://suntop-eg.com/storage/merchants/suntop-logo.jpg"
         },
         "valid_from": "2024-01-21T00:00:00Z",
         "valid_until": "2024-02-20T23:59:59Z",
@@ -103,7 +103,7 @@ curl -X GET "http://127.0.0.1:8000/api/offers/featured?limit=5&category_id=1" \
         "description": "خصم 25% على عصائر المانجو الاستوائية",
         "discount_percentage": 25,
         "discount_amount": null,
-        "image_url": "http://127.0.0.1:8000/storage/offers/mango-offer.jpg",
+        "image_url": "https://suntop-eg.com/storage/offers/mango-offer.jpg",
         "background_color": "#FFA500",
         "text_color": "#FFFFFF",
         "offer_type": {
@@ -118,7 +118,7 @@ curl -X GET "http://127.0.0.1:8000/api/offers/featured?limit=5&category_id=1" \
         "merchant": {
           "id": "1",
           "name": "سن توب",
-          "logo_url": "http://127.0.0.1:8000/storage/merchants/suntop-logo.jpg"
+          "logo_url": "https://suntop-eg.com/storage/merchants/suntop-logo.jpg"
         },
         "valid_from": "2024-01-21T00:00:00Z",
         "valid_until": "2024-03-06T23:59:59Z",
@@ -143,7 +143,7 @@ curl -X GET "http://127.0.0.1:8000/api/offers/featured?limit=5&category_id=1" \
         "description": "شحن مجاني للطلبات أكثر من 100 جنيه",
         "discount_percentage": null,
         "discount_amount": null,
-        "image_url": "http://127.0.0.1:8000/storage/offers/free-shipping.jpg",
+        "image_url": "https://suntop-eg.com/storage/offers/free-shipping.jpg",
         "background_color": "#28A745",
         "text_color": "#FFFFFF",
         "offer_type": {
@@ -158,7 +158,7 @@ curl -X GET "http://127.0.0.1:8000/api/offers/featured?limit=5&category_id=1" \
         "merchant": {
           "id": "1",
           "name": "سن توب",
-          "logo_url": "http://127.0.0.1:8000/storage/merchants/suntop-logo.jpg"
+          "logo_url": "https://suntop-eg.com/storage/merchants/suntop-logo.jpg"
         },
         "valid_from": "2024-01-21T00:00:00Z",
         "valid_until": "2024-03-21T23:59:59Z",
@@ -216,7 +216,7 @@ Retrieve quick statistics to display in the home page header or stats section.
 
 **Example Request:**
 ```bash
-curl -X GET "http://127.0.0.1:8000/api/offers/stats" \
+curl -X GET "https://suntop-eg.com/api/offers/stats" \
   -H "Accept: application/json"
 ```
 
@@ -272,7 +272,7 @@ Retrieve currently trending offers based on usage patterns and trend scores.
 
 **Example Request:**
 ```bash
-curl -X GET "http://127.0.0.1:8000/api/offers/trending?limit=3" \
+curl -X GET "https://suntop-eg.com/api/offers/trending?limit=3" \
   -H "Accept: application/json"
 ```
 
@@ -344,7 +344,7 @@ trend_score = (usage_count * 2) + (usage_rate * 50) + recency_bonus
 
 ```dart
 class FeaturedOffersService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'https://suntop-eg.com/api';
   
   // Get featured offers for home page
   Future<FeaturedOffersResponse> getFeaturedOffers({
@@ -999,15 +999,15 @@ class _HomeSpecialOffersSectionState extends State<HomeSpecialOffersSection> {
 
 ```bash
 # Test featured offers
-curl -X GET "http://127.0.0.1:8000/api/offers/featured?limit=3" \
+curl -X GET "https://suntop-eg.com/api/offers/featured?limit=3" \
   -H "Accept: application/json"
 
 # Test quick stats
-curl -X GET "http://127.0.0.1:8000/api/offers/stats" \
+curl -X GET "https://suntop-eg.com/api/offers/stats" \
   -H "Accept: application/json"
 
 # Test trending offers
-curl -X GET "http://127.0.0.1:8000/api/offers/trending?limit=2" \
+curl -X GET "https://suntop-eg.com/api/offers/trending?limit=2" \
   -H "Accept: application/json"
 ```
 

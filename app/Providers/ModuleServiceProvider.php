@@ -77,7 +77,6 @@ class ModuleServiceProvider extends ServiceProvider
                 return new \App\Modules\Orders\Services\OrderService(
                     $app->make(\App\Modules\Orders\Models\Order::class),
                     $app->make(\App\Modules\Products\Services\ProductService::class),
-                    $app->make(\App\Modules\Merchants\Services\MerchantService::class),
                     $app->make(\App\Modules\Loyalty\Services\LoyaltyService::class),
                     $app->make(\App\Modules\Offers\Services\OfferService::class),
                     $app->make(\App\Modules\Users\Services\UserCategoryService::class),

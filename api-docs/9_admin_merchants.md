@@ -1,6 +1,6 @@
 # API Documentation - Admin Merchant Management
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Admin Merchant Management Endpoints
 All endpoints in this section require admin authentication.
@@ -32,7 +32,7 @@ All endpoints in this section require admin authentication.
         "phone": "+20 109 999 9999",
         "email": "fresh@example.com",
         "address": "شارع النيل، القاهرة",
-        "logo_url": "http://127.0.0.1:8000/storage/merchants/logo1.jpg",
+        "logo_url": "https://suntop-eg.com/storage/merchants/logo1.jpg",
         "is_active": true,
         "is_open": true,
         "rating": 4.8,
@@ -89,7 +89,7 @@ cover_image: [FILE] (optional)
     "phone": "+20 109 888 8888",
     "email": "paradise@example.com",
     "address": "شارع الهرم، الجيزة",
-    "logo_url": "http://127.0.0.1:8000/storage/merchants/logo2.jpg",
+    "logo_url": "https://suntop-eg.com/storage/merchants/logo2.jpg",
     "is_active": true,
     "is_open": true,
     "commission_rate": 12,
@@ -116,8 +116,8 @@ cover_image: [FILE] (optional)
     "email": "fresh@example.com",
     "address": "شارع النيل، القاهرة",
     "description": "متجر متخصص في العصائر الطبيعية الطازجة",
-    "logo_url": "http://127.0.0.1:8000/storage/merchants/logo1.jpg",
-    "cover_image_url": "http://127.0.0.1:8000/storage/merchants/cover1.jpg",
+    "logo_url": "https://suntop-eg.com/storage/merchants/logo1.jpg",
+    "cover_image_url": "https://suntop-eg.com/storage/merchants/cover1.jpg",
     "is_active": true,
     "is_open": true,
     "opening_hours": "من 9 صباحاً حتى 11 مساءً",

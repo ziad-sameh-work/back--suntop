@@ -1,5 +1,5 @@
 {
-  "base_url": "http://127.0.0.1:8000",
+  "base_url": "https://suntop-eg.com",
   "endpoints": {
     "authentication": {
       "login": {
@@ -147,7 +147,7 @@
                 "id": "1",
                 "name": "سن توب برتقال طازج",
                 "description": "عصير برتقال طازج فاخر - زجاجة 500 مل مع فيتامين سي",
-                "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
                 "price": 2.50,
                 "original_price": 3.00,
                 "currency": "EGP",
@@ -203,7 +203,7 @@
                 "id": "1",
                 "name": "سن توب برتقال طازج",
                 "description": "عصير برتقال طازج فاخر",
-                "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
                 "price": 2.50,
                 "original_price": 3.00,
                 "currency": "EGP",
@@ -261,7 +261,7 @@
                 "id": "1",
                 "name": "سن توب برتقال طازج",
                 "description": "عصير برتقال طازج فاخر",
-                "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
                 "price": 2.50,
                 "currency": "EGP",
                 "category": "Citrus",
@@ -294,10 +294,10 @@
             "id": "1",
             "name": "سن توب برتقال طازج",
             "description": "عصير برتقال طازج فاخر - زجاجة 500 مل مع فيتامين سي",
-            "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+            "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
             "gallery": [
-              "http://127.0.0.1:8000/storage/products/j1_1.jpg",
-              "http://127.0.0.1:8000/storage/products/j1_2.jpg"
+              "https://suntop-eg.com/storage/products/j1_1.jpg",
+              "https://suntop-eg.com/storage/products/j1_2.jpg"
             ],
             "price": 2.50,
             "original_price": 3.00,
@@ -391,7 +391,7 @@
                 {
                   "product_id": "1",
                   "product_name": "سن توب برتقال طازج",
-                  "product_image": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                  "product_image": "https://suntop-eg.com/storage/products/j1.jpg",
                   "quantity": 2,
                   "unit_price": 2.50,
                   "total_price": 5.00
@@ -485,7 +485,7 @@
               {
                 "product_id": "1",
                 "product_name": "سن توب برتقال طازج",
-                "product_image": "http://127.0.0.1:8000/storage/products/j1.jpg",
+                "product_image": "https://suntop-eg.com/storage/products/j1.jpg",
                 "quantity": 2,
                 "unit_price": 2.50,
                 "total_price": 5.00

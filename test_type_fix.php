@@ -16,7 +16,7 @@ echo "- إضافة: use Illuminate\\Support\\Collection as SupportCollection;\n"
 echo "- تغيير نوع الإرجاع إلى: SupportCollection\n\n";
 
 echo "🧪 الآن يمكنك اختبار Orders API مرة أخرى:\n";
-echo "POST http://127.0.0.1:8000/api/orders\n\n";
+echo "POST https://suntop-eg.com/api/orders\n\n";
 
 echo "📋 بيانات الاختبار:\n";
 $testData = [

@@ -1,11 +1,11 @@
 /**
  * SunTop API Client - JavaScript/TypeScript
  * Complete API client for SunTop Backend with HMVC architecture
- * Base URL: http://127.0.0.1:8000
+ * Base URL: https://suntop-eg.com
  */
 
 class SunTopAPI {
-    constructor(baseURL = 'http://127.0.0.1:8000', token = null) {
+    constructor(baseURL = 'https://suntop-eg.com', token = null) {
         this.baseURL = baseURL;
         this.token = token;
         this.defaultHeaders = {

@@ -79,10 +79,10 @@ GET /api/pusher-chat/messages/{chat_id}
 php artisan serve
 
 # افتح صفحة الإدارة
-http://127.0.0.1:8000/admin/chats
+https://suntop-eg.com/admin/chats
 
 # أرسل رسالة تجريبية (استبدل TOKEN)
-curl -X POST "http://127.0.0.1:8000/api/chat/send" \
+curl -X POST "https://suntop-eg.com/api/chat/send" \
   -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat_id": 1, "message": "مرحبا من العميل"}'
@@ -92,7 +92,7 @@ curl -X POST "http://127.0.0.1:8000/api/chat/send" \
 
 ### 2. **اختبار PusherChat:**
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/pusher-chat/messages" \
+curl -X POST "https://suntop-eg.com/api/pusher-chat/messages" \
   -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat_id": 1, "message": "مرحبا من PusherChat"}'

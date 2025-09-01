@@ -129,25 +129,7 @@ class UserSeeder extends Seeder
                 'created_at' => now()->subDays(90),
                 'updated_at' => now(),
             ],
-            [
-                'name' => 'Merchant User',
-                'username' => 'merchant1',
-                'email' => 'merchant@suntop.com',
-                'full_name' => 'تاجر سن توب',
-                'phone' => '+20 100 000 0002',
-                'password' => Hash::make('merchant123'),
-                'role' => 'merchant',
-                'user_category_id' => null, // Merchants don't need categories
-                'total_cartons_purchased' => 0,
-                'total_packages_purchased' => 0,
-                'total_units_purchased' => 0,
-                'total_orders_count' => 0,
-                'total_purchase_amount' => 0,
-                'is_active' => true,
-                'email_verified_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+
         ];
 
         foreach ($users as $userData) {
@@ -163,6 +145,7 @@ class UserSeeder extends Seeder
 
         $this->command->info('🎉 تم إنشاء ' . count($users) . ' مستخدمين بنجاح!');
         $this->command->info('📊 الآن يمكن للمستخدمين الاستفادة من خصومات الكراتين والعلب حسب فئاتهم');
+        $this->command->info('ℹ️ ملاحظة: تم إزالة فئة التاجر من النظام');
     }
 
     /**

@@ -395,7 +395,7 @@
                     <select name="role" class="form-select" required>
                         <option value="">اختر نوع الحساب</option>
                         <option value="customer" {{ old('role') === 'customer' ? 'selected' : '' }}>عميل</option>
-                        <option value="merchant" {{ old('role') === 'merchant' ? 'selected' : '' }}>تاجر</option>
+                        <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>مدير</option>
                     </select>
                     @error('role')
                         <div class="form-error">{{ $message }}</div>

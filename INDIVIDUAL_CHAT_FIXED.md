@@ -62,7 +62,7 @@ messageDiv.innerHTML = `
 
 ### 1. **افتح صفحة الشات الفردية:**
 ```
-http://127.0.0.1:8000/admin/chats/1
+https://suntop-eg.com/admin/chats/1
 ```
 
 ### 2. **تحقق من Console:**
@@ -74,7 +74,7 @@ http://127.0.0.1:8000/admin/chats/1
 
 ### 3. **أرسل رسالة من العميل:**
 ```bash
-curl -X POST "http://127.0.0.1:8000/api/chat/send" \
+curl -X POST "https://suntop-eg.com/api/chat/send" \
   -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat_id": 1, "message": "Testing individual chat! 🚀"}'

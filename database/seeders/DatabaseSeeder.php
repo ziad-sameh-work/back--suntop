@@ -56,9 +56,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('❤️ المفضلة: مفضلة متنوعة للعملاء');
         $this->command->info('');
         $this->command->info('🔐 بيانات التيست السريع:');
-        $this->command->info('Username: testuser | Password: password123');
-        $this->command->info('Admin: admin | Password: admin123');
-        $this->command->info('Merchant: merchant1 | Password: merchant123');
+        $this->command->info('Customer: testuser | Password: password123');
+        $this->command->info('Admin: admin | Password: password');
         $this->command->info('');
         $this->command->info('🚀 المشروع جاهز للتيست!');
     }

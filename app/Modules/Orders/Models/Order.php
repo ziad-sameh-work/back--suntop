@@ -16,7 +16,6 @@ class Order extends Model
     protected $fillable = [
         'order_number',
         'user_id',
-        'merchant_id',
         'status',
         'subtotal',
         'delivery_fee',
@@ -72,13 +71,7 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Merchant relationship
-     */
-    public function merchant(): BelongsTo
-    {
-        return $this->belongsTo(Merchant::class);
-    }
+
 
     /**
      * Order items relationship
@@ -112,13 +105,7 @@ class Order extends Model
         return $query->where('user_id', $userId);
     }
 
-    /**
-     * Scope for merchant orders
-     */
-    public function scopeForMerchant($query, $merchantId)
-    {
-        return $query->where('merchant_id', $merchantId);
-    }
+
 
     /**
      * Scope by status

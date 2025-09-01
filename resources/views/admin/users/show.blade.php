@@ -56,6 +56,22 @@
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
     }
 
+    .user-avatar-large-fallback {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-blue));
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 48px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        flex-shrink: 0;
+    }
+
     .user-info-header {
         flex: 1;
         min-width: 300px;
@@ -359,9 +375,9 @@
         color: #2563EB;
     }
 
-    .role-merchant {
-        background: rgba(255, 107, 53, 0.1);
-        color: #EA580C;
+    .role-admin {
+        background: rgba(124, 58, 237, 0.1);
+        color: #7C3AED;
     }
 </style>
 @endpush
@@ -371,16 +387,19 @@
     <!-- User Header -->
     <div class="user-header">
         <div class="user-header-content">
-            <img src="{{ $user->profile_image ? asset($user->profile_image) : asset('images/default-avatar.png') }}" 
+            <img src="{{ $user->profile_image_url }}" 
                  alt="صورة المستخدم" class="user-avatar-large"
-                 onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="user-avatar-large-fallback">
+                {{ $user->initial }}
+            </div>
             
             <div class="user-info-header">
                 <h1 class="user-name">{{ $user->name }}</h1>
                 <p class="user-email">{{ $user->email }}</p>
                 <div class="user-badges">
                     <span class="badge">
-                        {{ $user->role === 'customer' ? 'عميل' : 'تاجر' }}
+                        {{ $user->role === 'customer' ? 'عميل' : 'مدير' }}
                     </span>
                     <span class="badge">
                         {{ $user->is_active ? 'نشط' : 'غير نشط' }}
@@ -440,7 +459,7 @@
                     <span class="info-label">نوع الحساب:</span>
                     <span class="info-value">
                         <span class="role-badge role-{{ $user->role }}">
-                            {{ $user->role === 'customer' ? 'عميل' : 'تاجر' }}
+                            {{ $user->role === 'customer' ? 'عميل' : 'مدير' }}
                         </span>
                     </span>
                 </li>

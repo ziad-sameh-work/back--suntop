@@ -68,14 +68,14 @@ echo ">>> echo 'Chat created with ID: ' . \$chat->id;\n";
 echo ">>> exit\n\n";
 
 echo "📨 Send Test Message:\n";
-echo "curl -X POST \"http://127.0.0.1:8000/test-chat-event/1\" \\\n";
+echo "curl -X POST \"https://suntop-eg.com/test-chat-event/1\" \\\n";
 echo "  -H \"Content-Type: application/json\"\n\n";
 
 echo "🎯 Expected Fresh Test Flow:\n";
 echo "1. Clear all data ✅\n";
 echo "2. Create fresh customer ✅\n";
 echo "3. Create fresh chat ✅\n";
-echo "4. Open admin panel: http://127.0.0.1:8000/admin/chats\n";
+echo "4. Open admin panel: https://suntop-eg.com/admin/chats\n";
 echo "5. Send test message and see real-time updates ✅\n\n";
 
 echo "🔍 Verify Data is Clean:\n";

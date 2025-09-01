@@ -369,7 +369,7 @@ class AdminUserController extends Controller
         $activeUsers = User::where('role', '!=', 'admin')->where('is_active', true)->count();
         $inactiveUsers = User::where('role', '!=', 'admin')->where('is_active', false)->count();
         $customers = User::where('role', 'customer')->count();
-        $merchants = User::where('role', 'merchant')->count();
+        $admins = User::where('role', 'admin')->count();
         $recentUsers = User::where('role', '!=', 'admin')
             ->where('created_at', '>=', Carbon::now()->subDays(30))
             ->count();
@@ -379,7 +379,7 @@ class AdminUserController extends Controller
             'active_users' => $activeUsers,
             'inactive_users' => $inactiveUsers,
             'customers' => $customers,
-            'merchants' => $merchants,
+            'admins' => $admins,
             'recent_users' => $recentUsers,
             'active_percentage' => $totalUsers > 0 ? round(($activeUsers / $totalUsers) * 100, 1) : 0
         ];

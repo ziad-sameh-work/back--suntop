@@ -4,7 +4,7 @@
  * Run this script once to fix existing notification data
  * 
  * Usage: Place this file in your Laravel project root and run it via browser
- * URL: http://127.0.0.1:8000/fix_notifications.php
+ * URL: https://suntop-eg.com/fix_notifications.php
  */
 
 // Include Laravel bootstrap

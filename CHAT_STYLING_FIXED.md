@@ -61,7 +61,7 @@
 
 ### **View Chat Page:**
 ```
-http://127.0.0.1:8000/admin/chats/1
+https://suntop-eg.com/admin/chats/1
 ```
 
 ### **Expected Results:**

@@ -56,14 +56,14 @@ FIREBASE_DATABASE_URL=https://suntop-609f9-default-rtdb.europe-west1.firebasedat
 
 قم بزيارة هذا URL لاختبار الاتصال:
 ```
-GET http://127.0.0.1:8000/api/test-firebase/connection
+GET https://suntop-eg.com/api/test-firebase/connection
 ```
 
 ### 4. 🧪 اختبار الشات الكامل
 
 قم بزيارة هذا URL لاختبار جميع وظائف الشات:
 ```
-GET http://127.0.0.1:8000/api/test-firebase/full-chat
+GET https://suntop-eg.com/api/test-firebase/full-chat
 ```
 
 ## 📱 Endpoints للشات Real-Time

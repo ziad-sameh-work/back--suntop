@@ -1,6 +1,6 @@
 # API Documentation - Admin Analytics
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Admin Analytics Endpoints
 All endpoints in this section require admin authentication.

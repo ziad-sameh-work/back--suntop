@@ -1,6 +1,6 @@
 # API Documentation - Real-Time Chat for Mobile Apps
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Real-Time Chat API Endpoints
 
@@ -305,7 +305,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService(
-    apiBaseUrl: 'http://127.0.0.1:8000',
+    apiBaseUrl: 'https://suntop-eg.com',
     userToken: 'your_auth_token_here'
   );
   

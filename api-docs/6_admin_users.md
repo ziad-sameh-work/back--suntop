@@ -1,6 +1,6 @@
 # API Documentation - Admin User Management
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Admin User Management Endpoints
 All endpoints in this section require admin authentication.
@@ -34,7 +34,7 @@ All endpoints in this section require admin authentication.
         "phone": "+20 109 999 9999",
         "role": "customer",
         "is_active": true,
-        "profile_image": "http://127.0.0.1:8000/storage/users/1.jpg",
+        "profile_image": "https://suntop-eg.com/storage/users/1.jpg",
         "user_category": {
           "id": "2",
           "name": "ذهبي",
@@ -142,7 +142,7 @@ profile_image: [FILE] (optional)
     "phone": "+20 109 999 9999",
     "role": "customer",
     "is_active": true,
-    "profile_image": "http://127.0.0.1:8000/storage/users/1.jpg",
+    "profile_image": "https://suntop-eg.com/storage/users/1.jpg",
     "user_category": {
       "id": "2",
       "name": "ذهبي",

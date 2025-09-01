@@ -43,8 +43,8 @@ class Product extends Model
             return \Storage::disk('public')->url($firstImage);
         }
         
-        // Return default image with full URL
-        return asset('images/no-product.png');
+        // Return default image with full URL - ensure CORS compatibility
+        return url('images/no-product.png');
     }
 
     /**
@@ -166,5 +166,41 @@ class Product extends Model
     public function getFavoritesCountAttribute(): int
     {
         return $this->favorites()->count();
+    }
+
+    /**
+     * Get product image URL with fallback
+     */
+    public function getImageUrlAttribute(): string
+    {
+        return $this->getFirstImageAttribute();
+    }
+
+    /**
+     * Check if product has valid image
+     */
+    public function hasValidImage(): bool
+    {
+        if (!$this->images || !is_array($this->images) || count($this->images) === 0) {
+            return false;
+        }
+
+        $firstImage = $this->images[0];
+        
+        // If it's a URL, assume it's valid (API calls will validate)
+        if (filter_var($firstImage, FILTER_VALIDATE_URL)) {
+            return true;
+        }
+        
+        // Check if file exists locally
+        return \Storage::disk('public')->exists($firstImage);
+    }
+
+    /**
+     * Get product initial for fallback icon
+     */
+    public function getInitialAttribute(): string
+    {
+        return strtoupper(substr($this->name ?? 'P', 0, 1));
     }
 }

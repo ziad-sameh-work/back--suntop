@@ -7,7 +7,7 @@ Dashboard متقدم لإدارة الطلبات مع تحديثات فورية�
 ## Base URL
 
 ```
-http://127.0.0.1:8000/api/admin
+https://suntop-eg.com/api/admin
 ```
 
 ## Authentication

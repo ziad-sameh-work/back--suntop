@@ -120,7 +120,7 @@ class TestPusherChatData extends Command
                 'Authorization' => 'Bearer ' . $token,
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json'
-            ])->post('http://127.0.0.1:8000/api/pusher-chat/messages', [
+            ])->post('https://suntop-eg.com/api/pusher-chat/messages', [
                 'chat_id' => $pusherChat->id,
                 'message' => '🚀 رسالة Pusher من API endpoint - ' . now()->format('H:i:s')
             ]);
@@ -176,8 +176,8 @@ class TestPusherChatData extends Command
 
         // Test URLs and expected results
         $this->info('🎯 Test URLs:');
-        $this->line("   - Admin Chat List: http://127.0.0.1:8000/admin/chats");
-        $this->line("   - Pusher Chat API: http://127.0.0.1:8000/api/pusher-chat/start");
+        $this->line("   - Admin Chat List: https://suntop-eg.com/admin/chats");
+        $this->line("   - Pusher Chat API: https://suntop-eg.com/api/pusher-chat/start");
         $this->line("   - Check Data: php artisan pusher-chat:check");
 
         $this->line('');

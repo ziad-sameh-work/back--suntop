@@ -1,6 +1,6 @@
 # API Documentation - Products
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Products Endpoints
 
@@ -27,7 +27,7 @@ Base URL: `http://127.0.0.1:8000`
         "id": "1",
         "name": "سن توب برتقال طازج",
         "description": "عصير برتقال طازج فاخر - زجاجة 500 مل مع فيتامين سي",
-        "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+        "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
         "price": 2.50,
         "original_price": 3.00,
             "currency": "EGP",
@@ -102,7 +102,7 @@ Base URL: `http://127.0.0.1:8000`
         "id": "1",
         "name": "سن توب برتقال طازج",
         "description": "عصير برتقال طازج فاخر",
-        "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+        "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
         "price": 2.50,
         "original_price": 3.00,
             "currency": "EGP",
@@ -177,7 +177,7 @@ Base URL: `http://127.0.0.1:8000`
         "id": "1",
         "name": "سن توب برتقال طازج",
         "description": "عصير برتقال طازج فاخر",
-        "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+        "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
         "price": 2.50,
         "currency": "EGP",
         "category": "Citrus",
@@ -213,10 +213,10 @@ Base URL: `http://127.0.0.1:8000`
     "id": "1",
     "name": "سن توب برتقال طازج",
     "description": "عصير برتقال طازج فاخر - زجاجة 500 مل مع فيتامين سي",
-    "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+    "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
     "gallery": [
-      "http://127.0.0.1:8000/storage/products/j1_1.jpg",
-      "http://127.0.0.1:8000/storage/products/j1_2.jpg"
+      "https://suntop-eg.com/storage/products/j1_1.jpg",
+      "https://suntop-eg.com/storage/products/j1_2.jpg"
     ],
     "price": 2.50,
     "original_price": 3.00,

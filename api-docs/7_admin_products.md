@@ -1,6 +1,6 @@
 # API Documentation - Admin Product Management
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Admin Product Management Endpoints
 All endpoints in this section require admin authentication.
@@ -30,7 +30,7 @@ All endpoints in this section require admin authentication.
         "id": "1",
         "name": "سن توب برتقال طازج",
         "description": "عصير برتقال طازج فاخر - زجاجة 500 مل",
-        "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+        "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
         "price": 2.50,
         "original_price": 3.00,
         "currency": "EGP",
@@ -107,7 +107,7 @@ tags[1]: "Citrus"
     "id": "2",
     "name": "سن توب ليمون طازج",
     "description": "عصير ليمون طازج فاخر - زجاجة 500 مل",
-    "image_url": "http://127.0.0.1:8000/storage/products/j2.jpg",
+    "image_url": "https://suntop-eg.com/storage/products/j2.jpg",
     "price": 2.25,
     "original_price": 2.75,
     "currency": "EGP",
@@ -138,10 +138,10 @@ tags[1]: "Citrus"
     "id": "1",
     "name": "سن توب برتقال طازج",
     "description": "عصير برتقال طازج فاخر - زجاجة 500 مل",
-    "image_url": "http://127.0.0.1:8000/storage/products/j1.jpg",
+    "image_url": "https://suntop-eg.com/storage/products/j1.jpg",
     "gallery": [
-      "http://127.0.0.1:8000/storage/products/j1_1.jpg",
-      "http://127.0.0.1:8000/storage/products/j1_2.jpg"
+      "https://suntop-eg.com/storage/products/j1_1.jpg",
+      "https://suntop-eg.com/storage/products/j1_2.jpg"
     ],
     "price": 2.50,
     "original_price": 3.00,

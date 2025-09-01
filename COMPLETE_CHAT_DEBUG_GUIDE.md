@@ -5,7 +5,7 @@
 ### 1. **Check Pusher Configuration**
 ```bash
 # Visit this URL to check config:
-http://127.0.0.1:8000/test-pusher-config
+https://suntop-eg.com/test-pusher-config
 ```
 
 **Expected Response:**
@@ -24,7 +24,7 @@ http://127.0.0.1:8000/test-pusher-config
 ### 2. **Test Pusher Connection** 
 ```bash
 # Open debug page:
-http://127.0.0.1:8000/test-pusher-debug.html
+https://suntop-eg.com/test-pusher-debug.html
 ```
 
 **Expected Results:**
@@ -35,7 +35,7 @@ http://127.0.0.1:8000/test-pusher-debug.html
 ### 3. **Test Event Broadcasting**
 ```bash
 # Test with route (replace 1 with actual chat ID):
-http://127.0.0.1:8000/test-chat-event/1
+https://suntop-eg.com/test-chat-event/1
 ```
 
 **Expected Response:**
@@ -81,7 +81,7 @@ tail -f storage/logs/laravel.log
 
 #### A. Open Admin Chat List:
 ```
-http://127.0.0.1:8000/admin/chats
+https://suntop-eg.com/admin/chats
 ```
 
 #### B. Open Browser Console (F12)
@@ -96,7 +96,7 @@ http://127.0.0.1:8000/admin/chats
 #### D. Trigger Test Event:
 ```bash
 # Visit this while admin panel is open:
-http://127.0.0.1:8000/test-chat-event/1
+https://suntop-eg.com/test-chat-event/1
 ```
 
 #### E. Expected Results in Admin Panel:
@@ -113,7 +113,7 @@ http://127.0.0.1:8000/test-chat-event/1
 
 #### A. Open Individual Chat:
 ```
-http://127.0.0.1:8000/admin/chats/1
+https://suntop-eg.com/admin/chats/1
 ```
 
 #### B. Expected Console Logs:
@@ -124,7 +124,7 @@ http://127.0.0.1:8000/admin/chats/1
 
 #### C. Trigger Event and Check:
 ```bash
-http://127.0.0.1:8000/test-chat-event/1
+https://suntop-eg.com/test-chat-event/1
 ```
 
 #### D. Expected Results:
@@ -176,7 +176,7 @@ http://127.0.0.1:8000/test-chat-event/1
 ### Test Different Message Types:
 ```bash
 # Test 1: Customer message
-curl -X POST "http://127.0.0.1:8000/api/chat/send" \
+curl -X POST "https://suntop-eg.com/api/chat/send" \
   -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"chat_id": 1, "message": "Test customer message 🧪"}'
@@ -185,7 +185,7 @@ curl -X POST "http://127.0.0.1:8000/api/chat/send" \
 # (Type message in admin chat interface)
 
 # Test 3: Route-based test
-curl "http://127.0.0.1:8000/test-chat-event/1"
+curl "https://suntop-eg.com/test-chat-event/1"
 ```
 
 ## ✅ Success Checklist
@@ -218,14 +218,14 @@ curl "http://127.0.0.1:8000/test-chat-event/1"
 ## 🎯 Final Test Scenario
 
 1. **Open two browser windows:**
-   - Window 1: `http://127.0.0.1:8000/admin/chats`
-   - Window 2: `http://127.0.0.1:8000/admin/chats/1`
+   - Window 1: `https://suntop-eg.com/admin/chats`
+   - Window 2: `https://suntop-eg.com/admin/chats/1`
 
 2. **Open console in both windows**
 
 3. **Trigger test event:**
    ```bash
-   curl "http://127.0.0.1:8000/test-chat-event/1"
+   curl "https://suntop-eg.com/test-chat-event/1"
    ```
 
 4. **Expected Results:**

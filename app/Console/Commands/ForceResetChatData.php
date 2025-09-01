@@ -96,8 +96,8 @@ class ForceResetChatData extends Command
         $this->info('🚀 Ready for fresh testing!');
         $this->line('');
         $this->info('🎯 Next steps:');
-        $this->line('1. Open admin panel: http://127.0.0.1:8000/admin/chats');
-        $this->line('2. Test with: http://127.0.0.1:8000/test-chat-event/1');
+        $this->line('1. Open admin panel: https://suntop-eg.com/admin/chats');
+        $this->line('2. Test with: https://suntop-eg.com/test-chat-event/1');
         $this->line('3. Or use: php artisan chat:test-events');
 
         return 0;

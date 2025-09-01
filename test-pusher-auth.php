@@ -3,7 +3,7 @@
 // Simple test script for Pusher authentication
 echo "🔧 Testing Pusher Authentication...\n";
 
-$baseUrl = 'http://127.0.0.1:8000';
+$baseUrl = 'https://suntop-eg.com';
 
 // Test data
 $testData = [

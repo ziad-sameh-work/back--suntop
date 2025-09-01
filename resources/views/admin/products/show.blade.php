@@ -12,6 +12,7 @@
     }
     .product-header-content { position: relative; z-index: 2; display: grid; grid-template-columns: auto 1fr auto; gap: 25px; align-items: center; }
     .product-main-image { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 4px solid rgba(255, 255, 255, 0.3); }
+    .product-image-large-fallback { width: 120px; height: 120px; border-radius: 12px; background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-blue)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 48px; border: 4px solid rgba(255, 255, 255, 0.3); flex-shrink: 0; }
     .product-name { font-size: 32px; font-weight: 700; margin: 0 0 8px 0; }
     .product-description { font-size: 16px; opacity: 0.9; margin: 0 0 15px 0; line-height: 1.5; }
     .product-badges { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -72,9 +73,14 @@
     <!-- Product Header -->
     <div class="product-header">
         <div class="product-header-content">
-            <img src="{{ $product->first_image }}" 
-                 alt="صورة المنتج" class="product-main-image"
-                 onerror="this.src='{{ asset('images/no-product.png') }}'">
+            @if($product->hasValidImage())
+                <img src="{{ $product->first_image }}" 
+                     alt="صورة المنتج" class="product-main-image"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            @endif
+            <div class="product-image-large-fallback" style="display:{{ $product->hasValidImage() ? 'none' : 'flex' }};">
+                {{ $product->initial }}
+            </div>
             
             <div class="product-info-header">
                 <h1 class="product-name">{{ $product->name }}</h1>

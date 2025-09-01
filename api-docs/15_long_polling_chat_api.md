@@ -1,6 +1,6 @@
 # API Documentation - Long-Polling Chat for Mobile Apps
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Long-Polling Chat API Endpoints
 

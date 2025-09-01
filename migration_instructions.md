@@ -38,7 +38,7 @@ php artisan migrate --path=database/migrations/2025_08_28_170900_add_selling_typ
 يمكنك الآن اختبار Orders API مرة أخرى من Postman:
 
 ```json
-POST http://127.0.0.1:8000/api/orders
+POST https://suntop-eg.com/api/orders
 {
     "merchant_id": "1",
     "items": [

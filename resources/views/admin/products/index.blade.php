@@ -258,6 +258,21 @@
         border: 2px solid var(--gray-200);
     }
 
+    .product-image-fallback {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-blue));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 24px;
+        border: 2px solid var(--gray-200);
+        flex-shrink: 0;
+    }
+
     .product-info {
         display: flex;
         align-items: center;
@@ -680,9 +695,14 @@
                         </td>
                         <td>
                             <div class="product-info">
-                                <img src="{{ $product->first_image }}" 
-                                     alt="صورة المنتج" class="product-image"
-                                     onerror="this.src='{{ asset('images/no-product.png') }}'">
+                                @if($product->hasValidImage())
+                                    <img src="{{ $product->first_image }}" 
+                                         alt="صورة المنتج" class="product-image"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                @endif
+                                <div class="product-image-fallback" style="display:{{ $product->hasValidImage() ? 'none' : 'flex' }};">
+                                    {{ $product->initial }}
+                                </div>
                                 <div class="product-details">
                                     <h4>{{ $product->name }}</h4>
                                     <p>{{ Str::limit($product->description, 50) }}</p>

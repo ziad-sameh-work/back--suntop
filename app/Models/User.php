@@ -18,7 +18,6 @@ class User extends Authenticatable
     // User roles constants
     const ROLE_USER = 'customer';
     const ROLE_ADMIN = 'admin';
-    const ROLE_MERCHANT = 'merchant';
 
     /**
      * The attributes that are mass assignable.
@@ -239,5 +238,33 @@ class User extends Authenticatable
     public function getCategoryDisplayNameAttribute(): ?string
     {
         return $this->userCategory?->display_name;
+    }
+
+    /**
+     * Get user profile image URL with fallback
+     */
+    public function getProfileImageUrlAttribute(): string
+    {
+        if ($this->profile_image && file_exists(public_path($this->profile_image))) {
+            return asset($this->profile_image);
+        }
+        
+        return asset('images/default-avatar.png');
+    }
+
+    /**
+     * Get user initial for avatar fallback
+     */
+    public function getInitialAttribute(): string
+    {
+        return strtoupper(substr($this->name ?? 'U', 0, 1));
+    }
+
+    /**
+     * Check if user has a valid profile image
+     */
+    public function hasValidProfileImage(): bool
+    {
+        return $this->profile_image && file_exists(public_path($this->profile_image));
     }
 }

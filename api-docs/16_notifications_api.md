@@ -7,7 +7,7 @@ The Notifications API provides comprehensive notification management for the Sun
 ## Base URL
 
 ```
-http://127.0.0.1:8000/api
+https://suntop-eg.com/api
 ```
 
 ## Authentication
@@ -708,7 +708,7 @@ The system automatically generates notifications for:
 
 ```dart
 class NotificationService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'https://suntop-eg.com/api';
   
   // Get notifications
   Future<NotificationsResponse> getNotifications({

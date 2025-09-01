@@ -6,7 +6,7 @@ echo "1. 🚀 Create Test Data:\n";
 echo "   php artisan pusher-chat:test --reset\n\n";
 
 echo "2. 🌐 Test Admin Page:\n";
-echo "   Open: http://127.0.0.1:8000/admin/chats\n\n";
+echo "   Open: https://suntop-eg.com/admin/chats\n\n";
 
 echo "3. ✅ Expected Results:\n";
 echo "   - Page loads without errors\n";

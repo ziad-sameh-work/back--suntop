@@ -1,6 +1,6 @@
 # API Documentation - Admin Order Management
 
-Base URL: `http://127.0.0.1:8000`
+Base URL: `https://suntop-eg.com`
 
 ## Admin Order Management Endpoints
 All endpoints in this section require admin authentication.
@@ -114,7 +114,7 @@ All endpoints in this section require admin authentication.
         "id": "1",
         "product_id": "1",
         "product_name": "سن توب برتقال طازج",
-        "product_image": "http://127.0.0.1:8000/storage/products/j1.jpg",
+        "product_image": "https://suntop-eg.com/storage/products/j1.jpg",
         "quantity": 2,
         "unit_price": 2.50,
         "total_price": 5.00
@@ -123,7 +123,7 @@ All endpoints in this section require admin authentication.
         "id": "2",
         "product_id": "2",
         "product_name": "سن توب ليمون طازج",
-        "product_image": "http://127.0.0.1:8000/storage/products/j2.jpg",
+        "product_image": "https://suntop-eg.com/storage/products/j2.jpg",
         "quantity": 1,
         "unit_price": 2.99,
         "total_price": 2.99
@@ -376,7 +376,7 @@ All endpoints in this section require admin authentication.
   "success": true,
   "message": "تم إنشاء ملف التصدير بنجاح",
   "data": {
-    "file_url": "http://127.0.0.1:8000/storage/exports/orders_2024_01_22_120000.csv",
+    "file_url": "https://suntop-eg.com/storage/exports/orders_2024_01_22_120000.csv",
     "file_name": "orders_2024_01_22_120000.csv",
     "expires_at": "2024-01-29T12:00:00Z"
   }

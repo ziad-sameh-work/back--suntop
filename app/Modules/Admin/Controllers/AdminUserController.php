@@ -74,8 +74,7 @@ class AdminUserController extends BaseController
                     'active_users' => User::where('is_active', true)->count(),
                     'inactive_users' => User::where('is_active', false)->count(),
                     'admins' => User::where('role', 'admin')->count(),
-                    'merchants' => User::where('role', 'merchant')->count(),
-                    'customers' => User::where('role', 'user')->count(),
+                    'customers' => User::where('role', 'customer')->count(),
                 ]
             ]);
         } catch (\Exception $e) {
@@ -246,8 +245,7 @@ class AdminUserController extends BaseController
                 ],
                 'by_role' => [
                     'admins' => User::where('role', 'admin')->count(),
-                    'merchants' => User::where('role', 'merchant')->count(),
-                    'customers' => User::where('role', 'user')->count(),
+                    'customers' => User::where('role', 'customer')->count(),
                 ],
                 'by_category' => User::leftJoin('user_categories', 'users.user_category_id', '=', 'user_categories.id')
                                    ->selectRaw('user_categories.name as category, user_categories.display_name, COUNT(users.id) as count')

@@ -6,7 +6,7 @@
  * استخدم هذا الملف للتأكد من عمل API بشكل صحيح
  */
 
-$baseUrl = 'http://127.0.0.1:8000/api';
+$baseUrl = 'https://suntop-eg.com/api';
 
 // مثال على بيانات الطلب
 $orderData = [
