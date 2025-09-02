@@ -170,7 +170,7 @@ class AdminDashboardController extends Controller
      */
     private function getRecentOrders()
     {
-        return Order::with(['user', 'merchant'])
+        return Order::with(['user'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();

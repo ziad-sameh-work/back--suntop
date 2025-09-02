@@ -16,10 +16,10 @@ class OrderItem extends Model
         'quantity',
         'unit_price',
         'total_price',
-        'selling_type',
-        'cartons_count',
-        'packages_count',
-        'units_count',
+        // 'selling_type', // Removed - column doesn't exist
+        // 'cartons_count', // Removed - column doesn't exist
+        // 'packages_count', // Removed - column doesn't exist
+        // 'units_count', // Removed - column doesn't exist
     ];
 
     protected $casts = [

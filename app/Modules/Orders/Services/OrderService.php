@@ -114,10 +114,10 @@ class OrderService extends BaseService
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'total_price' => $item['total_price'],
-                    'selling_type' => $item['selling_type'],
-                    'cartons_count' => $item['cartons_count'],
-                    'packages_count' => $item['packages_count'],
-                    'units_count' => $item['units_count'],
+                    // 'selling_type' => $item['selling_type'], // Removed - column doesn't exist
+                    // 'cartons_count' => $item['cartons_count'], // Removed - column doesn't exist
+                    // 'packages_count' => $item['packages_count'], // Removed - column doesn't exist
+                    // 'units_count' => $item['units_count'], // Removed - column doesn't exist
                 ]);
 
                 // Stock update (disabled - for backward compatibility)
