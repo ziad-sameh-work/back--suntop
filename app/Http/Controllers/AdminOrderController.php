@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Schema;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Users\Models\User;
 use App\Modules\Products\Models\Product;
-use App\Modules\Merchants\Models\Merchant;
+use App\Models\Notification;
+
 
 class AdminOrderController extends Controller
 {
@@ -59,10 +60,7 @@ class AdminOrderController extends Controller
             $query->where('total_amount', '<=', $request->amount_to);
         }
 
-        // Merchant filter (if merchant relationship exists)
-        if ($request->filled('merchant_id') && $request->merchant_id !== 'all') {
-            $query->where('merchant_id', $request->merchant_id);
-        }
+        // Merchant filter removed - single merchant system
 
         // Sorting
         $sortBy = $request->get('sort_by', 'created_at');
@@ -76,15 +74,8 @@ class AdminOrderController extends Controller
         // Statistics
         $stats = $this->getOrdersStats($request);
 
-        // Get merchants for filter (if available)
+        // Merchants list removed - single merchant system
         $merchants = [];
-        try {
-            if (Schema::hasTable('merchants')) {
-                $merchants = Merchant::where('is_active', true)->get();
-            }
-        } catch (\Exception $e) {
-            // Merchants table might not exist
-        }
 
         return view('admin.orders.index', compact('orders', 'stats', 'merchants'));
     }
@@ -96,8 +87,7 @@ class AdminOrderController extends Controller
     {
         $order = Order::with([
             'user',
-            'items.product',
-            'items.product.merchant'
+            'items.product'
         ])->findOrFail($id);
 
         // Calculate order statistics
@@ -115,7 +105,7 @@ class AdminOrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,confirmed,processing,shipped,delivered,cancelled,refunded',
+            'status' => 'required|in:pending,confirmed,preparing,processing,shipping,shipped,delivered,cancelled,refunded',
             'notes' => 'nullable|string|max:500'
         ]);
 
@@ -174,6 +164,212 @@ class AdminOrderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'حدث خطأ أثناء تحديث حالة الدفع'
+            ], 500);
+        }
+    }
+
+    /**
+     * Update order status with notification
+     */
+    public function updateStatusWithNotification(Request $request, $id)
+    {
+        // Enhanced logging for debugging
+        \Log::info("updateStatusWithNotification called", [
+            'order_id' => $id,
+            'request_data' => $request->all(),
+            'content_type' => $request->header('Content-Type'),
+            'method' => $request->method()
+        ]);
+
+        try {
+            // Validate request
+            $request->validate([
+                'status' => 'required|in:pending,confirmed,preparing,processing,shipping,shipped,delivered,cancelled,refunded',
+                'title' => 'required|string|max:100',
+                'message' => 'required|string|max:500',
+                'notes' => 'nullable|string|max:500'
+            ]);
+
+            \Log::info("Validation passed", ['order_id' => $id]);
+
+            // Start transaction
+            DB::beginTransaction();
+
+            // Find order with user relationship
+            $order = Order::with('user')->findOrFail($id);
+            $oldStatus = $order->status;
+            
+            \Log::info("Order found", [
+                'order_id' => $order->id,
+                'current_status' => $oldStatus,
+                'new_status' => $request->status,
+                'user_exists' => $order->user ? true : false,
+                'user_id' => $order->user_id,
+                'order_number' => $order->order_number
+            ]);
+
+            // Update order status
+            $order->update([
+                'status' => $request->status,
+                'status_notes' => $request->notes,
+                'updated_at' => now()
+            ]);
+
+            \Log::info("Order status updated", ['order_id' => $order->id, 'new_status' => $request->status]);
+
+            // Create notification if user exists
+            $notificationId = null;
+            if ($order->user) {
+                try {
+                    $notification = Notification::createOrderStatusNotification(
+                        $order->user->id,
+                        $order->order_number ?? "ORDER-{$order->id}",
+                        $request->status,
+                        [
+                            'title' => $request->title,
+                            'message' => $request->message,
+                            'custom_message' => true
+                        ]
+                    );
+                    
+                    $notificationId = $notification->id;
+                    \Log::info("Notification created", ['notification_id' => $notificationId]);
+                    
+                } catch (\Exception $notifE) {
+                    \Log::error("Failed to create notification", [
+                        'error' => $notifE->getMessage(),
+                        'user_id' => $order->user->id
+                    ]);
+                    // Continue without failing the whole operation
+                }
+            } else {
+                \Log::warning("No user found for order", ['order_id' => $id, 'user_id' => $order->user_id]);
+            }
+
+            // Commit transaction
+            DB::commit();
+
+            \Log::info("Transaction committed successfully", ['order_id' => $id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تحديث حالة الطلب وإرسال الإشعار بنجاح',
+                'data' => [
+                    'order_id' => $order->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $request->status,
+                    'notification_id' => $notificationId
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error("Validation failed", [
+                'order_id' => $id,
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'خطأ في البيانات المرسلة',
+                'errors' => $e->errors()
+            ], 422);
+            
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::error("Order not found", ['order_id' => $id]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'الطلب غير موجود'
+            ], 404);
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            
+            \Log::error('Error in updateStatusWithNotification', [
+                'order_id' => $id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء تحديث حالة الطلب',
+                'error_details' => [
+                    'message' => $e->getMessage(),
+                    'file' => basename($e->getFile()),
+                    'line' => $e->getLine()
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Update payment status with notification
+     */
+    public function updatePaymentWithNotification(Request $request, $id)
+    {
+        $request->validate([
+            'payment_status' => 'required|in:pending,paid,failed,refunded',
+            'title' => 'required|string|max:100',
+            'message' => 'required|string|max:500',
+            'payment_notes' => 'nullable|string|max:500'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $order = Order::with('user')->findOrFail($id);
+            
+            // Update payment status
+            $order->update([
+                'payment_status' => $request->payment_status,
+                'payment_notes' => $request->payment_notes,
+                'paid_at' => $request->payment_status === 'paid' ? now() : null,
+                'updated_at' => now()
+            ]);
+
+            // Send notification to user
+            if ($order->user) {
+                // Create a custom notification for payment status
+                Notification::createForUser(
+                    $order->user->id,
+                    $request->title,
+                    $request->message,
+                    Notification::TYPE_PAYMENT,
+                    null, // body
+                    Notification::ALERT_SUCCESS, // alert type
+                    [
+                        'order_number' => $order->order_number,
+                        'payment_status' => $request->payment_status,
+                        'custom_message' => true
+                    ], // data
+                    Notification::PRIORITY_HIGH,
+                    "/orders/{$order->order_number}"
+                );
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم تحديث حالة الدفع وإرسال الإشعار بنجاح',
+                'new_payment_status' => $request->payment_status
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error updating payment status with notification: ' . $e->getMessage());
+            \Log::error('Error trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء تحديث حالة الدفع',
+                'error' => $e->getMessage(), // Temporary for debugging
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
             ], 500);
         }
     }
@@ -238,7 +434,7 @@ class AdminOrderController extends Controller
             'action' => 'required|in:update_status,cancel,delete',
             'order_ids' => 'required|array',
             'order_ids.*' => 'exists:orders,id',
-            'status' => 'required_if:action,update_status|in:pending,confirmed,processing,shipped,delivered,cancelled,refunded',
+            'status' => 'required_if:action,update_status|in:pending,confirmed,preparing,processing,shipped,delivered,cancelled,refunded',
             'notes' => 'nullable|string|max:500'
         ]);
 

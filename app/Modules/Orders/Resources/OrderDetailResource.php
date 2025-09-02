@@ -14,9 +14,9 @@ class OrderDetailResource extends JsonResource
             'status' => $this->status,
             'status_text' => $this->status_text,
             'merchant' => [
-                'id' => $this->merchant->id,
-                'name' => $this->merchant->name,
-                'phone' => $this->merchant->phone,
+                'id' => 1,
+                'name' => 'سن توب',
+                'phone' => '+20 109 999 9999',
             ],
             'items' => $this->items->map(function ($item) {
                 return [

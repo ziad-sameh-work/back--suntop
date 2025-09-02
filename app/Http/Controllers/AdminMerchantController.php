@@ -82,16 +82,14 @@ class AdminMerchantController extends Controller
         // Get merchant statistics
         $merchantStats = $this->getMerchantStatistics($merchant);
         
-        // Get merchant products
-        $products = Product::where('merchant_id', $merchant->id)
-                          ->withCount(['orderItems'])
+        // Get all products (single merchant system)
+        $products = Product::withCount(['orderItems'])
                           ->orderBy('created_at', 'desc')
                           ->limit(10)
                           ->get();
 
-        // Get recent orders
-        $recentOrders = Order::where('merchant_id', $merchant->id)
-                          ->with(['user', 'items.product'])
+        // Get recent orders (single merchant system)
+        $recentOrders = Order::with(['user', 'items.product'])
                           ->orderBy('created_at', 'desc')
                           ->limit(10)
                           ->get();
@@ -271,8 +269,8 @@ class AdminMerchantController extends Controller
 
             $merchant = Merchant::findOrFail($id);
 
-            // Check if merchant has products
-            $productsCount = Product::where('merchant_id', $merchant->id)->count();
+                    // Check if there are any products (single merchant system)
+        $productsCount = Product::count();
             if ($productsCount > 0) {
                 return response()->json([
                     'success' => false,
@@ -342,7 +340,7 @@ class AdminMerchantController extends Controller
                         break;
 
                     case 'delete':
-                        $productsCount = Product::where('merchant_id', $merchant->id)->count();
+                        $productsCount = Product::count();
                         if ($productsCount === 0) {
                             if ($merchant->logo && file_exists(public_path($merchant->logo))) {
                                 unlink(public_path($merchant->logo));
@@ -399,10 +397,9 @@ class AdminMerchantController extends Controller
             'inactive_merchants' => (clone $query)->where('is_active', false)->count(),
             'open_merchants' => (clone $query)->where('is_open', true)->count(),
             'closed_merchants' => (clone $query)->where('is_open', false)->count(),
-            'total_products' => Product::whereIn('merchant_id', (clone $query)->pluck('id'))->count(),
-            'total_orders' => Order::whereIn('merchant_id', (clone $query)->pluck('id'))->count(),
-            'total_revenue' => Order::whereIn('merchant_id', (clone $query)->pluck('id'))
-                                   ->where('payment_status', 'paid')->sum('total_amount'),
+            'total_products' => Product::count(),
+            'total_orders' => Order::count(),
+            'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
             'avg_commission' => (clone $query)->avg('commission_rate'),
             'new_this_month' => (clone $query)->whereMonth('created_at', now()->month)->count(),
         ];
@@ -414,19 +411,18 @@ class AdminMerchantController extends Controller
     private function getMerchantStatistics($merchant)
     {
         return [
-            'total_products' => Product::where('merchant_id', $merchant->id)->count(),
-            'active_products' => Product::where('merchant_id', $merchant->id)->where('is_available', true)->count(),
-            'total_orders' => Order::where('merchant_id', $merchant->id)->count(),
-            'completed_orders' => Order::where('merchant_id', $merchant->id)->where('status', 'delivered')->count(),
-            'total_revenue' => Order::where('merchant_id', $merchant->id)->where('payment_status', 'paid')->sum('total_amount'),
-            'this_month_revenue' => Order::where('merchant_id', $merchant->id)
-                                         ->where('payment_status', 'paid')
+            'total_products' => Product::count(),
+            'active_products' => Product::where('is_available', true)->count(),
+            'total_orders' => Order::count(),
+            'completed_orders' => Order::where('status', 'delivered')->count(),
+            'total_revenue' => Order::where('payment_status', 'paid')->sum('total_amount'),
+            'this_month_revenue' => Order::where('payment_status', 'paid')
                                          ->whereMonth('created_at', now()->month)
                                          ->sum('total_amount'),
-            'avg_order_value' => Order::where('merchant_id', $merchant->id)->where('payment_status', 'paid')->avg('total_amount'),
-            'commission_earned' => Order::where('merchant_id', $merchant->id)->where('payment_status', 'paid')->sum('total_amount') * ($merchant->commission_rate / 100),
+            'avg_order_value' => Order::where('payment_status', 'paid')->avg('total_amount'),
+            'commission_earned' => Order::where('payment_status', 'paid')->sum('total_amount') * ($merchant->commission_rate / 100),
             'join_date' => $merchant->created_at,
-            'last_order_date' => Order::where('merchant_id', $merchant->id)->latest()->first()?->created_at,
+            'last_order_date' => Order::latest()->first()?->created_at,
         ];
     }
 
@@ -451,9 +447,8 @@ class AdminMerchantController extends Controller
         // Get merchant statistics
         $merchantStats = $this->getMerchantStatistics($merchant);
         
-        // Get top products for this merchant
-        $topProducts = Product::where('merchant_id', $merchant->id)
-            ->withCount(['orderItems'])
+        // Get top products (single merchant system)
+        $topProducts = Product::withCount(['orderItems'])
             ->orderBy('order_items_count', 'desc')
             ->limit(5)
             ->get();

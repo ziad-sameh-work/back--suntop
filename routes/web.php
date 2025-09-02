@@ -181,6 +181,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('orders', AdminOrderController::class)->only(['index', 'show']);
     Route::post('orders/{order}/update-status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::post('orders/{order}/update-payment', [AdminOrderController::class, 'updatePaymentStatus'])->name('orders.update-payment');
+    Route::post('orders/{order}/update-status-with-notification', [AdminOrderController::class, 'updateStatusWithNotification'])->name('orders.update-status-with-notification');
+    Route::post('orders/{order}/update-payment-with-notification', [AdminOrderController::class, 'updatePaymentWithNotification'])->name('orders.update-payment-with-notification');
     Route::post('orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->name('orders.cancel');
     Route::post('orders/bulk-action', [AdminOrderController::class, 'bulkAction'])->name('orders.bulk-action');
     Route::get('orders/{order}/print', [AdminOrderController::class, 'print'])->name('orders.print');
@@ -290,3 +292,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/stats/live', [AdminPusherChatController::class, 'getLiveStats'])->name('stats');
     });
 });
+
+// Test routes for debugging order status update
+Route::prefix('test')->middleware(['web'])->group(function () {
+    Route::post('orders/{id}/update-status', [App\Http\Controllers\TestOrderController::class, 'testUpdateStatus'])->name('test.orders.update-status');
+    Route::get('orders/{id}/info', [App\Http\Controllers\TestOrderController::class, 'getOrderInfo'])->name('test.orders.info');
+});
+
+// Debug routes without authentication
+require __DIR__ . '/test_routes.php';

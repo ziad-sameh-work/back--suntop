@@ -693,7 +693,7 @@ async function updateOrderStatus() {
     const notes = document.getElementById('statusNotes').value;
     
     try {
-        const response = await fetch(`{{ route('admin.orders.index') }}/${currentOrderId}/update-status`, {
+        const response = await fetch(`/admin/orders/${currentOrderId}/update-status`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -739,7 +739,7 @@ async function updatePaymentStatus() {
     const notes = document.getElementById('paymentNotes').value;
     
     try {
-        const response = await fetch(`{{ route('admin.orders.index') }}/${currentOrderId}/update-payment`, {
+        const response = await fetch(`/admin/orders/${currentOrderId}/update-payment`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -773,7 +773,7 @@ async function cancelOrder(orderId) {
     if (!confirm('هل أنت متأكد من إلغاء هذا الطلب؟ سيتم إعادة المخزون تلقائياً.')) return;
     
     try {
-        const response = await fetch(`{{ route('admin.orders.index') }}/${orderId}/cancel`, {
+        const response = await fetch(`/admin/orders/${orderId}/cancel`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -799,7 +799,7 @@ async function cancelOrder(orderId) {
 
 // Print order
 function printOrder(orderId) {
-    window.open(`{{ route('admin.orders.index') }}/${orderId}/print`, '_blank');
+    window.open(`/admin/orders/${orderId}/print`, '_blank');
 }
 
 // Bulk actions

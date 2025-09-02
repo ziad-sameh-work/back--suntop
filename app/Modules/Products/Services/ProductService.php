@@ -115,23 +115,12 @@ class ProductService extends BaseService
     }
 
     /**
-     * Update product stock
+     * Update product stock (disabled - inventory not tracked)
      */
     public function updateStock(string $productId, int $quantity): bool
     {
-        $product = $this->findByIdOrFail($productId);
-        
-        if ($product->stock_quantity < $quantity) {
-            throw new \Exception('الكمية المطلوبة غير متوفرة في المخزون');
-        }
-
-        $product->decrement('stock_quantity', $quantity);
-
-        // Mark as unavailable if stock is zero
-        if ($product->stock_quantity <= 0) {
-            $product->update(['is_available' => false]);
-        }
-
+        // Stock update disabled - inventory tracking removed
+        // This method exists for backward compatibility but does nothing
         return true;
     }
 

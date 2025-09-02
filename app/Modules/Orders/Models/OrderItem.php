@@ -90,11 +90,22 @@ class OrderItem extends Model
      */
     public function getLoyaltyPoints(): int
     {
-        if (!$this->product) {
+        // Return 0 if product relationship is null (product was deleted)
+        if (!$this->product || !$this->product->id) {
             return 0;
         }
 
-        return $this->product->getLoyaltyPoints($this->selling_type) * $this->quantity;
+        try {
+            return $this->product->getLoyaltyPoints($this->selling_type) * $this->quantity;
+        } catch (\Exception $e) {
+            \Log::error('Error calculating loyalty points for order item', [
+                'order_item_id' => $this->id,
+                'product_id' => $this->product_id,
+                'selling_type' => $this->selling_type,
+                'error' => $e->getMessage()
+            ]);
+            return 0;
+        }
     }
 
     /**

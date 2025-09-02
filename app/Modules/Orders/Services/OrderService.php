@@ -120,7 +120,7 @@ class OrderService extends BaseService
                     'units_count' => $item['units_count'],
                 ]);
 
-                // Update product stock (using actual units)
+                // Stock update (disabled - for backward compatibility)
                 $this->productService->updateStock($item['product_id'], $item['units_count']);
             }
 
@@ -129,7 +129,7 @@ class OrderService extends BaseService
                 'order_id' => $order->id,
                 'status' => Order::STATUS_PENDING,
                 'status_text' => 'في انتظار التأكيد',
-                'location' => $merchant->name,
+                'location' => 'سن توب',
                 'timestamp' => now(),
             ]);
 
@@ -195,7 +195,7 @@ class OrderService extends BaseService
      */
     public function getOrderById(string $id, int $userId): ?Order
     {
-        return $this->model->with(['items.product', 'trackings'])
+        return $this->model->with(['items', 'trackings'])
                           ->forUser($userId)
                           ->find($id);
     }
@@ -232,14 +232,7 @@ class OrderService extends BaseService
             // Update order status
             $order->update(['status' => Order::STATUS_CANCELLED]);
 
-            // Restore product stock
-            foreach ($order->items as $item) {
-                $product = $item->product;
-                if ($product) {
-                    $product->increment('stock_quantity', $item->quantity);
-                    $product->update(['is_available' => true]);
-                }
-            }
+            // Stock restoration removed - inventory is not tracked
 
             // Add tracking entry
             OrderTracking::create([
@@ -277,7 +270,6 @@ class OrderService extends BaseService
         // Create new order with same data
         $orderData = [
             'user_id' => $userId,
-            'merchant_id' => $originalOrder->merchant_id,
             'items' => $items,
             'delivery_address' => $originalOrder->delivery_address,
             'payment_method' => $originalOrder->payment_method,
@@ -337,42 +329,96 @@ class OrderService extends BaseService
         $products = $this->productService->getProductsByIds($productIds->toArray())->keyBy('id');
 
         return collect($items)->map(function ($item) use ($products) {
-            $product = $products->get($item['product_id']);
+            try {
+                $product = $products->get($item['product_id']);
 
-            if (!$product) {
-                throw new \Exception("المنتج غير موجود: {$item['product_id']}");
+                if (!$product) {
+                    throw new \Exception("المنتج غير موجود: {$item['product_id']}");
+                }
+
+                // Additional safety check
+                if (!isset($product->id) || !$product->id) {
+                    throw new \Exception("بيانات المنتج غير صحيحة: {$item['product_id']}");
+                }
+            } catch (\Exception $e) {
+                \Log::error('Product validation error', [
+                    'item' => $item,
+                    'product' => $product ?? 'null',
+                    'error' => $e->getMessage(),
+                    'products_count' => $products->count(),
+                    'available_product_ids' => $products->keys()->toArray()
+                ]);
+                throw $e;
             }
 
-            if (!$product->is_available) {
-                throw new \Exception("المنتج غير متوفر: {$product->name}");
-            }
+            // Product availability check removed - orders can be placed for any product
 
             // Determine selling type (default to 'unit' if not specified)
             $sellingType = $item['selling_type'] ?? 'unit';
             
+            // Ensure product name exists
+            $productName = $product->name ?? "منتج #{$product->id}";
+
             // Validate selling type is available for this product
-            $availableTypes = $product->getAvailableSellingTypes();
-            if (!in_array($sellingType, $availableTypes)) {
-                throw new \Exception("نوع البيع '{$sellingType}' غير متوفر للمنتج: {$product->name}");
+            try {
+                $availableTypes = $product->getAvailableSellingTypes();
+                if (!in_array($sellingType, $availableTypes)) {
+                    throw new \Exception("نوع البيع '{$sellingType}' غير متوفر للمنتج: {$productName}");
+                }
+            } catch (\Exception $e) {
+                \Log::error('Product selling type validation error', [
+                    'product_id' => $product->id,
+                    'product_name' => $productName,
+                    'selling_type' => $sellingType,
+                    'error' => $e->getMessage()
+                ]);
+                throw new \Exception("خطأ في التحقق من نوع البيع للمنتج: {$productName}");
             }
 
             // Check minimum purchase requirements
-            $requirements = $product->requiresMinimumPurchase();
-            if (!empty($requirements) && !in_array($sellingType, $requirements)) {
-                throw new \Exception("المنتج {$product->name} يتطلب شراء بالكرتون أو العلبة فقط");
+            try {
+                $requirements = $product->requiresMinimumPurchase();
+                if (!empty($requirements) && !in_array($sellingType, $requirements)) {
+                    throw new \Exception("المنتج {$productName} يتطلب شراء بالكرتون أو العلبة فقط");
+                }
+            } catch (\Exception $e) {
+                \Log::error('Product minimum purchase validation error', [
+                    'product_id' => $product->id,
+                    'product_name' => $productName,
+                    'error' => $e->getMessage()
+                ]);
+                throw new \Exception("خطأ في التحقق من الحد الأدنى للشراء للمنتج: {$productName}");
             }
 
             // Calculate actual units needed
             $requestedQuantity = $item['quantity'];
-            $actualUnits = $product->calculateActualQuantity($requestedQuantity, $sellingType);
-
-            // Check stock availability (based on actual units)
-            if ($product->stock_quantity < $actualUnits) {
-                throw new \Exception("الكمية المطلوبة غير متوفرة للمنتج: {$product->name}");
+            try {
+                $actualUnits = $product->calculateActualQuantity($requestedQuantity, $sellingType);
+            } catch (\Exception $e) {
+                \Log::error('Product quantity calculation error', [
+                    'product_id' => $product->id,
+                    'product_name' => $productName,
+                    'requested_quantity' => $requestedQuantity,
+                    'selling_type' => $sellingType,
+                    'error' => $e->getMessage()
+                ]);
+                throw new \Exception("خطأ في حساب الكمية للمنتج: {$productName}");
             }
 
+            // Stock check removed - orders can be placed regardless of stock
+
             // Get pricing
-            $unitPrice = $product->getEffectivePrice($sellingType);
+            try {
+                $unitPrice = $product->getEffectivePrice($sellingType);
+            } catch (\Exception $e) {
+                \Log::error('Product price calculation error', [
+                    'product_id' => $product->id,
+                    'product_name' => $productName,
+                    'selling_type' => $sellingType,
+                    'error' => $e->getMessage()
+                ]);
+                throw new \Exception("خطأ في حساب السعر للمنتج: {$productName}");
+            }
 
             // Calculate cartons, packages, and units
             $cartonsCount = 0;
@@ -395,8 +441,8 @@ class OrderService extends BaseService
 
             return [
                 'product_id' => $product->id,
-                'product_name' => $product->name,
-                'product_image' => $product->image_url,
+                'product_name' => $productName,
+                'product_image' => $product->image_url ?? '',
                 'quantity' => $requestedQuantity,
                 'unit_price' => $unitPrice,
                 'total_price' => $unitPrice * $requestedQuantity,
@@ -404,10 +450,10 @@ class OrderService extends BaseService
                 'cartons_count' => $cartonsCount,
                 'packages_count' => $packagesCount,
                 'units_count' => $unitsCount,
-                // Add loyalty points data for the service
-                'carton_loyalty_points' => $product->carton_loyalty_points,
-                'package_loyalty_points' => $product->package_loyalty_points,
-                'unit_loyalty_points' => $product->unit_loyalty_points,
+                // Add loyalty points data for the service (with defaults if missing)
+                'carton_loyalty_points' => $product->carton_loyalty_points ?? 0,
+                'package_loyalty_points' => $product->package_loyalty_points ?? 0,
+                'unit_loyalty_points' => $product->unit_loyalty_points ?? 0,
             ];
         });
     }
@@ -425,7 +471,7 @@ class OrderService extends BaseService
      */
     public function getUserOrderHistory(int $userId): array
     {
-        $recentOrders = $this->model->with(['merchant:id,name', 'items.product'])
+        $recentOrders = $this->model->with(['items.product'])
                                   ->forUser($userId)
                                   ->orderBy('created_at', 'desc')
                                   ->take(10)
@@ -435,14 +481,7 @@ class OrderService extends BaseService
             'total_orders' => $this->model->forUser($userId)->count(),
             'total_spent' => $this->model->forUser($userId)->where('status', 'delivered')->sum('total_amount'),
             'avg_order_value' => $this->model->forUser($userId)->where('status', 'delivered')->avg('total_amount'),
-            'favorite_merchant' => $this->model->with('merchant:id,name')
-                                             ->forUser($userId)
-                                             ->selectRaw('merchant_id, COUNT(*) as count')
-                                             ->groupBy('merchant_id')
-                                             ->orderBy('count', 'desc')
-                                             ->first()
-                                             ?->merchant
-                                             ?->name ?? 'لا يوجد',
+            'favorite_merchant' => 'سن توب',
         ];
 
         // Get most ordered items

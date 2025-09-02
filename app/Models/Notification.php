@@ -431,24 +431,35 @@ class Notification extends Model
         string $status,
         array $additionalData = []
     ): self {
-        $statusMessages = [
-            'pending' => 'طلبك في انتظار التأكيد',
-            'confirmed' => 'تم تأكيد طلبك وجاري التحضير',
-            'preparing' => 'جاري تحضير طلبك',
-            'shipped' => 'تم شحن طلبك وسيصل قريباً',
-            'delivered' => 'تم توصيل طلبك بنجاح',
-            'cancelled' => 'تم إلغاء طلبك',
-        ];
+        // Check if custom message is provided
+        if (isset($additionalData['custom_message']) && $additionalData['custom_message']) {
+            $title = $additionalData['title'] ?? "تحديث حالة الطلب #{$orderNumber}";
+            $message = $additionalData['message'] ?? "تم تحديث حالة طلبك";
+        } else {
+            // Use default messages
+            $statusMessages = [
+                'pending' => 'طلبك في انتظار التأكيد',
+                'confirmed' => 'تم تأكيد طلبك وجاري التحضير',
+                'preparing' => 'جاري تحضير طلبك وسيتم إشعاركم عند اكتمال التجهيز',
+                'processing' => 'جاري تحضير طلبك',
+                'shipping' => 'طلبك جاري الشحن وسيصل إليكم في أقرب وقت',
+                'shipped' => 'تم شحن طلبك وسيصل قريباً',
+                'delivered' => 'تم توصيل طلبك بنجاح',
+                'cancelled' => 'تم إلغاء طلبك',
+            ];
 
-        $title = "تحديث حالة الطلب #{$orderNumber}";
-        $message = $statusMessages[$status] ?? "تم تحديث حالة طلبك";
+            $title = "تحديث حالة الطلب #{$orderNumber}";
+            $message = $statusMessages[$status] ?? "تم تحديث حالة طلبك";
+        }
 
         return self::createForUser(
             $userId,
             $title,
             $message,
             self::TYPE_ORDER_STATUS,
-            array_merge(['order_number' => $orderNumber, 'status' => $status], $additionalData),
+            null, // body
+            self::ALERT_INFO, // alert type
+            array_merge(['order_number' => $orderNumber, 'status' => $status], $additionalData), // data
             self::PRIORITY_HIGH,
             "/orders/{$orderNumber}"
         );
@@ -473,7 +484,9 @@ class Notification extends Model
             $title,
             $message,
             self::TYPE_REWARD,
-            ['points' => $points, 'reason' => $reason, 'type' => $type],
+            null, // body
+            self::ALERT_SUCCESS, // alert type
+            ['points' => $points, 'reason' => $reason, 'type' => $type], // data
             self::PRIORITY_MEDIUM,
             "/loyalty"
         );
@@ -493,7 +506,9 @@ class Notification extends Model
             "عرض جديد: {$offerTitle}",
             $offerDescription,
             self::TYPE_OFFER,
-            $offerData,
+            null, // body
+            self::ALERT_INFO, // alert type
+            $offerData, // data
             self::PRIORITY_MEDIUM,
             "/offers"
         );

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Order Status Update</title>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; font-size: 14px; }
+        .test-data { background-color: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test Order Status Update</h1>
+    
+    <div class="test-data">
+        <h3>Test Configuration:</h3>
+        <p><strong>Order ID:</strong> 14</p>
+        <p><strong>Status:</strong> preparing</p>
+        <p><strong>Title:</strong> بدء التجهيز</p>
+        <p><strong>Message:</strong> تم البدء في تجهيز طلبكم، سيتم إشعاركم عند اكتمال التجهيز</p>
+    </div>
+    
+    <div>
+        <button onclick="getOrderInfo()">1. Get Order Info</button>
+        <button onclick="testWithTestController()">2. Test with Test Controller</button>
+        <button onclick="testWithOriginalController()">3. Test with Original Controller</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        const orderId = 14;
+        const testData = {
+            status: 'preparing',
+            title: 'بدء التجهيز',
+            message: 'تم البدء في تجهيز طلبكم، سيتم إشعاركم عند اكتمال التجهيز',
+            notes: 'Test from debug page'
+        };
+        
+        function addResult(title, content, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = `<h4>${title}</h4><pre>${content}</pre>`;
+            results.appendChild(div);
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        async function getOrderInfo() {
+            try {
+                addResult('📋 Getting Order Info...', 'Loading...', 'info');
+                
+                const response = await fetch(`/test/orders/${orderId}/info`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.text();
+                
+                if (response.ok) {
+                    addResult('✅ Order Info Retrieved', data, 'success');
+                } else {
+                    addResult('❌ Failed to Get Order Info', `Status: ${response.status}\n${data}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult('❌ Network Error', error.message, 'error');
+            }
+        }
+        
+        async function testWithTestController() {
+            try {
+                addResult('🧪 Testing with Test Controller...', JSON.stringify(testData, null, 2), 'info');
+                
+                const response = await fetch(`/test/orders/${orderId}/update-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.text();
+                
+                if (response.ok) {
+                    addResult('✅ Test Controller Success', data, 'success');
+                } else {
+                    addResult('❌ Test Controller Failed', `Status: ${response.status}\n${data}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult('❌ Test Controller Network Error', error.message, 'error');
+            }
+        }
+        
+        async function testWithOriginalController() {
+            try {
+                addResult('🎯 Testing with Original Controller...', JSON.stringify(testData, null, 2), 'info');
+                
+                // We need a CSRF token for this one
+                const csrfResponse = await fetch('/admin/orders');
+                const csrfText = await csrfResponse.text();
+                
+                let csrfToken = 'no-token';
+                const csrfMatch = csrfText.match(/name="csrf-token" content="([^"]+)"/);
+                if (csrfMatch) {
+                    csrfToken = csrfMatch[1];
+                }
+                
+                const response = await fetch(`/admin/orders/${orderId}/update-status-with-notification`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.text();
+                
+                if (response.ok) {
+                    addResult('✅ Original Controller Success', data, 'success');
+                } else {
+                    addResult('❌ Original Controller Failed', `Status: ${response.status}\nCSRF Token: ${csrfToken.substring(0, 20)}...\n${data}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult('❌ Original Controller Network Error', error.message, 'error');
+            }
+        }
+    </script>
+    
+    <h2>📋 Instructions:</h2>
+    <ol>
+        <li><strong>Step 1:</strong> Click "Get Order Info" to verify that Order 14 exists and has a user</li>
+        <li><strong>Step 2:</strong> Click "Test with Test Controller" to test the functionality without authentication/CSRF issues</li>
+        <li><strong>Step 3:</strong> Click "Test with Original Controller" to test the actual problematic endpoint</li>
+        <li><strong>Analysis:</strong> Compare the results to see where the problem lies</li>
+    </ol>
+    
+    <h2>🔍 What This Test Does:</h2>
+    <ul>
+        <li>Verifies that Order 14 exists and has a valid user relationship</li>
+        <li>Tests the order status update logic without middleware interference</li>
+        <li>Tests the original problematic endpoint to isolate the issue</li>
+        <li>Provides detailed error information for debugging</li>
+    </ul>
+    
+    <p><em>Access this page at: <strong>http://127.0.0.1:8000/test_order_status.html</strong></em></p>
+</body>
+</html>

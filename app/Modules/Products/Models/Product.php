@@ -18,12 +18,16 @@ class Product extends Model
         'back_color',
         'images',
         'is_available',
+        'stock_quantity',
+        'is_featured',
     ];
 
     protected $casts = [
         'images' => 'array',
         'price' => 'decimal:2',
         'is_available' => 'boolean',
+        'is_featured' => 'boolean',
+        'stock_quantity' => 'integer',
     ];
 
     /**
@@ -202,5 +206,116 @@ class Product extends Model
     public function getInitialAttribute(): string
     {
         return strtoupper(substr($this->name ?? 'P', 0, 1));
+    }
+
+    /**
+     * Get available selling types for this product
+     */
+    public function getAvailableSellingTypes(): array
+    {
+        // Default selling types - could be made configurable per product later
+        return ['unit', 'package', 'carton'];
+    }
+
+    /**
+     * Get effective price based on selling type
+     */
+    public function getEffectivePrice(string $sellingType = 'unit'): float
+    {
+        // For now, return the same price for all types
+        // This can be extended later to support different prices per selling type
+        switch ($sellingType) {
+            case 'carton':
+                // Assume carton has some discount or different pricing
+                return (float) $this->price * 24; // Example: 24 units per carton
+            case 'package':
+                // Assume package has some discount or different pricing  
+                return (float) $this->price * 6; // Example: 6 units per package
+            default: // unit
+                return (float) $this->price;
+        }
+    }
+
+    /**
+     * Calculate actual quantity (units) based on selling type
+     */
+    public function calculateActualQuantity(int $requestedQuantity, string $sellingType = 'unit'): int
+    {
+        switch ($sellingType) {
+            case 'carton':
+                // Example: 1 carton = 24 units
+                return $requestedQuantity * 24;
+            case 'package':
+                // Example: 1 package = 6 units
+                return $requestedQuantity * 6;
+            default: // unit
+                return $requestedQuantity;
+        }
+    }
+
+    /**
+     * Get loyalty points for this product based on selling type
+     */
+    public function getLoyaltyPoints(string $sellingType = 'unit'): int
+    {
+        switch ($sellingType) {
+            case 'carton':
+                // More points for buying cartons
+                return 10; // Example: 10 points per carton
+            case 'package':
+                // Medium points for packages
+                return 3; // Example: 3 points per package
+            default: // unit
+                return 1; // Example: 1 point per unit
+        }
+    }
+
+    /**
+     * Check if product has enough stock for requested quantity
+     */
+    public function hasEnoughStock(int $requestedQuantity, string $sellingType = 'unit'): bool
+    {
+        // First check if product is available
+        if (!$this->is_available) {
+            return false;
+        }
+
+        // If stock_quantity is null or 0, assume unlimited stock
+        if (!$this->stock_quantity) {
+            return true;
+        }
+
+        // Calculate actual units needed
+        $actualUnits = $this->calculateActualQuantity($requestedQuantity, $sellingType);
+        
+        return $this->stock_quantity >= $actualUnits;
+    }
+
+    /**
+     * Get minimum purchase requirements based on selling type
+     */
+    public function getMinimumPurchaseRequirement(string $sellingType = 'unit'): int
+    {
+        switch ($sellingType) {
+            case 'carton':
+                return 1; // Minimum 1 carton
+            case 'package':
+                return 1; // Minimum 1 package
+            default: // unit
+                return 1; // Minimum 1 unit
+        }
+    }
+
+    /**
+     * Check if product requires minimum purchase (only cartons/packages)
+     */
+    public function requiresMinimumPurchase(): array
+    {
+        // For now, allow all selling types
+        // This can be configured per product later
+        return [];
+        
+        // Example if some products require only cartons/packages:
+        // return ['carton', 'package'];
     }
 }
