@@ -722,8 +722,8 @@ let adminChannel = null;
 function initializePusherRealtime() {
     try {
         // Initialize Pusher with your credentials
-        pusher = new Pusher('44911da009b5537ffae1', {
-            cluster: 'eu',
+        pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
+            cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
             forceTLS: true,
             authEndpoint: '/api/broadcasting/auth',
             auth: {
