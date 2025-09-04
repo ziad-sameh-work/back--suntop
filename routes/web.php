@@ -263,15 +263,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Broadcasting Auth for web interface
     Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'auth'])->name('broadcasting.auth');
     
-    // Pusher Chat Management Routes
-    Route::prefix('pusher-chat')->name('pusher-chat.')->group(function () {
-        Route::get('/', [AdminPusherChatController::class, 'index'])->name('index');
-        Route::get('/{chat}', [AdminPusherChatController::class, 'show'])->name('show');
-        Route::post('/{chat}/reply', [AdminPusherChatController::class, 'sendReply'])->name('reply');
-        Route::get('/{chat}/messages', [AdminPusherChatController::class, 'getMessages'])->name('messages');
-        Route::post('/{chat}/close', [AdminPusherChatController::class, 'closeChat'])->name('close');
-        Route::get('/stats/live', [AdminPusherChatController::class, 'getLiveStats'])->name('stats');
-    });
+    // Removed duplicate pusher-chat routes - using main chats routes instead
 });
 
 // Test routes for debugging order status update
