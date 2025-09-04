@@ -725,7 +725,7 @@ function initializePusherRealtime() {
         pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
             cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
             forceTLS: true,
-            authEndpoint: '/api/broadcasting/auth',
+            authEndpoint: '/broadcasting/auth',
             auth: {
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -741,6 +741,14 @@ function initializePusherRealtime() {
         adminChannel.bind('App\\Events\\NewChatMessage', function(data) {
             console.log('🔔 New chat message received:', data);
             handleNewChatMessage(data);
+        });
+
+        // Also listen to all individual chat channels for broader coverage
+        pusher.bind_global(function(eventName, data) {
+            console.log('Global Pusher event:', eventName, data);
+            if (eventName === 'App\\Events\\NewChatMessage') {
+                handleNewChatMessage(data);
+            }
         });
 
         // Listen for chat status changes
