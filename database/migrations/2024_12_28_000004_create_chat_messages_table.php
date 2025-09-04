@@ -20,7 +20,8 @@ return new class extends Migration
             $table->enum('sender_type', ['customer', 'admin'])->default('customer');
             $table->text('message');
             $table->string('message_type', 50)->default('text'); // text, image, file, etc.
-            $table->json('attachments')->nullable();
+            $table->string('attachment_path')->nullable();
+            $table->string('attachment_name')->nullable();
             $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();
             $table->json('metadata')->nullable();
