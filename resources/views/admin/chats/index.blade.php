@@ -809,55 +809,116 @@ function handleNewChatMessage(data) {
 
 function updateChatListRealtime(data) {
     console.log('🔄 Updating chat list in real-time...');
+    console.log('Chat ID:', data.message.chat_id);
+    console.log('Message data:', data.message);
     
     const chatId = data.message.chat_id;
-    const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
     
-    if (chatItem) {
-        console.log('✅ Found chat item, updating...');
-        
-        // Update last message time
-        const timeElement = chatItem.querySelector('.chat-time');
+    // Debug: Check all possible selectors
+    console.log('Looking for chat item with selectors:');
+    const selectors = [
+        `[data-chat-id="${chatId}"]`,
+        `.chat-item[data-chat-id="${chatId}"]`,
+        `#chat-${chatId}`,
+        `.chat-card[data-id="${chatId}"]`
+    ];
+    
+    let chatItem = null;
+    for (let selector of selectors) {
+        chatItem = document.querySelector(selector);
+        console.log(`Selector "${selector}":`, chatItem ? 'Found' : 'Not found');
+        if (chatItem) break;
+    }
+    
+    // If not found, list all chat elements
+    if (!chatItem) {
+        console.log('❌ Chat item not found. Available chat elements:');
+        const allChatItems = document.querySelectorAll('[data-chat-id], .chat-item, .chat-card');
+        allChatItems.forEach((item, index) => {
+            console.log(`${index + 1}:`, item.outerHTML.substring(0, 200) + '...');
+        });
+        return;
+    }
+    
+    console.log('✅ Found chat item:', chatItem);
+    
+    // Update last message time
+    const timeSelectors = ['.chat-time', '.message-time', '.last-message-time', '.time'];
+    let timeElement = null;
+    for (let selector of timeSelectors) {
+        timeElement = chatItem.querySelector(selector);
         if (timeElement) {
-            timeElement.textContent = 'الآن';
+            console.log(`Found time element with selector: ${selector}`);
+            break;
         }
+    }
+    
+    if (timeElement) {
+        timeElement.textContent = 'الآن';
+        console.log('✅ Updated time to "الآن"');
+    } else {
+        console.log('❌ Time element not found');
+    }
 
-        // Update last message preview
-        const previewElement = chatItem.querySelector('.chat-preview');
+    // Update last message preview
+    const previewSelectors = ['.chat-preview', '.last-message', '.message-preview', '.preview'];
+    let previewElement = null;
+    for (let selector of previewSelectors) {
+        previewElement = chatItem.querySelector(selector);
         if (previewElement) {
-            const senderName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
-            const messageText = data.message.message.length > 50 ? 
-                data.message.message.substring(0, 50) + '...' : 
-                data.message.message;
-            previewElement.innerHTML = `<strong>${senderName}:</strong> ${messageText}`;
+            console.log(`Found preview element with selector: ${selector}`);
+            break;
         }
+    }
+    
+    if (previewElement) {
+        const senderName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
+        const messageText = data.message.message.length > 50 ? 
+            data.message.message.substring(0, 50) + '...' : 
+            data.message.message;
+        previewElement.innerHTML = `<strong>${senderName}:</strong> ${messageText}`;
+        console.log('✅ Updated preview message');
+    } else {
+        console.log('❌ Preview element not found');
+    }
 
-        // Update unread count if message from customer
-        if (data.message.sender_type === 'customer') {
-            const unreadBadge = chatItem.querySelector('.unread-badge');
+    // Update unread count if message from customer
+    if (data.message.sender_type === 'customer') {
+        const unreadSelectors = ['.unread-badge', '.badge', '.unread-count', '.notification-badge'];
+        let unreadBadge = null;
+        for (let selector of unreadSelectors) {
+            unreadBadge = chatItem.querySelector(selector);
             if (unreadBadge) {
-                const currentCount = parseInt(unreadBadge.textContent) || 0;
-                unreadBadge.textContent = currentCount + 1;
-                unreadBadge.style.display = 'inline-block';
+                console.log(`Found unread badge with selector: ${selector}`);
+                break;
             }
         }
-
-        // Move chat to top of list
-        const chatsList = chatItem.parentElement;
-        if (chatsList) {
-            chatsList.insertBefore(chatItem, chatsList.firstChild);
-        }
-
-        // Add highlight animation
-        chatItem.style.backgroundColor = '#fff3cd';
-        setTimeout(() => {
-            chatItem.style.backgroundColor = '';
-        }, 2000);
         
-        console.log('✅ Chat item updated successfully');
-    } else {
-        console.log('⚠️ Chat item not found, may need page refresh for new chat');
+        if (unreadBadge) {
+            const currentCount = parseInt(unreadBadge.textContent) || 0;
+            unreadBadge.textContent = currentCount + 1;
+            unreadBadge.style.display = 'inline-block';
+            console.log('✅ Updated unread count');
+        } else {
+            console.log('❌ Unread badge not found');
+        }
     }
+
+    // Move chat to top of list
+    const chatsList = chatItem.parentElement;
+    if (chatsList) {
+        chatsList.insertBefore(chatItem, chatsList.firstChild);
+        console.log('✅ Moved chat to top');
+    }
+
+    // Add highlight animation
+    chatItem.style.backgroundColor = '#fff3cd';
+    chatItem.style.transition = 'background-color 0.3s ease';
+    setTimeout(() => {
+        chatItem.style.backgroundColor = '';
+    }, 2000);
+    
+    console.log('✅ Chat item updated successfully');
 }
 
 function updateChatItemRealtime(chatData) {
