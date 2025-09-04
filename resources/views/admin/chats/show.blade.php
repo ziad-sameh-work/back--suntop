@@ -584,6 +584,19 @@
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    initializePusherChat();
+    
+    // Listen for Livewire events to refresh messages
+    if (typeof Livewire !== 'undefined') {
+        Livewire.on('refreshMessages', function() {
+            console.log('Livewire refreshMessages event received');
+            // Force reload of messages in Livewire component
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        });
+    }
+    
     // Auto-scroll to bottom on page load
     const messagesContainer = document.querySelector('.messages-container');
     if (messagesContainer) {
@@ -665,7 +678,9 @@ function initializePusherChat() {
             showMessageNotification(data.message);
             
             // Also refresh Livewire component
-            Livewire.emit('refreshMessages');
+            if (typeof Livewire !== 'undefined') {
+                Livewire.emit('refreshMessages');
+            }
         });
 
         // Also subscribe to private admin channel for potential admin messages
@@ -677,7 +692,9 @@ function initializePusherChat() {
                 showMessageNotification(data.message);
                 
                 // Also refresh Livewire component
-                Livewire.emit('refreshMessages');
+                if (typeof Livewire !== 'undefined') {
+                    Livewire.emit('refreshMessages');
+                }
             }
         });
 

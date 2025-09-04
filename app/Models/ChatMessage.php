@@ -159,7 +159,7 @@ class ChatMessage extends Model
             // استخدم Laravel Echo للشات المباشر
             if ($message->sender_type === 'customer' || 
                 $message->sender_type === 'admin' || 
-                (isset($message->metadata['sent_from']) && in_array($message->metadata['sent_from'], ['api_rt', 'admin_panel_firebase']))) {
+                (isset($message->metadata['sent_from']) && in_array($message->metadata['sent_from'], ['api_rt', 'admin_panel_firebase', 'admin_panel_livewire']))) {
                 
                 // Load necessary relationships before broadcasting
                 $message->load(['sender', 'chat.customer']);

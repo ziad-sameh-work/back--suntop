@@ -5,7 +5,6 @@ namespace App\Http\Livewire;
 use App\Models\Chat;
 use App\Models\ChatMessage;
 use App\Models\User;
-use App\Services\FirebaseRealtimeService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +23,6 @@ class ChatInterface extends Component
     public $isTyping = false;
     public $typingIndicator = '';
     
-    protected $firebaseService;
     
     protected $listeners = [
         'chatUpdated' => 'refreshMessages',
@@ -132,7 +130,7 @@ class ChatInterface extends Component
                 'attachment_path' => $attachmentPath,
                 'attachment_name' => $attachmentName,
                 'metadata' => [
-                    'sent_from' => 'api_rt' // Changed to trigger real-time events
+                    'sent_from' => 'admin_panel_livewire' // Changed to trigger real-time events
                 ]
             ]);
             
@@ -178,15 +176,22 @@ class ChatInterface extends Component
         $this->newMessage = '';
         $this->attachment = null;
 
-        // Refresh messages
+        // Refresh messages immediately
         $this->loadMessages();
 
-        // Emit event to update other components
+        // Force Livewire to re-render the component
+        $this->emit('refreshMessages');
         $this->emit('messageAdded', $message->id);
         $this->emit('chatUpdated', $this->chat->id);
 
         // Scroll to bottom
         $this->dispatchBrowserEvent('scrollToBottom');
+        
+        // Force browser to refresh the messages container
+        $this->dispatchBrowserEvent('forceRefreshMessages', [
+            'messageId' => $message->id,
+            'chatId' => $this->chat->id
+        ]);
         
         // Debug: Log success
         \Log::info('ChatInterface: Message sent successfully, form cleared');
@@ -232,6 +237,9 @@ class ChatInterface extends Component
                 $this->chat->markAsRead('admin');
             }
         }
+        
+        // إعادة تحميل الرسائل في كل render لضمان التحديث الفوري
+        $this->loadMessages();
         
         return view('livewire.chat-interface');
     }

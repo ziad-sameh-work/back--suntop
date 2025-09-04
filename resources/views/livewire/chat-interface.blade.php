@@ -145,6 +145,15 @@
             scrollToBottom();
         });
         
+        // الاستماع لحدث تحديث الرسائل القسري
+        window.addEventListener('forceRefreshMessages', event => {
+            console.log('Force refresh messages triggered:', event.detail);
+            // إعادة تحميل الصفحة جزئياً أو تحديث المحتوى
+            setTimeout(() => {
+                scrollToBottom();
+            }, 100);
+        });
+        
         // دالة التمرير لأسفل
         function scrollToBottom() {
             const container = document.getElementById('messagesContainer');
