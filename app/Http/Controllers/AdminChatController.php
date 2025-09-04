@@ -28,6 +28,9 @@ class AdminChatController extends Controller
         $assigned = $request->get('assigned', 'all');
         $search = $request->get('search');
 
+        // Check if chats table exists
+        $chatTableExists = \Schema::hasTable('chats');
+
         // Get statistics
         $stats = $this->getChatStats();
 
@@ -39,32 +42,32 @@ class AdminChatController extends Controller
             ]);
         }
 
-        // Get regular chats
-        $regularChats = Chat::with(['customer', 'assignedAdmin', 'latestMessage.sender'])
-            ->withCount('messages');
+        // Get regular chats (only if table exists)
+        $regularChats = $chatTableExists ? Chat::with(['customer', 'assignedAdmin', 'latestMessage.sender'])
+            ->withCount('messages') : collect();
 
         // Get pusher chats
         $pusherChats = PusherChat::with(['customer', 'messages.user'])
             ->withCount('messages');
 
-        // Apply filters to regular chats
-        if ($status !== 'all') {
+        // Apply filters to regular chats (only if table exists)
+        if ($chatTableExists && $status !== 'all') {
             $regularChats->where('status', $status);
         }
 
-        if ($priority !== 'all') {
+        if ($chatTableExists && $priority !== 'all') {
             $regularChats->where('priority', $priority);
         }
 
-        if ($assigned === 'unassigned') {
+        if ($chatTableExists && $assigned === 'unassigned') {
             $regularChats->whereNull('assigned_admin_id');
-        } elseif ($assigned === 'assigned') {
+        } elseif ($chatTableExists && $assigned === 'assigned') {
             $regularChats->whereNotNull('assigned_admin_id');
-        } elseif ($assigned === 'mine') {
+        } elseif ($chatTableExists && $assigned === 'mine') {
             $regularChats->where('assigned_admin_id', Auth::id());
         }
 
-        if ($search) {
+        if ($chatTableExists && $search) {
             $regularChats->where(function($q) use ($search) {
                 $q->where('subject', 'LIKE', "%{$search}%")
                   ->orWhereHas('customer', function($qq) use ($search) {
@@ -89,10 +92,10 @@ class AdminChatController extends Controller
         }
 
         // Execute queries
-        $regularChatsResults = $regularChats->orderBy('admin_unread_count', 'desc')
+        $regularChatsResults = $chatTableExists ? $regularChats->orderBy('admin_unread_count', 'desc')
             ->orderBy('last_message_at', 'desc')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get() : collect();
 
         $pusherChatsResults = $pusherChats->orderBy('updated_at', 'desc')
             ->orderBy('created_at', 'desc')
@@ -232,16 +235,19 @@ class AdminChatController extends Controller
      */
     private function getChatStats()
     {
+        // Check if chats table exists
+        $chatTableExists = \Schema::hasTable('chats');
+        
         // Regular chat stats
         $regularStats = [
-            'total' => Chat::count(),
-            'open' => Chat::where('status', 'open')->count(),
-            'in_progress' => Chat::where('status', 'in_progress')->count(),
-            'resolved' => Chat::where('status', 'resolved')->count(),
-            'closed' => Chat::where('status', 'closed')->count(),
-            'unassigned' => Chat::whereNull('assigned_admin_id')->count(),
-            'with_unread' => Chat::where('admin_unread_count', '>', 0)->count(),
-            'high_priority' => Chat::whereIn('priority', ['high', 'urgent'])->count(),
+            'total' => $chatTableExists ? Chat::count() : 0,
+            'open' => $chatTableExists ? Chat::where('status', 'open')->count() : 0,
+            'in_progress' => $chatTableExists ? Chat::where('status', 'in_progress')->count() : 0,
+            'resolved' => $chatTableExists ? Chat::where('status', 'resolved')->count() : 0,
+            'closed' => $chatTableExists ? Chat::where('status', 'closed')->count() : 0,
+            'unassigned' => $chatTableExists ? Chat::whereNull('assigned_admin_id')->count() : 0,
+            'with_unread' => $chatTableExists ? Chat::where('admin_unread_count', '>', 0)->count() : 0,
+            'high_priority' => $chatTableExists ? Chat::whereIn('priority', ['high', 'urgent'])->count() : 0,
         ];
 
         // Pusher chat stats

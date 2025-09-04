@@ -14,10 +14,18 @@ return new class extends Migration
     public function up()
     {
         Schema::table('order_items', function (Blueprint $table) {
-            $table->string('selling_type', 50)->default('unit')->after('total_price');
-            $table->integer('cartons_count')->default(0)->after('selling_type');
-            $table->integer('packages_count')->default(0)->after('cartons_count');
-            $table->integer('units_count')->default(0)->after('packages_count');
+            if (!Schema::hasColumn('order_items', 'selling_type')) {
+                $table->string('selling_type', 50)->default('unit')->after('total_price');
+            }
+            if (!Schema::hasColumn('order_items', 'cartons_count')) {
+                $table->integer('cartons_count')->default(0)->after('selling_type');
+            }
+            if (!Schema::hasColumn('order_items', 'packages_count')) {
+                $table->integer('packages_count')->default(0)->after('cartons_count');
+            }
+            if (!Schema::hasColumn('order_items', 'units_count')) {
+                $table->integer('units_count')->default(0)->after('packages_count');
+            }
         });
     }
 
