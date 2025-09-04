@@ -3,11 +3,14 @@
 @section('title', 'إدارة الدردشة والدعم')
 
 @section('content')
-<div class="dashboard-content">
+<!-- Toast Notification Container -->
+<div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+<div class="container-fluid">
     <!-- Page Header -->
-    <div class="page-header-section">
-        <div class="page-header-content">
-            <div class="page-title-wrapper">
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-text">
                 <h1 class="page-title">
                     <i class="fas fa-comments"></i>
                     إدارة الدردشة والدعم
@@ -792,6 +795,9 @@ function initializePusherRealtime() {
 function handleNewChatMessage(data) {
     console.log('📨 Processing new chat message:', data);
     
+    // Show toast notification
+    showToastNotification(data.message);
+    
     // Update unread count in stats
     updateUnreadStats();
     
@@ -826,10 +832,6 @@ function handleNewChatMessage(data) {
         // Move to top and highlight
         moveToTop(chatItem);
         highlightChatItem(chatItem);
-        
-        // Show notification with customer name
-        const customerName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
-        showNotification(`رسالة جديدة من ${customerName}`, data.message.message);
     } else {
         // Chat not visible, reload page to show new chat
         console.log('Chat not found in current list, refreshing...');
@@ -959,18 +961,62 @@ function updateChatStatus(chatId, newStatus) {
     }
 }
 
+function refreshChatStats() {
+    updateUnreadStats();
+}
+
+function showToastNotification(message) {
+    const toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) return;
+
+    const senderName = message.sender_type === 'customer' ? message.sender.name : 'الإدارة';
+    const messageText = message.message.substring(0, 80) + (message.message.length > 80 ? '...' : '');
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.innerHTML = `
+        <div class="toast-header">
+            <strong>💬 رسالة جديدة من ${senderName}</strong>
+            <button type="button" class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+        <div class="toast-body">
+            ${messageText}
+        </div>
+    `;
+    
+    // Add toast styles
+    toast.style.cssText = `
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        margin-bottom: 10px;
+        min-width: 300px;
+        max-width: 400px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 300);
+        }
+    }, 3000);
+}
+
 function showNotification(title, message) {
-    if ('Notification' in window && Notification.permission === 'granted') {
+    // Simple notification - you can enhance this with a proper notification library
+    if (Notification.permission === 'granted') {
         new Notification(title, {
             body: message.substring(0, 100),
-            icon: '/favicon.ico',
-            badge: '/favicon.ico'
-        });
-    } else if ('Notification' in window && Notification.permission !== 'denied') {
-        Notification.requestPermission().then(function(permission) {
-            if (permission === 'granted') {
-                showNotification(title, message);
-            }
+            icon: '/favicon.ico'
         });
     }
     
@@ -1120,5 +1166,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 </script>
-@endsection
 @endsection
