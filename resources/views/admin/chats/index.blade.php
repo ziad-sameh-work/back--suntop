@@ -725,7 +725,7 @@ function initializePusherRealtime() {
         pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
             cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
             forceTLS: true,
-            authEndpoint: '/broadcasting/auth',
+            authEndpoint: '/admin/broadcasting/auth',
             auth: {
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',

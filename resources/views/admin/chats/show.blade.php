@@ -659,7 +659,7 @@ function initializePusherChat() {
         pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
             cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
             forceTLS: true,
-            authEndpoint: '/api/broadcasting/auth',
+            authEndpoint: '/admin/broadcasting/auth',
             auth: {
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
