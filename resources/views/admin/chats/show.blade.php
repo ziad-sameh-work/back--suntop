@@ -671,27 +671,14 @@ function initializePusherChat() {
         // Subscribe to specific chat channel (regular chat uses public channel)
         chatChannel = pusher.subscribe(`chat.${chatId}`);
         
-        // Listen for new messages (regular chat uses 'message.new' event)
-        chatChannel.bind('message.new', function(data) {
-            console.log('🔔 New regular chat message received:', data);
-            addMessageToChat(data.message);
-            showMessageNotification(data.message);
-            
-            // Also refresh Livewire component
-            if (typeof Livewire !== 'undefined') {
-                Livewire.emit('refreshMessages');
-            }
-        });
-
-        // Also subscribe to private admin channel for potential admin messages
-        const adminChannel = pusher.subscribe('private-admin.chats');
-        adminChannel.bind('message.new', function(data) {
+        // Listen for NewChatMessage events (the main event from ChatMessage model)
+        chatChannel.bind('App\\Events\\NewChatMessage', function(data) {
+            console.log('🔔 New chat message received:', data);
             if (data.message.chat_id == chatId) {
-                console.log('🔔 Admin message received:', data);
                 addMessageToChat(data.message);
                 showMessageNotification(data.message);
                 
-                // Also refresh Livewire component
+                // Refresh Livewire component
                 if (typeof Livewire !== 'undefined') {
                     Livewire.emit('refreshMessages');
                 }

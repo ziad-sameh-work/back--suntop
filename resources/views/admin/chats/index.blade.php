@@ -737,24 +737,16 @@ function initializePusherRealtime() {
         // Subscribe to admin chats channel for real-time updates
         adminChannel = pusher.subscribe('private-admin.chats');
         
-        // Listen for new messages
-        adminChannel.bind('message.sent', function(data) {
-            console.log('🔔 New message received:', data);
-            handleNewMessage(data);
-            updateChatItemRealtime(data.chat);
-            showNotification(`رسالة جديدة من ${data.message.user.name}`, data.message.message);
+        // Listen for NewChatMessage events (the main event from ChatMessage model)
+        adminChannel.bind('App\\Events\\NewChatMessage', function(data) {
+            console.log('🔔 New chat message received:', data);
+            handleNewChatMessage(data);
         });
 
         // Listen for chat status changes
         adminChannel.bind('chat.status.updated', function(data) {
             console.log('📊 Chat status updated:', data);
             updateChatStatus(data.chat_id, data.status);
-        });
-
-        // Listen for regular chat messages (NewChatMessage event)
-        adminChannel.bind('message.new', function(data) {
-            console.log('🔔 New regular chat message received:', data);
-            handleNewRegularChatMessage(data);
         });
 
         // Connection status handling
@@ -789,21 +781,8 @@ function initializePusherRealtime() {
     }
 }
 
-function handleNewMessage(data) {
-    // Update unread count in stats
-    updateUnreadStats();
-    
-    // Update specific chat item if visible
-    const chatItem = document.querySelector(`[data-chat-id="${data.chat.id}"]`);
-    if (chatItem) {
-        updateChatItemUnreadCount(chatItem, data.chat.unread_admin_count);
-        moveToTop(chatItem);
-        highlightChatItem(chatItem);
-    }
-}
-
-function handleNewRegularChatMessage(data) {
-    console.log('📨 Processing regular chat message:', data);
+function handleNewChatMessage(data) {
+    console.log('📨 Processing new chat message:', data);
     
     // Update unread count in stats
     updateUnreadStats();
@@ -830,9 +809,11 @@ function handleNewRegularChatMessage(data) {
             customerNameElement.textContent = data.message.sender.name;
         }
 
-        // Update unread badge
-        const currentUnread = parseInt(chatItem.querySelector('.unread-badge')?.textContent || '0');
-        updateChatItemUnreadCount(chatItem, currentUnread + 1);
+        // Update unread badge only if message is from customer
+        if (data.message.sender_type === 'customer') {
+            const currentUnread = parseInt(chatItem.querySelector('.unread-badge')?.textContent || '0');
+            updateChatItemUnreadCount(chatItem, currentUnread + 1);
+        }
 
         // Move to top and highlight
         moveToTop(chatItem);
@@ -845,7 +826,7 @@ function handleNewRegularChatMessage(data) {
         // Chat not visible, reload page to show new chat
         console.log('Chat not found in current list, refreshing...');
         setTimeout(() => {
-        window.location.reload();
+            window.location.reload();
         }, 2000);
     }
 }

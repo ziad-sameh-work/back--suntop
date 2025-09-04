@@ -63,7 +63,7 @@ class PusherChatCustomer {
      */
     async loadChat() {
         try {
-            const response = await fetch(`${this.options.baseUrl}/api/pusher-chat/start`, {
+            const response = await fetch(`${this.options.baseUrl}/api/chat/start`, {
                 headers: {
                     'Authorization': `Bearer ${this.options.apiToken}`,
                     'Accept': 'application/json'
@@ -93,9 +93,9 @@ class PusherChatCustomer {
     setupChatChannel() {
         if (!this.echo || !this.chat) return;
 
-        this.chatChannel = this.echo.private(`chat.${this.chat.id}`);
+        this.chatChannel = this.echo.channel(`chat.${this.chat.id}`);
         
-        this.chatChannel.listen('message.sent', (data) => {
+        this.chatChannel.listen('App\\Events\\NewChatMessage', (data) => {
             console.log('New message received:', data);
             this.addMessage(data.message);
         });
@@ -354,7 +354,7 @@ class PusherChatCustomer {
                 ${this.escapeHtml(message.message)}
             </div>
             <div class="message-meta">
-                ${message.user.name} • ${message.formatted_time}
+                ${message.sender ? message.sender.name : (message.sender_type === 'admin' ? 'الإدارة' : 'أنت')} • ${message.formatted_time}
             </div>
         `;
 
@@ -378,7 +378,7 @@ class PusherChatCustomer {
         sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
         try {
-            const response = await fetch(`${this.options.baseUrl}/api/pusher-chat/messages`, {
+            const response = await fetch(`${this.options.baseUrl}/api/chat/send`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
