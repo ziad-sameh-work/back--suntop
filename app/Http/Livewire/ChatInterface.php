@@ -155,6 +155,9 @@ class ChatInterface extends Component
         if (Auth::user()->role === 'admin') {
             $this->chat->markAsRead('admin');
         }
+        
+        // Force component refresh
+        $this->emit('$refresh');
     }
 
     public function addMessage($messageId)

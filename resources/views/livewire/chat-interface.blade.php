@@ -171,14 +171,22 @@
                     if (data.message && data.message.chat_id == chatId) {
                         console.log('✅ CHAT INTERFACE: Message for current chat, refreshing Livewire...');
                         
-                        // Refresh the Livewire component
+                        // Force immediate Livewire component refresh
                         @this.call('refreshMessages').then(() => {
                             console.log('✅ CHAT INTERFACE: Livewire refreshed successfully');
+                            
+                            // Force re-render by calling $refresh
+                            Livewire.emit('$refresh');
+                            
                             setTimeout(() => {
                                 scrollToBottom();
-                            }, 100);
+                            }, 200);
                         }).catch((error) => {
                             console.error('❌ CHAT INTERFACE: Error refreshing Livewire:', error);
+                            // Fallback: reload the page if Livewire fails
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
                         });
                     }
                 });

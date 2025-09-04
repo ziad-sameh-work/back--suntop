@@ -737,9 +737,15 @@ function initializePusherRealtime() {
         // Subscribe to admin chats channel for real-time updates
         adminChannel = pusher.subscribe('private-admin.chats');
         
-        // Listen for NewChatMessage events (the main event from ChatMessage model)
+        // Bind to the new chat message event
         adminChannel.bind('App\\Events\\NewChatMessage', function(data) {
-            console.log('🔔 New chat message received:', data);
+            console.log('🔥 NewChatMessage event received:', data);
+            console.log('🔍 Event details:', {
+                chatId: data.message?.chat_id,
+                messageId: data.message?.id,
+                senderType: data.message?.sender_type,
+                message: data.message?.message?.substring(0, 50) + '...'
+            });
             handleNewChatMessage(data);
         });
 
@@ -797,13 +803,14 @@ function handleNewChatMessage(data) {
     showNotification(`رسالة جديدة من ${customerName}`, data.message.message);
     
     // Update the UI immediately without reload
-    updateChatListRealtime(data);
+    const success = updateChatListRealtime(data);
     
-    // Also emit Livewire events as backup
-    if (typeof Livewire !== 'undefined') {
-        console.log('🔄 Emitting Livewire events...');
-        Livewire.emit('messageAdded', data.message.id);
-        Livewire.emit('chatUpdated', data.message.chat_id);
+    // If UI update failed, force page reload after a delay
+    if (!success) {
+        console.log('🔄 UI update failed, forcing page reload...');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
     }
 }
 
@@ -814,101 +821,66 @@ function updateChatListRealtime(data) {
     
     const chatId = data.message.chat_id;
     
-    // Debug: Check all possible selectors
-    console.log('Looking for chat item with selectors:');
-    const selectors = [
-        `[data-chat-id="${chatId}"]`,
-        `.chat-item[data-chat-id="${chatId}"]`,
-        `#chat-${chatId}`,
-        `.chat-card[data-id="${chatId}"]`
-    ];
+    // Find the chat item
+    const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
     
-    let chatItem = null;
-    for (let selector of selectors) {
-        chatItem = document.querySelector(selector);
-        console.log(`Selector "${selector}":`, chatItem ? 'Found' : 'Not found');
-        if (chatItem) break;
-    }
-    
-    // If not found, list all chat elements
     if (!chatItem) {
         console.log('❌ Chat item not found. Available chat elements:');
-        const allChatItems = document.querySelectorAll('[data-chat-id], .chat-item, .chat-card');
+        const allChatItems = document.querySelectorAll('[data-chat-id]');
         allChatItems.forEach((item, index) => {
-            console.log(`${index + 1}:`, item.outerHTML.substring(0, 200) + '...');
+            console.log(`${index + 1}: data-chat-id="${item.getAttribute('data-chat-id')}"`);
         });
-        return;
+        
+        // Return false to indicate failure
+        return false;
     }
     
-    console.log('✅ Found chat item:', chatItem);
+    console.log('✅ Found chat item');
     
     // Update last message time
-    const timeSelectors = ['.chat-time', '.message-time', '.last-message-time', '.time'];
-    let timeElement = null;
-    for (let selector of timeSelectors) {
-        timeElement = chatItem.querySelector(selector);
-        if (timeElement) {
-            console.log(`Found time element with selector: ${selector}`);
-            break;
-        }
-    }
-    
+    const timeElement = chatItem.querySelector('.chat-time');
     if (timeElement) {
         timeElement.textContent = 'الآن';
-        console.log('✅ Updated time to "الآن"');
-    } else {
-        console.log('❌ Time element not found');
+        console.log('✅ Updated time');
     }
 
     // Update last message preview
-    const previewSelectors = ['.chat-preview', '.last-message', '.message-preview', '.preview'];
-    let previewElement = null;
-    for (let selector of previewSelectors) {
-        previewElement = chatItem.querySelector(selector);
-        if (previewElement) {
-            console.log(`Found preview element with selector: ${selector}`);
-            break;
-        }
-    }
-    
+    const previewElement = chatItem.querySelector('.chat-preview');
     if (previewElement) {
         const senderName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
-        const messageText = data.message.message.length > 50 ? 
-            data.message.message.substring(0, 50) + '...' : 
+        const messageText = data.message.message.length > 100 ? 
+            data.message.message.substring(0, 100) + '...' : 
             data.message.message;
         previewElement.innerHTML = `<strong>${senderName}:</strong> ${messageText}`;
-        console.log('✅ Updated preview message');
-    } else {
-        console.log('❌ Preview element not found');
+        console.log('✅ Updated preview');
     }
 
     // Update unread count if message from customer
     if (data.message.sender_type === 'customer') {
-        const unreadSelectors = ['.unread-badge', '.badge', '.unread-count', '.notification-badge'];
-        let unreadBadge = null;
-        for (let selector of unreadSelectors) {
-            unreadBadge = chatItem.querySelector(selector);
-            if (unreadBadge) {
-                console.log(`Found unread badge with selector: ${selector}`);
-                break;
-            }
-        }
-        
+        let unreadBadge = chatItem.querySelector('.unread-badge');
         if (unreadBadge) {
             const currentCount = parseInt(unreadBadge.textContent) || 0;
             unreadBadge.textContent = currentCount + 1;
             unreadBadge.style.display = 'inline-block';
             console.log('✅ Updated unread count');
         } else {
-            console.log('❌ Unread badge not found');
+            // Create unread badge if it doesn't exist
+            const chatMeta = chatItem.querySelector('.chat-meta');
+            if (chatMeta) {
+                unreadBadge = document.createElement('span');
+                unreadBadge.className = 'unread-badge';
+                unreadBadge.textContent = '1';
+                chatMeta.appendChild(unreadBadge);
+                console.log('✅ Created new unread badge');
+            }
         }
     }
 
     // Move chat to top of list
     const chatsList = chatItem.parentElement;
-    if (chatsList) {
+    if (chatsList && chatsList.firstChild !== chatItem) {
         chatsList.insertBefore(chatItem, chatsList.firstChild);
-        console.log('✅ Moved chat to top');
+        console.log('✅ Moved to top');
     }
 
     // Add highlight animation
@@ -918,7 +890,10 @@ function updateChatListRealtime(data) {
         chatItem.style.backgroundColor = '';
     }, 2000);
     
-    console.log('✅ Chat item updated successfully');
+    console.log('✅ Real-time update completed');
+    
+    // Return true to indicate success
+    return true;
 }
 
 function updateChatItemRealtime(chatData) {

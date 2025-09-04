@@ -65,8 +65,10 @@ class ChatList extends Component
 
     public function refreshList()
     {
-        // This will trigger a re-render
-        $this->render();
+        \Log::info('ChatList: refreshList called');
+        // Force a complete refresh of the component
+        $this->resetPage();
+        $this->emit('$refresh');
     }
 
     public function assignToMe($chatId)
