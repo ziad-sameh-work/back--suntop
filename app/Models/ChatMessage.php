@@ -155,11 +155,10 @@ class ChatMessage extends Model
             $recipientType = $message->sender_type === 'customer' ? 'admin' : 'customer';
             $message->chat->incrementUnreadCount($recipientType);
             
-            // إرسال الحدث لدعم الشات المباشر للتطبيقات والإدارة
-            // استخدم Laravel Echo للشات المباشر
+            // إرسال الحدث لدعم الشات المباشر عبر Pusher
             if ($message->sender_type === 'customer' || 
                 $message->sender_type === 'admin' || 
-                (isset($message->metadata['sent_from']) && in_array($message->metadata['sent_from'], ['api_rt', 'admin_panel_firebase', 'admin_panel_livewire']))) {
+                (isset($message->metadata['sent_from']) && in_array($message->metadata['sent_from'], ['api_rt', 'admin_panel_livewire']))) {
                 
                 // Load necessary relationships before broadcasting
                 $message->load(['sender', 'chat.customer']);

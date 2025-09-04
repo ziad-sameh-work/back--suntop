@@ -52,19 +52,11 @@ class ChatInterface extends Component
     public function mount(Chat $chat)
     {
         $this->chat = $chat;
-        $this->firebaseService = app(FirebaseRealtimeService::class);
         $this->loadMessages();
         
         // Mark messages as read for admin
         if (Auth::user()->role === 'admin') {
             $this->chat->markAsRead('admin');
-            $this->firebaseService->markMessagesAsRead($chat->id, 'admin');
-            
-            // تسجيل حضور الأدمن
-            $this->firebaseService->registerAdminPresence(
-                Auth::id(),
-                Auth::user()->full_name ?? Auth::user()->name
-            );
         }
     }
 
@@ -134,32 +126,7 @@ class ChatInterface extends Component
                 ]
             ]);
             
-            // إرسال الرسالة إلى Firebase للـ Real-time
-            if ($this->firebaseService) {
-                $this->firebaseService->sendMessage($this->chat->id, [
-                    'id' => $message->id,
-                    'sender_id' => $user->id,
-                    'sender_name' => $user->full_name ?? $user->name,
-                    'sender_type' => $senderType,
-                    'message' => $this->newMessage,
-                    'message_type' => $messageType,
-                    'attachment_url' => $attachmentPath ? url('storage/' . $attachmentPath) : null,
-                    'attachment_name' => $attachmentName,
-                    'metadata' => [
-                        'sent_from' => 'admin_panel_firebase',
-                        'admin_id' => $user->id,
-                        'admin_name' => $user->full_name ?? $user->name
-                    ]
-                ]);
-                
-                // إشعار العميل برسالة جديدة
-                $this->firebaseService->notifyCustomer($this->chat->customer_id, [
-                    'type' => 'admin_reply',
-                    'chat_id' => $this->chat->id,
-                    'admin_name' => $user->full_name ?? $user->name,
-                    'message' => "رد جديد من فريق الدعم: " . substr($this->newMessage, 0, 50) . (strlen($this->newMessage) > 50 ? '...' : '')
-                ]);
-            }
+            // سيتم بث الرسالة تلقائياً عبر Pusher من خلال ChatMessage model
             
             return $message;
         });

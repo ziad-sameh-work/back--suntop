@@ -4,12 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Chat;
 use App\Models\ChatMessage;
-use App\Models\PusherChat;
-use App\Models\PusherMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Events\NewChatMessage;
 
 class AdminChatController extends Controller
 {
@@ -46,10 +45,6 @@ class AdminChatController extends Controller
         $regularChats = $chatTableExists ? Chat::with(['customer', 'assignedAdmin', 'latestMessage.sender'])
             ->withCount('messages') : collect();
 
-        // Get pusher chats
-        $pusherChats = PusherChat::with(['customer', 'messages.user'])
-            ->withCount('messages');
-
         // Apply filters to regular chats (only if table exists)
         if ($chatTableExists && $status !== 'all') {
             $regularChats->where('status', $status);
@@ -75,72 +70,16 @@ class AdminChatController extends Controller
                          ->orWhere('email', 'LIKE', "%{$search}%");
                   });
             });
-
-            // Apply same search to pusher chats
-            $pusherChats->where(function($q) use ($search) {
-                $q->where('subject', 'LIKE', "%{$search}%")
-                  ->orWhereHas('customer', function($qq) use ($search) {
-                      $qq->where('name', 'LIKE', "%{$search}%")
-                         ->orWhere('email', 'LIKE', "%{$search}%");
-                  });
-            });
         }
 
-        // Apply status filter to pusher chats (map status values)
-        if ($status !== 'all') {
-            $pusherChats->where('status', $status);
-        }
-
-        // Execute queries
+        // Execute queries - only for regular chats
         $regularChatsResults = $chatTableExists ? $regularChats->orderBy('admin_unread_count', 'desc')
             ->orderBy('last_message_at', 'desc')
             ->orderBy('created_at', 'desc')
             ->get() : collect();
 
-        $pusherChatsResults = $pusherChats->orderBy('updated_at', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Transform pusher chats to match regular chat structure
-        $transformedPusherChats = $pusherChatsResults->map(function ($pusherChat) {
-            // Get the latest message
-            $latestMessage = $pusherChat->messages->sortByDesc('created_at')->first();
-            
-            // Create a pseudo Chat model that can work with routes
-            $pseudoChat = new \stdClass();
-            $pseudoChat->id = $pusherChat->id;
-            $pseudoChat->customer_id = $pusherChat->user_id;
-            $pseudoChat->subject = $pusherChat->subject ?: 'محادثة Pusher';
-            $pseudoChat->status = $pusherChat->status;
-            $pseudoChat->priority = 'medium'; // Default priority for pusher chats
-            $pseudoChat->admin_unread_count = 1; // Mark as unread for visibility
-            $pseudoChat->customer_unread_count = 0;
-            $pseudoChat->last_message_at = $latestMessage ? $latestMessage->created_at : $pusherChat->created_at;
-            $pseudoChat->created_at = $pusherChat->created_at;
-            $pseudoChat->updated_at = $pusherChat->updated_at;
-            $pseudoChat->customer = $pusherChat->customer;
-            $pseudoChat->assignedAdmin = null;
-            $pseudoChat->messages_count = $pusherChat->messages_count;
-            $pseudoChat->latestMessage = $latestMessage ? collect([
-                (object) [
-                    'id' => $latestMessage->id,
-                    'message' => $latestMessage->message,
-                    'sender_type' => $latestMessage->user_id == $pusherChat->user_id ? 'customer' : 'admin',
-                    'created_at' => $latestMessage->created_at,
-                    'sender' => $latestMessage->user
-                ]
-            ]) : collect([]);
-            $pseudoChat->is_pusher_chat = true; // Flag to identify pusher chats
-            $pseudoChat->formatted_last_message_time = $this->formatMessageTime($pseudoChat->last_message_at);
-            
-            return $pseudoChat;
-        });
-
-        // Combine and sort all chats
-        $allChats = $regularChatsResults->concat($transformedPusherChats)
-            ->sortByDesc(function ($chat) {
-                return $chat->last_message_at ?: $chat->created_at;
-            });
+        // Use only regular chats - simplified approach
+        $allChats = $regularChatsResults;
 
         // Manually paginate the combined results
         $perPage = 20;
@@ -250,28 +189,8 @@ class AdminChatController extends Controller
             'high_priority' => $chatTableExists ? Chat::whereIn('priority', ['high', 'urgent'])->count() : 0,
         ];
 
-        // Pusher chat stats
-        $pusherStats = [
-            'total' => PusherChat::count(),
-            'open' => PusherChat::where('status', 'open')->count(),
-            'in_progress' => PusherChat::where('status', 'in_progress')->count(),
-            'resolved' => PusherChat::where('status', 'resolved')->count(),
-            'closed' => PusherChat::where('status', 'closed')->count(),
-        ];
-
-        // Combined stats
-        return [
-            'total' => $regularStats['total'] + $pusherStats['total'],
-            'open' => $regularStats['open'] + $pusherStats['open'],
-            'in_progress' => $regularStats['in_progress'] + $pusherStats['in_progress'],
-            'resolved' => $regularStats['resolved'] + $pusherStats['resolved'],
-            'closed' => $regularStats['closed'] + $pusherStats['closed'],
-            'unassigned' => $regularStats['unassigned'], // Pusher chats don't have assigned admin
-            'with_unread' => $regularStats['with_unread'] + $pusherStats['total'], // All pusher chats considered unread
-            'high_priority' => $regularStats['high_priority'],
-            'pusher_chats' => $pusherStats['total'], // Additional stat for pusher chats
-            'regular_chats' => $regularStats['total'], // Additional stat for regular chats
-        ];
+        // Return only regular chat stats
+        return $regularStats;
     }
 
     /**

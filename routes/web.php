@@ -234,25 +234,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('chats/{chat}/priority', [AdminChatController::class, 'updatePriority'])->name('chats.updatePriority');
     Route::get('chats-admins', [AdminChatController::class, 'getAdmins'])->name('chats.admins');
 
-    // Firebase Chat Routes for Admin Panel - Disabled (Controller not found)
-    /*
-    Route::prefix('firebase-chats')->name('firebase-chats.')->group(function () {
-        Route::get('/', [AdminFirebaseChatController::class, 'index'])->name('index');
-        Route::get('/dashboard', [AdminFirebaseChatController::class, 'realtimeDashboard'])->name('dashboard');
-        Route::get('/{chat}', [AdminFirebaseChatController::class, 'show'])->name('show');
-    });
-    
-    // Firebase Chat API Routes for Admin
-    Route::prefix('api/firebase-chat')->group(function () {
-        Route::get('test-connection', [AdminFirebaseChatController::class, 'testFirebaseConnection'])->name('api.firebase-chats.test');
-        Route::post('send-message', [AdminFirebaseChatController::class, 'sendMessage'])->name('api.firebase-chats.send');
-        Route::post('{chat}/assign', [AdminFirebaseChatController::class, 'assignAdmin'])->name('api.firebase-chats.assign');
-        Route::post('{chat}/status', [AdminFirebaseChatController::class, 'updateStatus'])->name('api.firebase-chats.status');
-        Route::post('typing-indicator', [AdminFirebaseChatController::class, 'sendTypingIndicator'])->name('api.firebase-chats.typing');
-        Route::get('stats', [AdminFirebaseChatController::class, 'getStats'])->name('api.firebase-chats.stats');
-        Route::get('admins', [AdminFirebaseChatController::class, 'getAdmins'])->name('api.firebase-chats.admins');
-    });
-    */
 
     // Enhanced Notification Routes
     Route::get('notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
