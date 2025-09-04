@@ -147,8 +147,14 @@ class ChatInterface extends Component
 
     public function refreshMessages()
     {
+        \Log::info('ChatInterface: refreshMessages called');
         $this->loadMessages();
         $this->dispatchBrowserEvent('scrollToBottom');
+        
+        // Mark messages as read for admin
+        if (Auth::user()->role === 'admin') {
+            $this->chat->markAsRead('admin');
+        }
     }
 
     public function addMessage($messageId)

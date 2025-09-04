@@ -792,47 +792,22 @@ function initializePusherRealtime() {
 function handleNewChatMessage(data) {
     console.log('📨 Processing new chat message:', data);
     
-    // Update unread count in stats
-    updateUnreadStats();
+    // Show notification with customer name
+    const customerName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
+    showNotification(`رسالة جديدة من ${customerName}`, data.message.message);
     
-    // Find chat item and update it
-    const chatItem = document.querySelector(`[data-chat-id="${data.message.chat_id}"]`);
-    if (chatItem) {
-        // Update last message time
-        const timeElement = chatItem.querySelector('.chat-time');
-        if (timeElement) {
-            timeElement.textContent = 'الآن';
-        }
-
-        // Update last message preview
-        const previewElement = chatItem.querySelector('.chat-preview');
-        if (previewElement) {
-            const senderName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
-            previewElement.innerHTML = `<strong>${senderName}:</strong> ${data.message.message.substring(0, 100)}${data.message.message.length > 100 ? '...' : ''}`;
-        }
-
-        // Update customer name if needed
-        const customerNameElement = chatItem.querySelector('.chat-customer');
-        if (customerNameElement && data.message.sender_type === 'customer') {
-            customerNameElement.textContent = data.message.sender.name;
-        }
-
-        // Update unread badge only if message is from customer
-        if (data.message.sender_type === 'customer') {
-            const currentUnread = parseInt(chatItem.querySelector('.unread-badge')?.textContent || '0');
-            updateChatItemUnreadCount(chatItem, currentUnread + 1);
-        }
-
-        // Move to top and highlight
-        moveToTop(chatItem);
-        highlightChatItem(chatItem);
+    // Refresh Livewire component instead of manual DOM manipulation
+    if (typeof Livewire !== 'undefined') {
+        console.log('🔄 Refreshing Livewire ChatList component...');
+        Livewire.emit('messageAdded', data.message.id);
         
-        // Show notification with customer name
-        const customerName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
-        showNotification(`رسالة جديدة من ${customerName}`, data.message.message);
+        // Also try to refresh the component directly
+        const chatListComponent = Livewire.find('chat-list');
+        if (chatListComponent) {
+            chatListComponent.call('refreshList');
+        }
     } else {
-        // Chat not visible, reload page to show new chat
-        console.log('Chat not found in current list, refreshing...');
+        console.log('⚠️ Livewire not available, falling back to page reload');
         setTimeout(() => {
             window.location.reload();
         }, 2000);
