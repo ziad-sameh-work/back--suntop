@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Pusher Connection</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .log { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin: 10px 0; border-radius: 4px; font-family: monospace; max-height: 400px; overflow-y: auto; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 4px; cursor: pointer; }
+        input { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; width: 300px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Test Pusher Real-time Connection</h1>
+        
+        <div id="connectionStatus" class="status info">
+            🔄 Ready to test...
+        </div>
+
+        <div>
+            <h3>Enter Pusher Credentials:</h3>
+            <input type="text" id="pusherKey" placeholder="Enter Pusher App Key" style="width: 100%; margin-bottom: 10px;">
+            <input type="text" id="pusherCluster" placeholder="Enter Cluster (e.g., mt1)" value="mt1" style="width: 100%; margin-bottom: 10px;">
+            <button onclick="testConnection()" style="width: 100%;">🚀 Test Connection</button>
+        </div>
+
+        <div>
+            <h3>Test Results:</h3>
+            <div id="testLog" class="log">
+                Waiting for test...
+            </div>
+        </div>
+    </div>
+
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        let pusher = null;
+        
+        function log(message) {
+            const logDiv = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('connectionStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function testConnection() {
+            const key = document.getElementById('pusherKey').value.trim();
+            const cluster = document.getElementById('pusherCluster').value.trim();
+
+            if (!key) {
+                updateStatus('❌ Please enter Pusher App Key', 'error');
+                log('❌ Missing Pusher App Key');
+                return;
+            }
+
+            log('🚀 Starting Pusher connection test...');
+            log(`📋 Using Key: ${key.substring(0, 10)}...`);
+            log(`📋 Using Cluster: ${cluster}`);
+            
+            try {
+                // Initialize Pusher
+                pusher = new Pusher(key, {
+                    cluster: cluster,
+                    forceTLS: true,
+                    enabledTransports: ['ws', 'wss'],
+                    disabledTransports: []
+                });
+
+                updateStatus('🔄 Testing connection...', 'info');
+
+                // Connection events
+                pusher.connection.bind('connecting', function() {
+                    log('🔄 Connecting to Pusher...');
+                    updateStatus('🔄 Connecting...', 'info');
+                });
+
+                pusher.connection.bind('connected', function() {
+                    log('✅ Successfully connected to Pusher!');
+                    updateStatus('✅ Connected Successfully!', 'success');
+                    testChannels();
+                });
+
+                pusher.connection.bind('disconnected', function() {
+                    log('❌ Disconnected from Pusher');
+                    updateStatus('❌ Disconnected', 'error');
+                });
+
+                pusher.connection.bind('failed', function() {
+                    log('🔴 Connection failed - Check your credentials');
+                    updateStatus('🔴 Connection Failed', 'error');
+                });
+
+                pusher.connection.bind('error', function(error) {
+                    log('🔴 Connection error: ' + JSON.stringify(error));
+                    updateStatus('🔴 Connection Error', 'error');
+                });
+
+            } catch (error) {
+                log('🔴 Error initializing Pusher: ' + error.message);
+                updateStatus('🔴 Initialization Error', 'error');
+            }
+        }
+
+        function testChannels() {
+            log('📡 Testing channel subscriptions...');
+            
+            // Test public channel
+            try {
+                const testChannel = pusher.subscribe('chat.1');
+                
+                testChannel.bind('pusher:subscription_succeeded', function() {
+                    log('✅ Successfully subscribed to public channel (chat.1)');
+                });
+
+                testChannel.bind('pusher:subscription_error', function(error) {
+                    log('🔴 Public channel subscription error: ' + JSON.stringify(error));
+                });
+
+                testChannel.bind('App\\Events\\NewChatMessage', function(data) {
+                    log('🔔 Received NewChatMessage event!');
+                    log('📦 Data: ' + JSON.stringify(data, null, 2));
+                    updateStatus('🔔 Real-time message received!', 'success');
+                });
+
+            } catch (error) {
+                log('🔴 Error testing channels: ' + error.message);
+            }
+
+            // Test private channel (will fail without auth, but that's expected)
+            try {
+                const adminChannel = pusher.subscribe('private-admin.chats');
+                
+                adminChannel.bind('pusher:subscription_succeeded', function() {
+                    log('✅ Successfully subscribed to admin channel');
+                });
+
+                adminChannel.bind('pusher:subscription_error', function(error) {
+                    log('⚠️ Admin channel subscription failed (expected without auth): ' + JSON.stringify(error));
+                });
+
+            } catch (error) {
+                log('⚠️ Admin channel test failed (expected): ' + error.message);
+            }
+
+            log('📝 Now run: php test-realtime-chat.php customer "Test message"');
+            log('📝 You should see the message appear above in real-time!');
+        }
+
+        // Auto-fill key if available
+        window.addEventListener('load', function() {
+            log('🔥 Pusher Connection Test Ready');
+            log('📝 Enter your Pusher App Key and click Test Connection');
+        });
+    </script>
+</body>
+</html>
