@@ -799,13 +799,16 @@ function handleNewChatMessage(data) {
     // Refresh Livewire component instead of manual DOM manipulation
     if (typeof Livewire !== 'undefined') {
         console.log('🔄 Refreshing Livewire ChatList component...');
-        Livewire.emit('messageAdded', data.message.id);
         
-        // Also try to refresh the component directly
-        const chatListComponent = Livewire.find('chat-list');
-        if (chatListComponent) {
-            chatListComponent.call('refreshList');
-        }
+        // Emit to all components that might be listening
+        Livewire.emit('messageAdded', data.message.id);
+        Livewire.emit('chatUpdated', data.message.chat_id);
+        
+        // Simple approach: just reload the page for now
+        console.log('🔄 Reloading page to show new message...');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     } else {
         console.log('⚠️ Livewire not available, falling back to page reload');
         setTimeout(() => {
