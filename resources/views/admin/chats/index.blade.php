@@ -796,24 +796,67 @@ function handleNewChatMessage(data) {
     const customerName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
     showNotification(`رسالة جديدة من ${customerName}`, data.message.message);
     
-    // Refresh Livewire component instead of manual DOM manipulation
+    // Update the UI immediately without reload
+    updateChatListRealtime(data);
+    
+    // Also emit Livewire events as backup
     if (typeof Livewire !== 'undefined') {
-        console.log('🔄 Refreshing Livewire ChatList component...');
-        
-        // Emit to all components that might be listening
+        console.log('🔄 Emitting Livewire events...');
         Livewire.emit('messageAdded', data.message.id);
         Livewire.emit('chatUpdated', data.message.chat_id);
+    }
+}
+
+function updateChatListRealtime(data) {
+    console.log('🔄 Updating chat list in real-time...');
+    
+    const chatId = data.message.chat_id;
+    const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+    
+    if (chatItem) {
+        console.log('✅ Found chat item, updating...');
         
-        // Simple approach: just reload the page for now
-        console.log('🔄 Reloading page to show new message...');
+        // Update last message time
+        const timeElement = chatItem.querySelector('.chat-time');
+        if (timeElement) {
+            timeElement.textContent = 'الآن';
+        }
+
+        // Update last message preview
+        const previewElement = chatItem.querySelector('.chat-preview');
+        if (previewElement) {
+            const senderName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
+            const messageText = data.message.message.length > 50 ? 
+                data.message.message.substring(0, 50) + '...' : 
+                data.message.message;
+            previewElement.innerHTML = `<strong>${senderName}:</strong> ${messageText}`;
+        }
+
+        // Update unread count if message from customer
+        if (data.message.sender_type === 'customer') {
+            const unreadBadge = chatItem.querySelector('.unread-badge');
+            if (unreadBadge) {
+                const currentCount = parseInt(unreadBadge.textContent) || 0;
+                unreadBadge.textContent = currentCount + 1;
+                unreadBadge.style.display = 'inline-block';
+            }
+        }
+
+        // Move chat to top of list
+        const chatsList = chatItem.parentElement;
+        if (chatsList) {
+            chatsList.insertBefore(chatItem, chatsList.firstChild);
+        }
+
+        // Add highlight animation
+        chatItem.style.backgroundColor = '#fff3cd';
         setTimeout(() => {
-            window.location.reload();
-        }, 1000);
-    } else {
-        console.log('⚠️ Livewire not available, falling back to page reload');
-        setTimeout(() => {
-            window.location.reload();
+            chatItem.style.backgroundColor = '';
         }, 2000);
+        
+        console.log('✅ Chat item updated successfully');
+    } else {
+        console.log('⚠️ Chat item not found, may need page refresh for new chat');
     }
 }
 
