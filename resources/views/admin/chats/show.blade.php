@@ -7,15 +7,13 @@
 @endsection
 
     @section('content')
-<!-- Toast Notification Container -->
-<div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
-
-<div class="container-fluid">
-    <div class="chat-container">
-        <div class="chat-layout">
-            <!-- Sidebar -->
-            <div class="chat-sidebar">
-                <div class="sidebar-header">
+<div class="chat-container">
+    <!-- مؤشر تحديث الشات -->
+    @livewire('chat-updates-indicator')
+    <div class="chat-layout">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="sidebar-header">
                 <div class="customer-info">
                     <div class="customer-avatar">
                         {{ substr($chat->customer->name, 0, 1) }}
@@ -684,39 +682,28 @@ function initializePusherChat() {
                 if (typeof Livewire !== 'undefined') {
                     Livewire.emit('refreshMessages');
                 }
+            }
+        });
+
         // Connection status handling
         pusher.connection.bind('connected', function() {
-            console.log('✅ Pusher connected successfully');
+            console.log('✅ Pusher connected successfully for chat');
             showConnectionStatus('connected');
-            
-            // Subscribe to the chat channel
-            const channel = pusher.subscribe(`private-chat.${chatId}`);
-            
-            channel.bind('pusher:subscription_succeeded', function() {
-                console.log('✅ Successfully subscribed to chat channel');
-                showConnectionStatus('subscribed');
-            });
-            
-            channel.bind('pusher:subscription_error', function(error) {
-                console.error('❌ Subscription error:', error);
-                showConnectionStatus('subscription_error');
-            });
-            
-            // Listen for new messages
-            channel.bind('App\\Events\\NewChatMessage', function(data) {
-                console.log('📨 New message received:', data);
-                
-                // Show toast notification
-                showToastNotification(data.message);
-                
-                // Refresh the Livewire component to show new message
-                Livewire.emit('refreshMessages');
-                
-                // Show notification if message is from customer
-                if (data.message.sender_type === 'customer') {
-                    showNotification('رسالة جديدة', data.message.message);
-                }
-            });
+        });
+
+        pusher.connection.bind('disconnected', function() {
+            console.log('❌ Pusher disconnected from chat');
+            showConnectionStatus('disconnected');
+        });
+
+        chatChannel.bind('pusher:subscription_succeeded', function() {
+            console.log('✅ Successfully subscribed to chat channel');
+            showConnectionStatus('subscribed');
+        });
+
+        chatChannel.bind('pusher:subscription_error', function(error) {
+            console.error('🔴 Chat channel subscription error:', error);
+            showConnectionStatus('subscription_error');
         });
 
     } catch (error) {
@@ -790,49 +777,54 @@ function showMessageNotification(message) {
     const senderName = message.sender_type === 'customer' ? 'العميل' : 'الإدارة';
     const title = `رسالة جديدة من ${senderName}`;
     
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification';
-    toast.innerHTML = `
-        <div class="toast-header">
-            <strong>💬 رسالة جديدة من ${senderName}</strong>
-            <button type="button" class="toast-close" onclick="this.parentElement.parentElement.remove()">×</button>
-        </div>
-        <div class="toast-body">
-            ${messageText}
-        </div>
-    `;
+    // Browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+            body: message.message.substring(0, 100),
+            icon: '/favicon.ico'
+        });
+    }
     
-    // Add toast styles
-    toast.style.cssText = `
-        background: #fff;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        margin-bottom: 10px;
-        min-width: 300px;
-        max-width: 400px;
-        animation: slideInRight 0.3s ease-out;
-        border-left: 4px solid #007bff;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    `;
-    
-    toastContainer.appendChild(toast);
-    
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        if (toast.parentElement) {
-            toast.style.animation = 'slideOutRight 0.3s ease-in';
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 300);
-        }
-    }, 3000);
+    // In-page notification
+    showInPageNotification(title, message.message);
 }
 
-function showMessageNotification(message) {
-    showToastNotification(message);
+function showInPageNotification(title, message) {
+    const notification = document.createElement('div');
+    notification.className = 'chat-notification';
+    notification.innerHTML = `
+        <div class="notification-content">
+            <strong>${title}</strong>
+            <p>${message.substring(0, 80)}...</p>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #17a2b8;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        max-width: 400px;
+        animation: slideInRight 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 4000);
 }
 
 function showConnectionStatus(status) {
@@ -905,54 +897,29 @@ style.textContent = `
         }
     }
     
-    @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-    
-    .toast-notification {
-        border-left: 4px solid #007bff;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
-    .toast-header {
-        background: #f8f9fa;
-        padding: 10px 15px;
-        border-bottom: 1px solid #dee2e6;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-radius: 8px 8px 0 0;
-    }
-    
-    .toast-body {
-        padding: 12px 15px;
-        color: #495057;
-        line-height: 1.4;
-    }
-    
-    .toast-close {
-        background: none;
+    .notification-close {
+        background: rgba(255,255,255,0.2);
         border: none;
-        font-size: 18px;
-        cursor: pointer;
-        color: #6c757d;
-        padding: 0;
+        color: white;
         width: 20px;
         height: 20px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
+        line-height: 1;
     }
     
-    .toast-close:hover {
-        color: #495057;
+    .notification-close:hover {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .chat-notification .notification-content p {
+        margin: 5px 0 0 0;
+        font-size: 13px;
+        opacity: 0.9;
     }
 `;
 document.head.appendChild(style);

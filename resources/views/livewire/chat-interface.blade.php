@@ -154,6 +154,32 @@
             }, 100);
         });
         
+        // Pusher Real-time listener for this specific chat
+        if (typeof Pusher !== 'undefined' && window.pusher) {
+            const chatId = @json($chat->id);
+            console.log('Setting up Pusher listener for chat:', chatId);
+            
+            // Listen for new messages in this specific chat
+            window.pusher.bind('message.new', function(data) {
+                console.log('New message received in chat interface:', data);
+                
+                // Check if this message is for the current chat
+                if (data.message && data.message.chat_id == chatId) {
+                    console.log('Message is for current chat, refreshing...');
+                    
+                    // Refresh the Livewire component
+                    @this.call('refreshMessages');
+                    
+                    // Scroll to bottom after a short delay
+                    setTimeout(() => {
+                        scrollToBottom();
+                    }, 200);
+                }
+            });
+        } else {
+            console.log('Pusher not available for chat interface');
+        }
+        
         // دالة التمرير لأسفل
         function scrollToBottom() {
             const container = document.getElementById('messagesContainer');
