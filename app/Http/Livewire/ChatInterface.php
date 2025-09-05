@@ -103,11 +103,12 @@ class ChatInterface extends Component
                 'attachment_path' => $attachmentPath,
                 'attachment_name' => $attachmentName,
                 'metadata' => [
-                    'sent_from' => 'admin_panel_livewire' // Changed to trigger real-time events
+                    'sent_from' => 'admin_panel_livewire'
                 ]
             ]);
             
-            // سيتم بث الرسالة تلقائياً عبر Pusher من خلال ChatMessage model
+            // Fire the real-time event for admin messages
+            event(new \App\Events\NewChatMessage($message));
             
             return $message;
         });
