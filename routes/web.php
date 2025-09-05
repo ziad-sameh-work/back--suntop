@@ -7,7 +7,6 @@ use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminProductController;
 use App\Http\Controllers\AdminOrderController;
-use App\Http\Controllers\AdminMerchantController;
 use App\Http\Controllers\AdminOfferController;
 use App\Http\Controllers\AdminLoyaltyController;
 use App\Http\Controllers\AdminUserCategoryController;
@@ -358,19 +357,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('orders/{order}/print', [AdminOrderController::class, 'print'])->name('orders.print');
     Route::get('orders/export', [AdminOrderController::class, 'export'])->name('orders.export');
 
-    // Merchant Management Routes
-    Route::resource('merchants', AdminMerchantController::class);
-    Route::post('merchants/{merchant}/toggle-status', [AdminMerchantController::class, 'toggleStatus'])->name('merchants.toggle-status');
-    Route::post('merchants/{merchant}/toggle-open', [AdminMerchantController::class, 'toggleOpenStatus'])->name('merchants.toggle-open');
-    Route::post('merchants/bulk-action', [AdminMerchantController::class, 'bulkAction'])->name('merchants.bulk-action');
-    Route::get('merchants/{merchant}/analytics', [AdminMerchantController::class, 'analytics'])->name('merchants.analytics');
-    Route::get('merchants/export', [AdminMerchantController::class, 'export'])->name('merchants.export');
 
     // Offers Management Routes
     Route::resource('offers', AdminOfferController::class);
     Route::post('offers/{offer}/toggle-status', [AdminOfferController::class, 'toggleStatus'])->name('offers.toggle-status');
     Route::post('offers/bulk-action', [AdminOfferController::class, 'bulkAction'])->name('offers.bulk-action');
-    Route::get('offers/{offer}/analytics', [AdminOfferController::class, 'analytics'])->name('offers.analytics');
     Route::get('offers/export', [AdminOfferController::class, 'export'])->name('offers.export');
 
     // Loyalty Points Management Routes

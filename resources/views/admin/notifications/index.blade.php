@@ -339,7 +339,6 @@
                         <select class="form-select" id="role_filter" name="role_filter">
                             <option value="">جميع المستخدمين</option>
                             <option value="customer">العملاء فقط</option>
-                            <option value="merchant">التجار فقط</option>
                             <option value="admin">الإداريين فقط</option>
                         </select>
                     </div>

@@ -11,7 +11,6 @@ use App\Modules\Admin\Controllers\UserCategoryController;
 use App\Modules\Admin\Controllers\AdminUserController;
 use App\Modules\Admin\Controllers\AdminProductController;
 use App\Modules\Admin\Controllers\AdminOrderController;
-use App\Modules\Admin\Controllers\AdminMerchantController;
 use App\Modules\Admin\Controllers\AdminOfferController;
 use App\Modules\Admin\Controllers\AdminLoyaltyController;
 use App\Modules\Admin\Controllers\AdminAnalyticsController;
@@ -124,17 +123,6 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(functi
         Route::post('/{id}/tracking', [AdminOrderController::class, 'addTracking']);
     });
 
-    // Merchant Management
-    Route::prefix('merchants')->group(function () {
-        Route::get('/', [AdminMerchantController::class, 'index']);
-        Route::post('/', [AdminMerchantController::class, 'store']);
-        Route::get('/{id}', [AdminMerchantController::class, 'show']);
-        Route::put('/{id}', [AdminMerchantController::class, 'update']);
-        Route::delete('/{id}', [AdminMerchantController::class, 'destroy']);
-        Route::post('/{id}/toggle-status', [AdminMerchantController::class, 'toggleStatus']);
-        Route::post('/{id}/toggle-open', [AdminMerchantController::class, 'toggleOpen']);
-        Route::get('/statistics/overview', [AdminMerchantController::class, 'statistics']);
-    });
 
     // Offers Management
     Route::prefix('offers')->group(function () {
@@ -217,7 +205,7 @@ Route::prefix('loyalty')->middleware('auth:sanctum')->group(function () {
     // Tiers
     Route::get('/tiers', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'getTiers']);
     
-    // For merchants/admin
+    // For admin
     Route::post('/points/add', [App\Modules\Loyalty\Controllers\LoyaltyController::class, 'addPoints']);
 });
 

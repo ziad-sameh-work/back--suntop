@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Modules\Offers\Models\Offer;
 use App\Modules\Products\Models\Product;
 use App\Modules\Orders\Models\Order;
+use App\Modules\Users\Models\UserCategory;
 
 class AdminOfferController extends Controller
 {
@@ -16,15 +17,15 @@ class AdminOfferController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Offer::query();
+        $query = Offer::with('userCategory');
 
         // Search functionality
         if ($request->filled('search')) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
                 $q->where('title', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('code', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('description', 'LIKE', "%{$searchTerm}%");
+                  ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+                  ->orWhere('type', 'LIKE', "%{$searchTerm}%");
             });
         }
 
@@ -41,9 +42,9 @@ class AdminOfferController extends Controller
             }
         }
 
-        // Type filter
-        if ($request->filled('type') && $request->type !== 'all') {
-            $query->where('type', $request->type);
+        // User category filter
+        if ($request->filled('user_category_id') && $request->user_category_id !== 'all') {
+            $query->where('user_category_id', $request->user_category_id);
         }
 
         // Date range filter
@@ -57,6 +58,11 @@ class AdminOfferController extends Controller
         $offers = $query->orderBy('created_at', 'desc')
                        ->paginate($request->get('per_page', 20));
 
+        // Get user categories for filter dropdown
+        $userCategories = UserCategory::where('is_active', true)
+                                    ->orderBy('sort_order')
+                                    ->get();
+
         // Get statistics
         $stats = $this->getOffersStats($request);
 
@@ -67,7 +73,7 @@ class AdminOfferController extends Controller
             ]);
         }
 
-        return view('admin.offers.index', compact('offers', 'stats'));
+        return view('admin.offers.index', compact('offers', 'stats', 'userCategories'));
     }
 
     /**
@@ -75,10 +81,20 @@ class AdminOfferController extends Controller
      */
     public function create()
     {
-        $categories = Product::distinct()->pluck('category')->filter()->sort();
-        $products = Product::select('id', 'name', 'category')->where('is_available', true)->get();
+        // Get categories from product_categories table instead
+        $categories = \App\Modules\Products\Models\ProductCategory::where('is_active', true)
+                                                                 ->orderBy('sort_order')
+                                                                 ->pluck('name')
+                                                                 ->sort();
         
-        return view('admin.offers.create', compact('categories', 'products'));
+        $products = Product::select('id', 'name', 'category_id')
+                          ->with('category:id,name')
+                          ->where('is_available', true)
+                          ->get();
+        
+        $userCategories = UserCategory::where('is_active', true)->orderBy('sort_order')->get();
+        
+        return view('admin.offers.create', compact('categories', 'products', 'userCategories'));
     }
 
     /**
@@ -89,23 +105,20 @@ class AdminOfferController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'type' => 'required|in:percentage,fixed_amount',
+            'type' => 'nullable|string|max:255',
+            'user_category_id' => 'nullable|exists:user_categories,id',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'discount_amount' => 'nullable|numeric|min:0',
             'minimum_amount' => 'nullable|numeric|min:0',
             'maximum_discount' => 'nullable|numeric|min:0',
             'valid_from' => 'required|date',
             'valid_until' => 'required|date|after:valid_from',
-            'usage_limit' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
             'first_order_only' => 'boolean',
             'applicable_categories' => 'nullable|array',
             'applicable_products' => 'nullable|array',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
-
-        // Generate unique code
-        $validated['code'] = Offer::generateCode();
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -152,10 +165,20 @@ class AdminOfferController extends Controller
      */
     public function edit(Offer $offer)
     {
-        $categories = Product::distinct()->pluck('category')->filter()->sort();
-        $products = Product::select('id', 'name', 'category')->where('is_available', true)->get();
+        // Get categories from product_categories table instead
+        $categories = \App\Modules\Products\Models\ProductCategory::where('is_active', true)
+                                                                 ->orderBy('sort_order')
+                                                                 ->pluck('name')
+                                                                 ->sort();
         
-        return view('admin.offers.edit', compact('offer', 'categories', 'products'));
+        $products = Product::select('id', 'name', 'category_id')
+                          ->with('category:id,name')
+                          ->where('is_available', true)
+                          ->get();
+        
+        $userCategories = UserCategory::where('is_active', true)->orderBy('sort_order')->get();
+        
+        return view('admin.offers.edit', compact('offer', 'categories', 'products', 'userCategories'));
     }
 
     /**
@@ -166,14 +189,14 @@ class AdminOfferController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
-            'type' => 'required|in:percentage,fixed_amount',
+            'type' => 'nullable|string|max:255',
+            'user_category_id' => 'nullable|exists:user_categories,id',
             'discount_percentage' => 'nullable|numeric|min:0|max:100',
             'discount_amount' => 'nullable|numeric|min:0',
             'minimum_amount' => 'nullable|numeric|min:0',
             'maximum_discount' => 'nullable|numeric|min:0',
             'valid_from' => 'required|date',
             'valid_until' => 'required|date|after:valid_from',
-            'usage_limit' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
             'first_order_only' => 'boolean',
             'applicable_categories' => 'nullable|array',
@@ -286,8 +309,8 @@ class AdminOfferController extends Controller
                 $searchTerm = $request->search;
                 $query->where(function($q) use ($searchTerm) {
                     $q->where('title', 'LIKE', "%{$searchTerm}%")
-                      ->orWhere('code', 'LIKE', "%{$searchTerm}%")
-                      ->orWhere('description', 'LIKE', "%{$searchTerm}%");
+                      ->orWhere('description', 'LIKE', "%{$searchTerm}%")
+                      ->orWhere('type', 'LIKE', "%{$searchTerm}%");
                 });
             }
         }
@@ -298,10 +321,10 @@ class AdminOfferController extends Controller
             'inactive_offers' => (clone $query)->where('is_active', false)->count(),
             'expired_offers' => (clone $query)->where('valid_until', '<', now())->count(),
             'upcoming_offers' => (clone $query)->where('valid_from', '>', now())->count(),
-            'percentage_offers' => (clone $query)->where('type', 'percentage')->count(),
-            'fixed_amount_offers' => (clone $query)->where('type', 'fixed_amount')->count(),
-            'total_usage' => Offer::sum('used_count'),
-            'avg_discount_percentage' => (clone $query)->where('type', 'percentage')->avg('discount_percentage'),
+            'category_offers' => (clone $query)->whereNotNull('user_category_id')->count(),
+            'general_offers' => (clone $query)->whereNull('user_category_id')->count(),
+            'total_usage' => 0, // No longer tracking individual usage
+            'avg_discount_percentage' => (clone $query)->whereNotNull('discount_percentage')->avg('discount_percentage'),
         ];
     }
 
@@ -310,16 +333,26 @@ class AdminOfferController extends Controller
      */
     private function getOfferStatistics($offer)
     {
+        // Calculate total savings from orders that used discounts during this offer period
+        $totalSavings = Order::where('discount', '>', 0)
+                            ->whereBetween('created_at', [$offer->valid_from, $offer->valid_until])
+                            ->sum('discount');
+
+        // Count orders with discounts during offer period as usage approximation
+        $totalUsage = Order::where('discount', '>', 0)
+                          ->whereBetween('created_at', [$offer->valid_from, $offer->valid_until])
+                          ->count();
+
         return [
-            'total_usage' => $offer->used_count,
-            'remaining_usage' => $offer->usage_limit ? max(0, $offer->usage_limit - $offer->used_count) : null,
-            'usage_percentage' => $offer->usage_limit ? min(100, ($offer->used_count / $offer->usage_limit) * 100) : 0,
             'days_remaining' => now()->diffInDays($offer->valid_until, false),
             'is_expired' => $offer->valid_until < now(),
             'is_upcoming' => $offer->valid_from > now(),
-            'total_savings' => 0, // This would be calculated from actual order usage
+            'user_category' => $offer->userCategory ? $offer->userCategory->display_name : 'جميع الفئات',
             'created_at' => $offer->created_at,
-            'last_used_at' => null, // This would come from order usage tracking
+            'offer_type' => $offer->type ?? 'غير محدد',
+            'total_usage' => $totalUsage,
+            'total_savings' => $totalSavings,
+            'remaining_usage' => null, // No longer applicable since no usage limits
         ];
     }
 
@@ -334,16 +367,4 @@ class AdminOfferController extends Controller
         ]);
     }
 
-    /**
-     * Offer analytics
-     */
-    public function analytics($id)
-    {
-        $offer = Offer::findOrFail($id);
-        
-        // Get offer statistics
-        $offerStats = $this->getOfferStatistics($offer);
-        
-        return view('admin.offers.analytics', compact('offer', 'offerStats'));
-    }
 }

@@ -5,36 +5,121 @@
 
 @push('styles')
 <style>
-    /* Dashboard Specific Styles */
+    /* Creative Dashboard Styles */
     .dashboard-container {
         display: grid;
-        gap: 25px;
+        gap: 30px;
         grid-template-columns: 1fr;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: 100vh;
     }
 
-    /* Stats Cards */
+    /* Welcome Section */
+    .welcome-section {
+        background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 50%, #4a90e2 100%);
+        border-radius: 24px;
+        padding: 40px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .welcome-section::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .welcome-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .welcome-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .welcome-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 20px;
+    }
+
+    .welcome-stats {
+        display: flex;
+        gap: 30px;
+        margin-top: 20px;
+    }
+
+    .welcome-stat {
+        text-align: center;
+    }
+
+    .welcome-stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+
+    .welcome-stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    /* Stats Cards with Creative Design */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
     }
 
     @media (min-width: 1400px) {
         .stats-grid {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
         }
     }
 
     .stat-card {
-        background: var(--white);
-        border-radius: 16px;
-        padding: 25px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        border: 1px solid var(--gray-100);
-        transition: all 0.3s ease;
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.1),
+            0 1px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         position: relative;
         overflow: hidden;
+        backdrop-filter: blur(10px);
     }
 
     .stat-card::before {
@@ -43,13 +128,22 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--suntop-orange), var(--suntop-blue));
+        height: 5px;
+        background: linear-gradient(90deg, #ff6b35, #4a90e2, #10b981, #8b5cf6);
+        background-size: 300% 100%;
+        animation: gradientShift 3s ease infinite;
+    }
+
+    @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
     }
 
     .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
     .stat-header {
@@ -60,50 +154,129 @@
     }
 
     .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+        width: 70px;
+        height: 70px;
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 22px;
-        color: var(--white);
+        font-size: 28px;
+        color: white;
+        position: relative;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
     }
 
-    .stat-icon.orange { background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-orange-dark)); }
-    .stat-icon.blue { background: linear-gradient(135deg, var(--suntop-blue), var(--suntop-blue-dark)); }
-    .stat-icon.green { background: linear-gradient(135deg, var(--success), #0D9488); }
-    .stat-icon.purple { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
-    .stat-icon.warning { background: linear-gradient(135deg, var(--warning), #D97706); }
-    .stat-icon.success { background: linear-gradient(135deg, var(--success), #059669); }
+    .stat-icon::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: 22px;
+        padding: 2px;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+    }
+
+    .stat-icon.orange { 
+        background: linear-gradient(135deg, #ff6b35, #ff8c42, #ffa726);
+        animation: pulse-orange 2s ease-in-out infinite alternate;
+    }
+    .stat-icon.blue { 
+        background: linear-gradient(135deg, #4a90e2, #5ba3f5, #42a5f5);
+        animation: pulse-blue 2s ease-in-out infinite alternate;
+    }
+    .stat-icon.green { 
+        background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7);
+        animation: pulse-green 2s ease-in-out infinite alternate;
+    }
+    .stat-icon.purple { 
+        background: linear-gradient(135deg, #8b5cf6, #a78bfa, #c4b5fd);
+        animation: pulse-purple 2s ease-in-out infinite alternate;
+    }
+    .stat-icon.warning { 
+        background: linear-gradient(135deg, #f59e0b, #fbbf24, #fcd34d);
+        animation: pulse-warning 2s ease-in-out infinite alternate;
+    }
+    .stat-icon.success { 
+        background: linear-gradient(135deg, #059669, #10b981, #34d399);
+        animation: pulse-success 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-orange {
+        0% { box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(255, 107, 53, 0.5); }
+    }
+    @keyframes pulse-blue {
+        0% { box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(74, 144, 226, 0.5); }
+    }
+    @keyframes pulse-green {
+        0% { box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(16, 185, 129, 0.5); }
+    }
+    @keyframes pulse-purple {
+        0% { box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(139, 92, 246, 0.5); }
+    }
+    @keyframes pulse-warning {
+        0% { box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(245, 158, 11, 0.5); }
+    }
+    @keyframes pulse-success {
+        0% { box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(5, 150, 105, 0.5); }
+    }
 
     .stat-title {
-        font-size: 14px;
-        color: var(--gray-500);
+        font-size: 16px;
+        color: #64748b;
         margin: 0;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .stat-value {
-        font-size: 32px;
-        font-weight: 700;
-        color: var(--gray-800);
-        margin: 10px 0;
+        font-size: 3rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #1e293b, #475569);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 15px 0;
         direction: ltr;
         text-align: right;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     .stat-change {
         display: flex;
         align-items: center;
-        gap: 5px;
-        font-size: 13px;
-        font-weight: 500;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
     }
 
-    .stat-change.positive { color: var(--success); }
-    .stat-change.negative { color: var(--danger); }
-    .stat-change.warning { color: var(--warning); }
-    .stat-change.info { color: var(--suntop-blue); }
+    .stat-change.positive { 
+        color: #059669; 
+        background: rgba(16, 185, 129, 0.1);
+    }
+    .stat-change.negative { 
+        color: #dc2626; 
+        background: rgba(239, 68, 68, 0.1);
+    }
+    .stat-change.warning { 
+        color: #d97706; 
+        background: rgba(245, 158, 11, 0.1);
+    }
+    .stat-change.info { 
+        color: #2563eb; 
+        background: rgba(59, 130, 246, 0.1);
+    }
 
     /* Clickable Cards */
     .stat-card.clickable {
@@ -120,16 +293,38 @@
     .charts-section {
         display: grid;
         grid-template-columns: 2fr 1fr;
-        gap: 25px;
-        margin-bottom: 30px;
+        gap: 30px;
+        margin-bottom: 40px;
     }
 
     .chart-card {
-        background: var(--white);
-        border-radius: 16px;
-        padding: 25px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        border: 1px solid var(--gray-100);
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 24px;
+        padding: 35px;
+        box-shadow: 
+            0 15px 35px rgba(0, 0, 0, 0.08),
+            0 5px 15px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .chart-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #ff6b35, #4a90e2, #10b981);
+        background-size: 200% 100%;
+        animation: gradientMove 4s ease infinite;
+    }
+
+    @keyframes gradientMove {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
     }
 
     .chart-header {
@@ -142,22 +337,38 @@
     }
 
     .chart-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--gray-800);
+        font-size: 22px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1e293b, #475569);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .chart-title i {
+        color: #ff6b35;
+        font-size: 20px;
     }
 
     .chart-period {
-        font-size: 12px;
-        color: var(--gray-500);
-        background: var(--gray-50);
-        padding: 6px 12px;
-        border-radius: 20px;
+        font-size: 13px;
+        color: #64748b;
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.8);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     .chart-container {
         position: relative;
-        height: 300px;
+        height: 320px;
+        border-radius: 16px;
+        overflow: hidden;
     }
 
     /* Tables */
@@ -320,6 +531,28 @@
 
 @section('content')
 <div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+        <div class="welcome-content">
+            <h1 class="welcome-title">مرحباً بك في SunTop</h1>
+            <p class="welcome-subtitle">لوحة التحكم الذكية لإدارة متجرك الإلكتروني</p>
+            <div class="welcome-stats">
+                <div class="welcome-stat">
+                    <span class="welcome-stat-number">{{ number_format($stats['total_users']) }}</span>
+                    <span class="welcome-stat-label">مستخدم</span>
+                </div>
+                <div class="welcome-stat">
+                    <span class="welcome-stat-number">{{ number_format($orderStats['total_orders']) }}</span>
+                    <span class="welcome-stat-label">طلب</span>
+                </div>
+                <div class="welcome-stat">
+                    <span class="welcome-stat-number">{{ number_format($stats['today_revenue']) }}</span>
+                    <span class="welcome-stat-label">إيرادات اليوم</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Stats Cards -->
     <div class="stats-grid">
         <!-- Total Users -->
@@ -382,20 +615,6 @@
             </div>
         </div>
 
-        <!-- Merchants -->
-        <div class="stat-card clickable" onclick="window.location.href='{{ route('admin.merchants.index') }}'">
-            <div class="stat-header">
-                <div class="stat-icon orange">
-                    <i class="fas fa-store"></i>
-                </div>
-                <h3 class="stat-title">إجمالي التجار</h3>
-            </div>
-            <div class="stat-value">{{ number_format($stats['total_merchants']) }}</div>
-            <div class="stat-change positive">
-                <i class="fas fa-store"></i>
-                <span>تاجر مسجل</span>
-            </div>
-        </div>
 
         <!-- Offers -->
         <div class="stat-card clickable" onclick="window.location.href='{{ route('admin.offers.index') }}'">
@@ -498,7 +717,10 @@
         <!-- Revenue Chart -->
         <div class="chart-card">
             <div class="chart-header">
-                <h3 class="chart-title">إيرادات آخر 6 أشهر</h3>
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-line"></i>
+                    إيرادات آخر 6 أشهر
+                </h3>
                 <span class="chart-period">الأشهر الماضية</span>
             </div>
             <div class="chart-container">
@@ -509,7 +731,10 @@
         <!-- User Categories Chart -->
         <div class="chart-card">
             <div class="chart-header">
-                <h3 class="chart-title">توزيع فئات المستخدمين</h3>
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-pie"></i>
+                    توزيع فئات المستخدمين
+                </h3>
                 <span class="chart-period">الوضع الحالي</span>
             </div>
             <div class="chart-container">

@@ -357,26 +357,6 @@
                 </div>
             </div>
 
-            <!-- Top Merchants -->
-            <div class="performer-card">
-                <div class="performer-header">
-                    <h4>أفضل التجار</h4>
-                    <i class="fas fa-store"></i>
-                </div>
-                <div class="performer-list">
-                    @forelse($topPerformers['merchants'] as $merchant)
-                    <div class="performer-item">
-                        <div class="performer-info">
-                            <div class="performer-name">{{ $merchant->name }}</div>
-                            <div class="performer-detail">الطلبات: {{ $merchant->orders_count ?? 0 }}</div>
-                        </div>
-                        <div class="performer-value">{{ number_format($merchant->orders_sum_total_amount ?? 0, 2) }} ج.م</div>
-                    </div>
-                    @empty
-                    <div class="no-data">لا توجد بيانات</div>
-                    @endforelse
-                </div>
-            </div>
 
             <!-- Top Users -->
             <div class="performer-card">

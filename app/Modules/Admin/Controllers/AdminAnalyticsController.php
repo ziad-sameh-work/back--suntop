@@ -6,7 +6,6 @@ use App\Modules\Core\BaseController;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Products\Models\Product;
 use App\Models\User;
-use App\Modules\Merchants\Models\Merchant;
 use App\Modules\Users\Models\UserCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,7 +34,6 @@ class AdminAnalyticsController extends BaseController
                 'orders' => $this->getOrderStats($dateFrom, $dateTo),
                 'customers' => $this->getCustomerStats($dateFrom, $dateTo),
                 'products' => $this->getProductStats($dateFrom, $dateTo),
-                'merchants' => $this->getMerchantStats($dateFrom, $dateTo),
                 'trends' => $this->getTrends($dateFrom, $dateTo),
             ];
 
@@ -67,7 +65,6 @@ class AdminAnalyticsController extends BaseController
                 ],
                 'by_day' => $this->getDailySales($dateFrom, $dateTo),
                 'by_category' => $this->getSalesByCategory($dateFrom, $dateTo),
-                'by_merchant' => $this->getSalesByMerchant($dateFrom, $dateTo),
                 'by_payment_method' => $this->getSalesByPaymentMethod($dateFrom, $dateTo),
                 'hourly_distribution' => $this->getHourlySales($dateFrom, $dateTo),
             ];
@@ -167,7 +164,7 @@ class AdminAnalyticsController extends BaseController
             'total_orders' => Order::whereBetween('created_at', [$dateFrom, $dateTo])->count(),
             'total_customers' => User::where('role', 'user')->count(),
             'total_products' => Product::count(),
-            'active_merchants' => Merchant::where('is_active', true)->count(),
+            'active_merchants' => 0,
             'pending_orders' => Order::where('status', 'pending')->count(),
         ];
     }
@@ -234,16 +231,6 @@ class AdminAnalyticsController extends BaseController
                  ->get();
     }
 
-    private function getMerchantStats($dateFrom, $dateTo)
-    {
-        return DB::table('orders')
-                 ->join('merchants', 'orders.merchant_id', '=', 'merchants.id')
-                 ->whereBetween('orders.created_at', [$dateFrom, $dateTo])
-                 ->selectRaw('merchants.name, COUNT(orders.id) as order_count, SUM(orders.total_amount) as revenue')
-                 ->groupBy('merchants.id', 'merchants.name')
-                 ->orderBy('revenue', 'desc')
-                 ->get();
-    }
 
     private function getTrends($dateFrom, $dateTo)
     {

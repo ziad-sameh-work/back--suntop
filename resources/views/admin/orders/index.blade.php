@@ -5,20 +5,241 @@
 
 @push('styles')
 <style>
-    .orders-container { padding: 25px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-    .stat-card { background: linear-gradient(135deg, var(--white) 0%, #f8fafc 100%); border-radius: 16px; padding: 25px; border: 1px solid var(--gray-100); transition: all 0.3s ease; position: relative; overflow: hidden; }
-    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--gradient); }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12); }
+    /* Creative Orders Management Styles */
+    .orders-container { 
+        padding: 20px; 
+        max-width: 1400px; 
+        margin: 0 auto; 
+    }
+
+    /* Hero Section */
+    .orders-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 24px;
+        padding: 60px 40px;
+        margin-bottom: 30px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+
+    .orders-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: heroFloat 6s ease-in-out infinite;
+    }
+
+    .orders-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -30%;
+        width: 150%;
+        height: 150%;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
+        animation: heroFloat 8s ease-in-out infinite reverse;
+    }
+
+    @keyframes heroFloat {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(1deg); }
+        66% { transform: translate(-20px, 20px) rotate(-1deg); }
+    }
+
+    .orders-hero-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 30px;
+    }
+
+    .orders-hero-text h1 {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin: 0 0 15px 0;
+        background: linear-gradient(45deg, #ffffff, #f0f9ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .orders-hero-text p {
+        font-size: 1.3rem;
+        margin: 0;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+
+    .orders-hero-stats {
+        display: flex;
+        gap: 40px;
+        flex-wrap: wrap;
+    }
+
+    .hero-stat {
+        text-align: center;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        min-width: 120px;
+        transition: all 0.3s ease;
+    }
+
+    .hero-stat:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .hero-stat-number {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        color: #ffffff;
+    }
+
+    .hero-stat-label {
+        display: block;
+        font-size: 0.9rem;
+        opacity: 0.8;
+        font-weight: 500;
+    }
+
+    /* Enhanced Stats Cards */
+    .stats-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+        gap: 25px; 
+        margin-bottom: 40px; 
+    }
+    
+    .stat-card { 
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%); 
+        border-radius: 20px; 
+        padding: 30px; 
+        box-shadow: 
+            0 10px 30px rgba(0, 0, 0, 0.1),
+            0 1px 8px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+    
+    .stat-card::before { 
+        content: ''; 
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        right: 0;
+        height: 5px; 
+        background: linear-gradient(90deg, #ff6b35, #4a90e2, #10b981, #8b5cf6);
+        background-size: 300% 100%;
+        animation: gradientShift 3s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    
+    .stat-card:hover { 
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 5px 15px rgba(0, 0, 0, 0.1);
+    }
     .stat-card.clickable { cursor: pointer; }
     .stat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-    .stat-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--white); }
-    .stat-icon.pending { background: linear-gradient(135deg, #F59E0B, #D97706); }
-    .stat-icon.confirmed { background: linear-gradient(135deg, #10B981, #059669); }
-    .stat-icon.processing { background: linear-gradient(135deg, var(--suntop-orange), var(--suntop-orange-dark)); }
-    .stat-icon.revenue { background: linear-gradient(135deg, var(--suntop-blue), var(--suntop-blue-dark)); }
-    .stat-value { font-size: 32px; font-weight: 700; color: var(--gray-800); margin: 0 0 5px 0; }
-    .stat-label { font-size: 14px; color: var(--gray-600); margin: 0; }
+    .stat-icon { 
+        width: 70px; 
+        height: 70px; 
+        border-radius: 20px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 28px; 
+        color: white;
+        position: relative;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    .stat-icon::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: 22px;
+        padding: 2px;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+    }
+    .stat-icon.pending { 
+        background: linear-gradient(135deg, #F59E0B, #D97706, #FBBF24);
+        animation: pulse-yellow 2s ease-in-out infinite alternate;
+    }
+    .stat-icon.confirmed { 
+        background: linear-gradient(135deg, #10B981, #059669, #34D399);
+        animation: pulse-green 2s ease-in-out infinite alternate;
+    }
+    .stat-icon.processing { 
+        background: linear-gradient(135deg, #ff6b35, #ff8c42, #ffa726);
+        animation: pulse-orange 2s ease-in-out infinite alternate;
+    }
+    .stat-icon.revenue { 
+        background: linear-gradient(135deg, #4a90e2, #5ba3f5, #42a5f5);
+        animation: pulse-blue 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-yellow {
+        0% { box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(251, 191, 36, 0.5); }
+    }
+    @keyframes pulse-green {
+        0% { box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(16, 185, 129, 0.5); }
+    }
+    @keyframes pulse-orange {
+        0% { box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(255, 107, 53, 0.5); }
+    }
+    @keyframes pulse-blue {
+        0% { box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3); }
+        100% { box-shadow: 0 12px 30px rgba(74, 144, 226, 0.5); }
+    }
+    .stat-value { 
+        font-size: 2.8rem; 
+        font-weight: 800;
+        background: linear-gradient(135deg, #1e293b, #475569);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 15px 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stat-label { 
+        font-size: 16px; 
+        color: #64748b;
+        margin: 0;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
     .stat-change { font-size: 12px; font-weight: 500; }
     .stat-change.positive { color: var(--success); }
     .stat-change.negative { color: var(--danger); }
@@ -198,6 +419,30 @@
 
 @section('content')
 <div class="orders-container">
+    <!-- Hero Section -->
+    <div class="orders-hero">
+        <div class="orders-hero-content">
+            <div class="orders-hero-text">
+                <h1>إدارة الطلبات</h1>
+                <p>تحكم شامل في جميع الطلبات ومتابعة المبيعات</p>
+            </div>
+            <div class="orders-hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-number">{{ number_format($stats['total_orders']) }}</span>
+                    <span class="hero-stat-label">إجمالي الطلبات</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-number">{{ number_format($stats['pending_orders']) }}</span>
+                    <span class="hero-stat-label">طلب معلق</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-number">{{ number_format($stats['delivered_orders']) }}</span>
+                    <span class="hero-stat-label">طلب مكتمل</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistics Cards -->
     <div class="stats-grid">
         <div class="stat-card clickable" onclick="filterByStatus('all')">
@@ -332,19 +577,6 @@
                     </select>
                 </div>
 
-                @if(count($merchants) > 0)
-                <div class="filter-group">
-                    <label class="filter-label">التاجر</label>
-                    <select name="merchant_id" class="filter-select">
-                        <option value="all">جميع التجار</option>
-                        @foreach($merchants as $merchant)
-                            <option value="{{ $merchant->id }}" {{ request('merchant_id') == $merchant->id ? 'selected' : '' }}>
-                                {{ $merchant->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
 
                 <div class="filter-group">
                     <label class="filter-label">من تاريخ</label>

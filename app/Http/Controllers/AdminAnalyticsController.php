@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Products\Models\Product;
-use App\Modules\Merchants\Models\Merchant;
 use App\Modules\Users\Models\UserCategory;
 use App\Modules\Loyalty\Models\LoyaltyPoint;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +40,6 @@ class AdminAnalyticsController extends Controller
             'topPerformers' => [
                 'products' => $this->getTopProducts($startDate, $endDate),
                 'categories' => $this->getTopCategories($startDate, $endDate),
-                'merchants' => $this->getTopMerchants($startDate, $endDate),
                 'users' => $this->getTopUsers($startDate, $endDate),
             ],
             'timeRange' => $timeRange,
@@ -294,24 +292,6 @@ class AdminAnalyticsController extends Controller
         return $categories;
     }
 
-    private function getTopMerchants($startDate, $endDate)
-    {
-        return Merchant::whereHas('orders', function($q) use ($startDate, $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->where('payment_status', 'paid');
-            })
-            ->withSum(['orders' => function($q) use ($startDate, $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->where('payment_status', 'paid');
-            }], 'total_amount')
-            ->withCount(['orders' => function($q) use ($startDate, $endDate) {
-                $q->whereBetween('created_at', [$startDate, $endDate])
-                  ->where('payment_status', 'paid');
-            }])
-            ->orderBy('orders_sum_total_amount', 'desc')
-            ->limit(5)
-            ->get();
-    }
 
     private function getTopUsers($startDate, $endDate)
     {

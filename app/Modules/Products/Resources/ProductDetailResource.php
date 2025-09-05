@@ -8,13 +8,18 @@ class ProductDetailResource extends JsonResource
 {
     public function toArray($request): array
     {
+        $originalPrice = (float) $this->price;
+        $finalPrice = $this->calculateDiscountedPrice($request);
+        
         return [
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
             'image_url' => $this->getMainImageUrl(),
             'images' => $this->getAllImageUrls(),
-            'price' => (float) $this->price,
+            'price' => $finalPrice,
+            'original_price' => $originalPrice !== $finalPrice ? $originalPrice : null,
+            'discount_percentage' => $originalPrice !== $finalPrice ? round((($originalPrice - $finalPrice) / $originalPrice) * 100, 1) : null,
             'category' => $this->getCategoryInfo(),
             'category_name' => $this->getCategoryName(),
             'category_id' => $this->category_id,
@@ -23,6 +28,48 @@ class ProductDetailResource extends JsonResource
             'created_at' => $this->created_at->toISOString(),
             'updated_at' => $this->updated_at->toISOString(),
         ];
+    }
+    
+    /**
+     * Calculate discounted price based on user category offers
+     */
+    private function calculateDiscountedPrice($request): float
+    {
+        $originalPrice = (float) $this->price;
+        
+        // Get authenticated user
+        $user = $request->user();
+        if (!$user || !$user->user_category_id) {
+            return $originalPrice;
+        }
+        
+        // Get active offers for user's category
+        $offers = \App\Modules\Offers\Models\Offer::where('is_active', true)
+            ->where('user_category_id', $user->user_category_id)
+            ->where('valid_from', '<=', now())
+            ->where('valid_until', '>=', now())
+            ->get();
+        
+        $bestDiscount = 0;
+        
+        foreach ($offers as $offer) {
+            $discount = 0;
+            
+            if ($offer->discount_percentage) {
+                // Percentage discount
+                $discount = ($originalPrice * $offer->discount_percentage) / 100;
+            } elseif ($offer->discount_amount) {
+                // Fixed amount discount
+                $discount = min($offer->discount_amount, $originalPrice);
+            }
+            
+            // Keep the best discount
+            if ($discount > $bestDiscount) {
+                $bestDiscount = $discount;
+            }
+        }
+        
+        return max(0, $originalPrice - $bestDiscount);
     }
     
     /**

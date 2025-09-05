@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Modules\Orders\Models\Order;
 use App\Modules\Products\Models\Product;
-use App\Modules\Merchants\Models\Merchant;
 use App\Modules\Users\Models\UserCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -92,7 +91,7 @@ class AdminDashboardController extends Controller
         return [
             'total_users' => User::where('role', 'customer')->count(),
             'total_products' => Product::count(),
-            'total_merchants' => Merchant::count(),
+            'total_merchants' => 0,
             'total_offers' => \App\Modules\Offers\Models\Offer::count(),
             'total_loyalty_users' => 0, // Disabled - loyalty_points table doesn't exist
             'total_user_categories' => \App\Modules\Users\Models\UserCategory::count(),
@@ -230,27 +229,6 @@ class AdminDashboardController extends Controller
             ];
         }
 
-        // تنبيه التجار غير النشطين
-        $inactiveMerchantsCount = Merchant::where('is_active', false)->count();
-        if ($inactiveMerchantsCount > 0) {
-            $alerts[] = [
-                'type' => 'warning',
-                'title' => 'تجار غير نشطين',
-                'message' => "يوجد {$inactiveMerchantsCount} تاجر غير نشط",
-                'icon' => 'fas fa-store-slash'
-            ];
-        }
-
-        // تنبيه المتاجر المغلقة
-        $closedStoresCount = Merchant::where('is_open', false)->count();
-        if ($closedStoresCount > 0) {
-            $alerts[] = [
-                'type' => 'info',
-                'title' => 'متاجر مغلقة',
-                'message' => "يوجد {$closedStoresCount} متجر مغلق حالياً",
-                'icon' => 'fas fa-door-closed'
-            ];
-        }
 
         // تنبيه العروض المنتهية الصلاحية
         $expiredOffersCount = \App\Modules\Offers\Models\Offer::where('valid_until', '<', now())

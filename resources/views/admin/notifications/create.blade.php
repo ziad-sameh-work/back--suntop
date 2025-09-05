@@ -230,7 +230,6 @@
                                 <select class="form-select" id="role_filter" name="role_filter">
                                     <option value="">جميع الأدوار</option>
                                     <option value="customer" {{ old('role_filter') === 'customer' ? 'selected' : '' }}>العملاء فقط</option>
-                                    <option value="merchant" {{ old('role_filter') === 'merchant' ? 'selected' : '' }}>التجار فقط</option>
                                     <option value="admin" {{ old('role_filter') === 'admin' ? 'selected' : '' }}>الإداريين فقط</option>
                                 </select>
                                 <div class="form-text">اختر نوع المستخدمين المراد إرسال الإشعار إليهم</div>

@@ -12,16 +12,14 @@ class Offer extends Model
     protected $fillable = [
         'title',
         'description',
-        'code',
         'type',
+        'user_category_id',
         'discount_percentage',
         'discount_amount',
         'minimum_amount',
         'maximum_discount',
         'valid_from',
         'valid_until',
-        'usage_limit',
-        'used_count',
         'is_active',
         'image_url',
         'applicable_categories',
@@ -52,31 +50,12 @@ class Offer extends Model
         'applicable_products' => 'array',
     ];
 
-    // Constants for offer types
-    const TYPE_PERCENTAGE = 'percentage';
-    const TYPE_FIXED_AMOUNT = 'fixed_amount';
-    const TYPE_DISCOUNT = 'discount';
-    const TYPE_BOGO = 'bogo'; // Buy One Get One
-    const TYPE_FREEBIE = 'freebie';
-    const TYPE_CASHBACK = 'cashback';
-
-    const TYPES = [
-        self::TYPE_DISCOUNT => 'خصم',
-        self::TYPE_BOGO => 'اشتري واحصل على مجاني',
-        self::TYPE_FREEBIE => 'منتج مجاني',
-        self::TYPE_CASHBACK => 'استرداد نقدي',
-    ];
-
     /**
-     * Generate a unique offer code
+     * Relationship with UserCategory
      */
-    public static function generateCode($prefix = 'OFFER')
+    public function userCategory()
     {
-        do {
-            $code = $prefix . strtoupper(substr(uniqid(), -6));
-        } while (self::where('code', $code)->exists());
-        
-        return $code;
+        return $this->belongsTo(\App\Modules\Users\Models\UserCategory::class);
     }
 
     /**
@@ -87,8 +66,7 @@ class Offer extends Model
         $now = now();
         return $this->is_active 
             && $this->valid_from <= $now 
-            && $this->valid_until >= $now
-            && ($this->usage_limit === null || $this->used_count < $this->usage_limit);
+            && $this->valid_until >= $now;
     }
 
     /**
@@ -104,12 +82,12 @@ class Offer extends Model
             return 0;
         }
 
-        if ($this->type === self::TYPE_PERCENTAGE) {
+        if ($this->discount_percentage) {
             $discount = ($amount * $this->discount_percentage) / 100;
             return $this->maximum_discount ? min($discount, $this->maximum_discount) : $discount;
         }
 
-        return $this->discount_amount;
+        return $this->discount_amount ?? 0;
     }
 
     /**
@@ -169,15 +147,15 @@ class Offer extends Model
     }
 
     /**
-     * Calculate trend score based on usage
+     * Calculate trend score based on activity
      */
     public function updateTrendScore()
     {
         $daysSinceCreated = $this->created_at->diffInDays(now());
-        $usageRate = $this->usage_limit ? ($this->used_count / $this->usage_limit) : 0;
         $recencyBonus = max(0, 30 - $daysSinceCreated); // Bonus for newer offers
+        $categoryBonus = $this->userCategory ? 10 : 0; // Bonus for category-specific offers
         
-        $this->trend_score = ($this->used_count * 2) + ($usageRate * 50) + $recencyBonus;
+        $this->trend_score = $recencyBonus + $categoryBonus + ($this->is_featured ? 20 : 0);
         $this->save();
     }
 

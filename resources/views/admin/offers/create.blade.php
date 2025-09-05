@@ -492,21 +492,6 @@
                     <div class="form-help">مبلغ الخصم بالجنيه المصري</div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">الحد الأدنى للطلب (ج.م)</label>
-                    <input type="number" name="minimum_amount" class="form-control" 
-                           min="0" step="0.01" placeholder="100"
-                           value="{{ old('minimum_amount', 0) }}">
-                    <div class="form-help">أقل مبلغ يجب أن يصل إليه الطلب لتطبيق العرض</div>
-                </div>
-
-                <div class="form-group" id="maxDiscountGroup">
-                    <label class="form-label">الحد الأقصى للخصم (ج.م)</label>
-                    <input type="number" name="maximum_discount" class="form-control" 
-                           min="0" step="0.01" placeholder="200"
-                           value="{{ old('maximum_discount') }}">
-                    <div class="form-help">أقصى مبلغ خصم (اختياري للنسبة المئوية)</div>
-                </div>
             </div>
         </div>
 
@@ -539,85 +524,16 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">حد الاستخدام</label>
-                    <input type="number" name="usage_limit" class="form-control" 
-                           min="1" placeholder="100"
-                           value="{{ old('usage_limit') }}">
-                    <div class="form-help">عدد مرات الاستخدام المسموحة (اتركه فارغاً لعدم التحديد)</div>
+                    <label class="form-label">نوع العرض</label>
+                    <input type="text" name="type" class="form-control" 
+                           placeholder="مثال: عرض الجمعة البيضاء، عرض العملاء الجدد"
+                           value="{{ old('type') }}">
+                    <div class="form-help">اكتب نوع أو تصنيف العرض (اختياري)</div>
                 </div>
+
             </div>
         </div>
 
-        <!-- Application Settings -->
-        <div class="form-section">
-            <h3 class="section-title">
-                <div class="section-icon warning">
-                    <i class="fas fa-cogs"></i>
-                </div>
-                إعدادات التطبيق
-            </h3>
-            
-            <div class="form-grid">
-                <div class="form-group full-width">
-                    <div class="checkbox-group">
-                        <input type="checkbox" name="first_order_only" id="first_order_only" 
-                               value="1" {{ old('first_order_only') ? 'checked' : '' }}>
-                        <label for="first_order_only">للطلب الأول فقط</label>
-                    </div>
-                    <div class="form-help">سيكون العرض متاحاً فقط للعملاء الجدد (الطلب الأول)</div>
-                </div>
-
-                <div class="form-group full-width">
-                    <div class="checkbox-group">
-                        <input type="checkbox" name="is_active" id="is_active" 
-                               value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                        <label for="is_active">تفعيل العرض فوراً</label>
-                    </div>
-                    <div class="form-help">العرض سيكون نشطاً ومتاحاً للاستخدام</div>
-                </div>
-            </div>
-
-            <!-- Categories Selection -->
-            <div class="form-group">
-                <label class="form-label">الفئات المشمولة (اختياري)</label>
-                <div class="multi-select" id="categoriesSelect">
-                    @foreach($categories as $category)
-                    <div class="select-option">
-                        <input type="checkbox" name="applicable_categories[]" 
-                               value="{{ $category }}" id="cat_{{ $loop->index }}"
-                               {{ in_array($category, old('applicable_categories', [])) ? 'checked' : '' }}>
-                        <label for="cat_{{ $loop->index }}">{{ $category }}</label>
-                    </div>
-                    @endforeach
-                </div>
-                <div class="form-help">اختر الفئات التي ينطبق عليها العرض (اتركه فارغاً لجميع الفئات)</div>
-            </div>
-        </div>
-
-        <!-- Image Upload -->
-        <div class="form-section">
-            <h3 class="section-title">
-                <div class="section-icon info">
-                    <i class="fas fa-image"></i>
-                </div>
-                صورة العرض (اختياري)
-            </h3>
-            
-            <div class="form-group">
-                <div class="upload-area" onclick="document.getElementById('imageInput').click()">
-                    <div class="upload-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                    </div>
-                    <div class="upload-text">اضغط لرفع صورة أو اسحب الصورة هنا</div>
-                    <div class="upload-hint">PNG, JPG, WEBP حتى 2MB</div>
-                </div>
-                <input type="file" name="image" id="imageInput" accept="image/*" style="display: none;">
-                
-                <div class="preview-container" id="previewContainer">
-                    <img id="previewImage" class="preview-image" alt="Preview">
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="form-actions">
@@ -650,11 +566,9 @@ function selectDiscountType(type) {
     if (type === 'percentage') {
         percentageGroup.style.display = 'block';
         amountGroup.style.display = 'none';
-        maxDiscountGroup.style.display = 'block';
     } else {
         percentageGroup.style.display = 'none';
         amountGroup.style.display = 'block';
-        maxDiscountGroup.style.display = 'none';
     }
 }
 
@@ -664,46 +578,6 @@ document.addEventListener('DOMContentLoaded', function() {
     selectDiscountType(selectedType);
 });
 
-// Image upload handling
-const imageInput = document.getElementById('imageInput');
-const previewContainer = document.getElementById('previewContainer');
-const previewImage = document.getElementById('previewImage');
-
-imageInput.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImage.src = e.target.result;
-            previewContainer.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-// Drag and drop handling
-const uploadArea = document.querySelector('.upload-area');
-
-uploadArea.addEventListener('dragover', function(e) {
-    e.preventDefault();
-    uploadArea.classList.add('dragover');
-});
-
-uploadArea.addEventListener('dragleave', function(e) {
-    e.preventDefault();
-    uploadArea.classList.remove('dragover');
-});
-
-uploadArea.addEventListener('drop', function(e) {
-    e.preventDefault();
-    uploadArea.classList.remove('dragover');
-    
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-        imageInput.files = files;
-        imageInput.dispatchEvent(new Event('change'));
-    }
-});
 
 // Form validation
 document.querySelector('form').addEventListener('submit', function(e) {

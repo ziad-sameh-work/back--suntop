@@ -487,12 +487,6 @@
                 </a>
             </div>
 
-            <div class="nav-item">
-                <a href="{{ route('admin.merchants.index') }}" class="nav-link {{ request()->routeIs('admin.merchants*') ? 'active' : '' }}">
-                    <i class="fas fa-store"></i>
-                    <span class="nav-text">التجار</span>
-                </a>
-            </div>
 
             <div class="nav-item">
                 <a href="{{ route('admin.offers.index') }}" class="nav-link {{ request()->routeIs('admin.offers*') ? 'active' : '' }}">
@@ -515,12 +509,6 @@
                 </a>
             </div>
 
-                            <div class="nav-item">
-                    <a href="{{ route('admin.analytics.index') }}" class="nav-link {{ request()->routeIs('admin.analytics*') ? 'active' : '' }}">
-                        <i class="fas fa-chart-pie"></i>
-                        <span class="nav-text">التحليلات</span>
-                    </a>
-                </div>
 
                 <div class="nav-item">
                     <a href="{{ route('admin.chats.index') }}" class="nav-link {{ request()->routeIs('admin.chats*') ? 'active' : '' }}">
