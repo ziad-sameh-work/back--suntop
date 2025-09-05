@@ -177,6 +177,9 @@ class ChatController extends Controller
 
             $message->load('sender');
 
+            // Fire the real-time event for Flutter
+            event(new \App\Events\NewChatMessage($message));
+
             return response()->json([
                 'success' => true,
                 'data' => [
