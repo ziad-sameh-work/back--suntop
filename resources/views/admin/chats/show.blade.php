@@ -666,10 +666,14 @@ function initializePusherChat() {
             return;
         }
         
+        // Use current domain for auth endpoint to handle both local and production
+        const authEndpoint = window.location.protocol + '//' + window.location.host + '/broadcasting/auth';
+        console.log('🔗 Auth endpoint:', authEndpoint);
+        
         pusher = new Pusher(pusherKey, {
             cluster: pusherCluster,
             forceTLS: true,
-            authEndpoint: '/broadcasting/auth',
+            authEndpoint: authEndpoint,
             auth: {
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,

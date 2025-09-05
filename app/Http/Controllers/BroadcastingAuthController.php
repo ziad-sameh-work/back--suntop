@@ -53,6 +53,12 @@ class BroadcastingAuthController extends Controller
         $socketId = $request->input('socket_id');
 
         // Check channel authorization
+        \Log::info('Broadcasting auth: Channel check', [
+            'channel_name' => $channelName,
+            'user_role' => $user->role,
+            'is_private_admin_chats' => strpos($channelName, 'private-admin.chats') !== false
+        ]);
+        
         if (strpos($channelName, 'private-admin.chats') !== false) {
             // Admin chats channel
             \Log::info('Checking admin.chats channel access', [
@@ -65,7 +71,7 @@ class BroadcastingAuthController extends Controller
                     'user_role' => $user->role,
                     'required_role' => 'admin'
                 ]);
-                return response('Forbidden', 403);
+                return response()->json(['error' => 'Forbidden - Not admin'], 403);
             }
             
             $userData = [
@@ -144,6 +150,34 @@ class BroadcastingAuthController extends Controller
             }
         }
 
-        return response('Forbidden', 403);
+        } elseif (strpos($channelName, 'admin-chats-public') !== false) {
+            // Public admin channel for testing
+            \Log::info('Public admin channel access', [
+                'user_role' => $user->role,
+                'channel' => $channelName
+            ]);
+            
+            $userData = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'role' => $user->role
+            ];
+            
+            $auth = $pusher->socket_auth($channelName, $socketId, json_encode($userData));
+            \Log::info('Broadcasting auth successful for public admin channel', [
+                'user_id' => $user->id,
+                'channel' => $channelName
+            ]);
+            return response($auth, 200, [
+                'Content-Type' => 'application/json'
+            ]);
+        }
+        
+        \Log::warning('Broadcasting auth: No matching channel found', [
+            'channel_name' => $channelName,
+            'user_role' => $user->role
+        ]);
+        
+        return response()->json(['error' => 'Channel not found'], 403);
     }
 }

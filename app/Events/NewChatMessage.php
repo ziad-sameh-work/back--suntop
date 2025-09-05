@@ -62,7 +62,9 @@ class NewChatMessage implements ShouldBroadcast
             // Public channel for customer apps (Flutter)
             new Channel('chat.' . $this->chatMessage->chat_id),
             // Private admin channel for real-time admin updates
-            new PrivateChannel('admin.chats')
+            new PrivateChannel('admin.chats'),
+            // Public admin channel for testing
+            new Channel('admin-chats-public')
         ];
     }
 
@@ -114,7 +116,11 @@ class NewChatMessage implements ShouldBroadcast
         // Log the broadcast data for debugging
         \Log::info('Broadcasting NewChatMessage event', [
             'event_name' => 'message.new',
-            'channels' => ['chat.' . $this->chatMessage->chat_id, 'private-admin.chats'],
+            'channels' => [
+                'chat.' . $this->chatMessage->chat_id, 
+                'private-admin.chats',
+                'admin-chats-public'
+            ],
             'message_id' => $this->chatMessage->id,
             'chat_id' => $this->chatMessage->chat_id,
             'sender_type' => $this->chatMessage->sender_type,

@@ -276,22 +276,43 @@
 <style>
 /* Dashboard Content */
 .dashboard-content {
-    padding: 30px;
-    background: #f8f9fa;
-    min-height: 100vh;
+    padding: 100px 15px 15px 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    min-height: calc(100vh - var(--header-height));
+    max-width: calc(100vw - var(--sidebar-width) - 60px);
+    margin: 0 auto 0 0;
+    overflow-x: hidden;
 }
 
 /* Page Header */
 .page-header-section {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .page-header-content {
     background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
-    border-radius: 20px;
-    padding: 30px;
+    border-radius: 25px;
+    padding: 40px;
     color: white;
-    box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+    box-shadow: 0 15px 40px rgba(255, 107, 53, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.page-header-content::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
 }
 
 .page-title-wrapper {
@@ -299,129 +320,196 @@
 }
 
 .page-title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 10px 0;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 15px 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 20px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1;
 }
 
 .page-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
+    font-size: 1.2rem;
+    opacity: 0.95;
     margin: 0;
+    font-weight: 400;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1;
 }
 
 /* Statistics Section */
 .stats-section {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .stats-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
 }
 
 .stat-card {
     background: white;
-    border-radius: 15px;
-    padding: 25px;
+    border-radius: 20px;
+    padding: 30px;
     display: flex;
     align-items: center;
-    gap: 20px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border-left: 5px solid;
+    gap: 25px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(45deg, var(--card-color), var(--card-color-light));
+    transition: width 0.3s ease;
+}
+
+.stat-card:hover::before {
+    width: 100%;
+    opacity: 0.05;
 }
 
 .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
 }
 
-.stat-card.primary { border-left-color: #FF6B35; }
-.stat-card.success { border-left-color: #28a745; }
-.stat-card.warning { border-left-color: #ffc107; }
-.stat-card.info { border-left-color: #17a2b8; }
-.stat-card.purple { border-left-color: #6f42c1; }
-.stat-card.danger { border-left-color: #dc3545; }
-.stat-card.orange { border-left-color: #fd7e14; }
+.stat-card.primary { --card-color: #FF6B35; --card-color-light: #ff8c5a; }
+.stat-card.success { --card-color: #28a745; --card-color-light: #5cb85c; }
+.stat-card.warning { --card-color: #ffc107; --card-color-light: #ffcd39; }
+.stat-card.info { --card-color: #17a2b8; --card-color-light: #46b5d1; }
+.stat-card.purple { --card-color: #6f42c1; --card-color-light: #8e5dd8; }
+.stat-card.danger { --card-color: #dc3545; --card-color-light: #e55a6c; }
+.stat-card.orange { --card-color: #fd7e14; --card-color-light: #fd9843; }
 
 .stat-icon {
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
     color: white;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
 }
 
-.stat-card.primary .stat-icon { background: #FF6B35; }
-.stat-card.success .stat-icon { background: #28a745; }
-.stat-card.warning .stat-icon { background: #ffc107; }
-.stat-card.info .stat-icon { background: #17a2b8; }
-.stat-card.purple .stat-icon { background: #6f42c1; }
-.stat-card.danger .stat-icon { background: #dc3545; }
-.stat-card.orange .stat-icon { background: #fd7e14; }
+.stat-card:hover .stat-icon {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.stat-card.primary .stat-icon { background: linear-gradient(135deg, #FF6B35, #ff8c5a); }
+.stat-card.success .stat-icon { background: linear-gradient(135deg, #28a745, #5cb85c); }
+.stat-card.warning .stat-icon { background: linear-gradient(135deg, #ffc107, #ffcd39); }
+.stat-card.info .stat-icon { background: linear-gradient(135deg, #17a2b8, #46b5d1); }
+.stat-card.purple .stat-icon { background: linear-gradient(135deg, #6f42c1, #8e5dd8); }
+.stat-card.danger .stat-icon { background: linear-gradient(135deg, #dc3545, #e55a6c); }
+.stat-card.orange .stat-icon { background: linear-gradient(135deg, #fd7e14, #fd9843); }
 
 .stat-content {
     flex: 1;
 }
 
 .stat-number {
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 2.5rem;
+    font-weight: 800;
     color: #2c3e50;
-    margin: 0 0 5px 0;
+    margin: 0 0 8px 0;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .stat-label {
     color: #7f8c8d;
-    font-weight: 500;
+    font-weight: 600;
     margin: 0;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
 }
 
 /* Content Section */
 .content-section {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .section-card {
     background: white;
-    border-radius: 15px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     overflow: hidden;
+    border: 1px solid rgba(255, 107, 53, 0.1);
+    transition: all 0.3s ease;
+}
+
+.section-card:hover {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
 }
 
 .card-header {
     background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
     color: white;
-    padding: 20px 25px;
+    padding: 25px 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.section-card:hover .card-header::before {
+    left: 100%;
 }
 
 .card-title {
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 700;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1;
 }
 
 .card-body {
-    padding: 25px;
+    padding: 30px;
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
 }
 
 /* Filters */
 .filters-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
 }
 
 .form-group {
@@ -455,38 +543,72 @@
 .chats-list {
     max-height: 70vh;
     overflow-y: auto;
+    padding: 10px;
 }
 
 .chat-item {
     display: flex;
     align-items: center;
-    padding: 20px 25px;
-    border-bottom: 1px solid #f8f9fa;
-    transition: background-color 0.3s ease;
+    padding: 25px;
+    margin-bottom: 15px;
+    border-radius: 15px;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
 }
 
 .chat-item:hover {
-    background-color: #f8f9fa;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 107, 53, 0.3);
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f6 100%);
+}
+
+.chat-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.05), transparent);
+    transition: left 0.5s;
+}
+
+.chat-item:hover::before {
+    left: 100%;
 }
 
 .chat-item:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .chat-avatar {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-weight: 700;
-    font-size: 18px;
-    margin-left: 15px;
+    font-weight: 800;
+    font-size: 20px;
+    margin-left: 20px;
     flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.chat-item:hover .chat-avatar {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
 }
 
 .chat-content {
@@ -502,46 +624,66 @@
 }
 
 .chat-customer {
-    font-weight: 600;
+    font-weight: 700;
     color: #2c3e50;
-    font-size: 16px;
+    font-size: 18px;
     margin: 0;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .chat-time {
-    color: #7f8c8d;
-    font-size: 12px;
+    color: #95a5a6;
+    font-size: 13px;
+    font-weight: 500;
+    background: rgba(149, 165, 166, 0.1);
+    padding: 4px 8px;
+    border-radius: 12px;
 }
 
 .chat-subject {
     color: #34495e;
-    margin-bottom: 5px;
-    font-size: 14px;
-    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
 }
 
 .chat-preview {
     color: #7f8c8d;
-    font-size: 13px;
-    margin-bottom: 10px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 14px;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    background: rgba(127, 140, 141, 0.05);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border-left: 3px solid rgba(255, 107, 53, 0.3);
 }
 
 .chat-meta {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
+    margin-top: 8px;
 }
 
 .status-badge {
-    padding: 4px 10px;
-    border-radius: 20px;
+    padding: 6px 12px;
+    border-radius: 25px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .status-open { background: #fee2e2; color: #dc2626; }
@@ -550,10 +692,18 @@
 .status-closed { background: #f3f4f6; color: #6b7280; }
 
 .priority-badge {
-    padding: 4px 8px;
-    border-radius: 15px;
-    font-size: 10px;
-    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.priority-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
 }
 
 .priority-low { background: #d1fae5; color: #059669; }
@@ -563,11 +713,20 @@
 
 /* Type Badges */
 .type-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
+    padding: 5px 12px;
+    border-radius: 15px;
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-left: 8px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.type-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
 }
 
 .type-pusher {
@@ -762,10 +921,14 @@ function initializePusher() {
             console.error('❌ Auth test error:', error);
         });
         
+        // Use current domain for auth endpoint to handle both local and production
+        const authEndpoint = window.location.protocol + '//' + window.location.host + '/broadcasting/auth';
+        console.log('🔗 Auth endpoint:', authEndpoint);
+        
         pusher = new Pusher(pusherKey, {
             cluster: pusherCluster,
             encrypted: true,
-            authEndpoint: '/broadcasting/auth',
+            authEndpoint: authEndpoint,
             auth: {
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
@@ -823,8 +986,9 @@ function initializePusher() {
 
 function subscribeToChannels() {
     try {
-        // Subscribe to private admin channel for all chat updates
-        adminChannel = pusher.subscribe('private-admin.chats');
+        // Subscribe to admin channel for all chat updates (using public channel for testing)
+        console.log('🔗 Subscribing to admin-chats-public channel...');
+        adminChannel = pusher.subscribe('admin-chats-public');
         
         // Make channel available globally
         window.adminChannel = adminChannel;
@@ -858,8 +1022,8 @@ function setupEventListeners() {
         handleNewMessage(data);
     });
     
-    // Also bind to all events for debugging
-    adminChannel.bind_all(function(eventName, data) {
+    // Also bind to all events for debugging (using bind_global for Pusher JS)
+    adminChannel.bind_global(function(eventName, data) {
         console.log('📡 All events on admin channel:', eventName, data);
     });
     

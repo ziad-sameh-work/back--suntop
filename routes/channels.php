@@ -47,10 +47,36 @@ Broadcast::channel('pusher-chat.{chatId}', function ($user, $chatId) {
     return false;
 });
 
-// Admin channel for all chats
+// Admin channel for all chats (private channel)
 Broadcast::channel('admin.chats', function ($user) {
-    if ($user->role === 'admin') {
+    \Log::info('Channel authorization for admin.chats', [
+        'user_id' => $user ? $user->id : null,
+        'user_role' => $user ? $user->role : null,
+        'is_admin' => $user && $user->role === 'admin'
+    ]);
+    
+    if ($user && $user->role === 'admin') {
         return ['id' => $user->id, 'name' => $user->name, 'role' => 'admin'];
     }
+    
+    \Log::warning('Channel authorization denied for admin.chats', [
+        'user_role' => $user ? $user->role : 'no_user'
+    ]);
+    
+    return false;
+});
+
+// Public admin channel for testing (no authentication required)
+Broadcast::channel('admin-chats-public', function ($user) {
+    \Log::info('Public admin channel access', [
+        'user_id' => $user ? $user->id : null,
+        'user_role' => $user ? $user->role : null
+    ]);
+    
+    // Allow all authenticated users for testing
+    if ($user) {
+        return ['id' => $user->id, 'name' => $user->name, 'role' => $user->role];
+    }
+    
     return false;
 });

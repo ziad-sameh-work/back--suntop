@@ -202,6 +202,67 @@ Route::post('/debug-pusher-auth', function (\Illuminate\Http\Request $request) {
     ]);
 })->middleware(['web']);
 
+// Test real-time message broadcasting
+Route::get('/test-broadcast-message/{chatId?}', function ($chatId = 1) {
+    if (!auth()->check()) {
+        return response()->json(['error' => 'Not authenticated'], 401);
+    }
+    
+    try {
+        // Find or create a test chat
+        $chat = \App\Models\Chat::find($chatId);
+        if (!$chat) {
+            $customer = \App\Models\User::where('role', 'customer')->first();
+            if (!$customer) {
+                return response()->json(['error' => 'No customer found'], 404);
+            }
+            
+            $chat = \App\Models\Chat::create([
+                'customer_id' => $customer->id,
+                'subject' => 'Test Chat for Broadcasting',
+                'status' => 'open',
+                'priority' => 'medium'
+            ]);
+        }
+        
+        // Create a test message
+        $message = \App\Models\ChatMessage::create([
+            'chat_id' => $chat->id,
+            'sender_id' => auth()->id(),
+            'sender_type' => 'admin',
+            'message' => '🧪 Test broadcast message from admin - ' . now()->format('H:i:s'),
+            'message_type' => 'text'
+        ]);
+        
+        // Load relationships for the event
+        $message->load(['sender', 'chat.customer']);
+        
+        // Fire the event
+        event(new \App\Events\NewChatMessage($message));
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Test message broadcasted successfully',
+            'data' => [
+                'message_id' => $message->id,
+                'chat_id' => $chat->id,
+                'message_text' => $message->message,
+                'channels' => [
+                    'chat.' . $chat->id,
+                    'private-admin.chats',
+                    'admin-chats-public'
+                ]
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Failed to broadcast message',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+})->middleware(['web', 'auth']);
+
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::get('/admin/login', [AuthController::class, 'showLoginForm'])->name('admin.login.form');
