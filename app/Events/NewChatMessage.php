@@ -59,8 +59,10 @@ class NewChatMessage implements ShouldBroadcast
     public function broadcastOn()
     {
         return [
-            // Public channel for customer apps (Flutter)
+            // Public channel for customer apps (Flutter) - الأساسي
             new Channel('chat.' . $this->chatMessage->chat_id),
+            // Mobile-specific channel (easier for mobile apps)
+            new Channel('mobile-chat.' . $this->chatMessage->chat_id),
             // Private admin channel for real-time admin updates
             new PrivateChannel('admin.chats'),
             // Public admin channel for testing

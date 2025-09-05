@@ -257,13 +257,24 @@ Route::prefix('favorites')->middleware('auth:sanctum')->group(function () {
 });
 
 // Real-Time Chat Routes with Pusher (Protected)
-Route::prefix('chat')->middleware('auth:sanctum')->group(function () {
-    Route::get('/start', [ChatController::class, 'getOrCreateChat']);
-    Route::post('/send', [ChatController::class, 'sendMessage']);
-    Route::get('/{chatId}/messages', [ChatController::class, 'getMessages']);
-    Route::get('/history', [ChatController::class, 'getChatHistory']);
-    Route::post('/{chatId}/read', [ChatController::class, 'markAsRead']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/chat/start', [ChatController::class, 'getOrCreateChat']);
+    Route::post('/chat/send', [ChatController::class, 'sendMessage']);
+    Route::get('/chat/{chat}/messages', [ChatController::class, 'getMessages']);
+    Route::get('/chat/history', [ChatController::class, 'getChatHistory']);
+    Route::post('/chat/{chat}/read', [ChatController::class, 'markAsRead']);
 });
+
+// Test Chat routes (for testing real-time functionality)
+Route::prefix('test')->group(function () {
+    Route::post('/send-message', [\App\Http\Controllers\Api\TestChatController::class, 'sendTestMessage']);
+    Route::post('/create-chat', [\App\Http\Controllers\Api\TestChatController::class, 'createTestChat']);
+    Route::get('/chat/{chatId}/messages', [\App\Http\Controllers\Api\TestChatController::class, 'getChatMessages']);
+    Route::post('/pusher-broadcast', [\App\Http\Controllers\Api\TestChatController::class, 'testPusherBroadcast']);
+});
+
+// Mobile Chat Routes - Real-time للموبايل
+require __DIR__ . '/mobile-chat-api.php';
 
 // Protected user route
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

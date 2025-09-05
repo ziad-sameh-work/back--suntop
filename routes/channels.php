@@ -80,3 +80,32 @@ Broadcast::channel('admin-chats-public', function ($user) {
     
     return false;
 });
+
+// Mobile-specific public channel for easier real-time (NO AUTH REQUIRED)
+// هذه القناة للموبايل بدون authentication للسهولة
+Broadcast::channel('mobile-chat.{chatId}', function ($user, $chatId) {
+    // Log للتتبع
+    \Log::info('Mobile chat channel access attempt', [
+        'user_id' => $user ? $user->id : 'no_user',
+        'chat_id' => $chatId,
+        'user_role' => $user ? $user->role : 'no_user'
+    ]);
+    
+    // السماح للجميع للتسهيل على الموبايل
+    if ($user) {
+        return [
+            'id' => $user->id, 
+            'name' => $user->name, 
+            'role' => $user->role,
+            'platform' => 'mobile'
+        ];
+    }
+    
+    // حتى بدون مستخدم للاختبار
+    return [
+        'id' => 'guest',
+        'name' => 'Guest User',
+        'role' => 'guest',
+        'platform' => 'mobile'
+    ];
+});

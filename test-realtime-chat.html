@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار Real-Time Chat</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            direction: rtl;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .section {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .messages {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        .message {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background: white;
+            border-left: 4px solid #007bff;
+        }
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">غير متصل</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>اختبار Real-Time Chat مع Pusher</h1>
+            <p>اختبار استقبال وإرسال الرسائل في الوقت الفعلي</p>
+        </div>
+
+        <!-- Pusher Connection Section -->
+        <div class="section">
+            <h3>🔗 اتصال Pusher</h3>
+            <div class="form-group">
+                <label>Chat ID للاستماع:</label>
+                <input type="number" id="chatId" value="1" placeholder="أدخل Chat ID">
+            </div>
+            <button onclick="connectToPusher()">الاتصال بـ Pusher</button>
+            <button onclick="disconnectFromPusher()">قطع الاتصال</button>
+            <div id="pusherStatus"></div>
+        </div>
+
+        <!-- Send Test Message Section -->
+        <div class="section">
+            <h3>📤 إرسال رسالة تجريبية</h3>
+            <div class="form-group">
+                <label>Chat ID:</label>
+                <input type="number" id="sendChatId" value="1">
+            </div>
+            <div class="form-group">
+                <label>نص الرسالة:</label>
+                <textarea id="messageText" placeholder="اكتب رسالتك هنا...">رسالة تجريبية من صفحة الاختبار</textarea>
+            </div>
+            <div class="form-group">
+                <label>نوع المرسل:</label>
+                <select id="senderType">
+                    <option value="customer">عميل</option>
+                    <option value="admin">أدمن</option>
+                </select>
+            </div>
+            <button onclick="sendTestMessage()">إرسال رسالة</button>
+            <div id="sendStatus"></div>
+        </div>
+
+        <!-- Create Test Chat Section -->
+        <div class="section">
+            <h3>➕ إنشاء محادثة تجريبية</h3>
+            <div class="form-group">
+                <label>موضوع المحادثة:</label>
+                <input type="text" id="chatSubject" placeholder="موضوع المحادثة">
+            </div>
+            <div class="form-group">
+                <label>إيميل العميل:</label>
+                <input type="email" id="customerEmail" placeholder="customer@example.com">
+            </div>
+            <button onclick="createTestChat()">إنشاء محادثة</button>
+            <div id="createStatus"></div>
+        </div>
+
+        <!-- Direct Pusher Test Section -->
+        <div class="section">
+            <h3>🚀 اختبار Pusher مباشر</h3>
+            <div class="form-group">
+                <label>اسم القناة:</label>
+                <input type="text" id="testChannel" value="chat.1" placeholder="chat.1">
+            </div>
+            <div class="form-group">
+                <label>اسم الحدث:</label>
+                <input type="text" id="testEvent" value="message.new" placeholder="message.new">
+            </div>
+            <button onclick="testDirectPusher()">إرسال حدث مباشر</button>
+            <div id="directStatus"></div>
+        </div>
+
+        <!-- Received Messages Section -->
+        <div class="section">
+            <h3>📨 الرسائل المستقبلة</h3>
+            <div class="messages" id="receivedMessages">
+                <p>لا توجد رسائل بعد...</p>
+            </div>
+            <button onclick="clearMessages()">مسح الرسائل</button>
+        </div>
+    </div>
+
+    <script>
+        let pusher = null;
+        let channel = null;
+        let currentChatId = null;
+
+        // Pusher configuration
+        const pusherConfig = {
+            key: 'f546bf192457a6d47ed5',
+            cluster: 'eu',
+            forceTLS: true,
+            auth: {
+                headers: {
+                    'Authorization': 'Bearer YOUR_TOKEN_HERE', // Replace with actual token
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            },
+            authEndpoint: '/api/broadcasting/auth'
+        };
+
+        function updateConnectionStatus(status, message) {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.textContent = message;
+            statusEl.className = `connection-status ${status}`;
+        }
+
+        function addMessage(type, content) {
+            const messagesEl = document.getElementById('receivedMessages');
+            if (messagesEl.children[0]?.textContent === 'لا توجد رسائل بعد...') {
+                messagesEl.innerHTML = '';
+            }
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            messageEl.innerHTML = `
+                <strong>[${new Date().toLocaleTimeString('ar-EG')}] ${type}:</strong><br>
+                <pre>${JSON.stringify(content, null, 2)}</pre>
+            `;
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function showStatus(elementId, type, message) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function connectToPusher() {
+            const chatId = document.getElementById('chatId').value;
+            if (!chatId) {
+                showStatus('pusherStatus', 'error', 'يرجى إدخال Chat ID');
+                return;
+            }
+
+            try {
+                // Disconnect existing connection
+                if (pusher) {
+                    pusher.disconnect();
+                }
+
+                // Create new Pusher instance
+                pusher = new Pusher(pusherConfig.key, {
+                    cluster: pusherConfig.cluster,
+                    forceTLS: pusherConfig.forceTLS
+                });
+
+                // Connection events
+                pusher.connection.bind('connected', function() {
+                    updateConnectionStatus('connected', 'متصل بـ Pusher');
+                    showStatus('pusherStatus', 'success', 'تم الاتصال بـ Pusher بنجاح');
+                });
+
+                pusher.connection.bind('disconnected', function() {
+                    updateConnectionStatus('disconnected', 'غير متصل');
+                    showStatus('pusherStatus', 'error', 'تم قطع الاتصال');
+                });
+
+                pusher.connection.bind('error', function(err) {
+                    updateConnectionStatus('disconnected', 'خطأ في الاتصال');
+                    showStatus('pusherStatus', 'error', 'خطأ في الاتصال: ' + err.message);
+                });
+
+                // Subscribe to chat channel
+                const channelName = `chat.${chatId}`;
+                channel = pusher.subscribe(channelName);
+                currentChatId = chatId;
+
+                // Listen for new messages
+                channel.bind('message.new', function(data) {
+                    addMessage('رسالة جديدة', data);
+                });
+
+                // Listen for all events (for debugging)
+                channel.bind_global(function(eventName, data) {
+                    addMessage(`حدث: ${eventName}`, data);
+                });
+
+                showStatus('pusherStatus', 'info', `جاري الاتصال بقناة: ${channelName}`);
+
+            } catch (error) {
+                showStatus('pusherStatus', 'error', 'خطأ: ' + error.message);
+            }
+        }
+
+        function disconnectFromPusher() {
+            if (pusher) {
+                pusher.disconnect();
+                pusher = null;
+                channel = null;
+                updateConnectionStatus('disconnected', 'غير متصل');
+                showStatus('pusherStatus', 'info', 'تم قطع الاتصال');
+            }
+        }
+
+        async function sendTestMessage() {
+            const chatId = document.getElementById('sendChatId').value;
+            const message = document.getElementById('messageText').value;
+            const senderType = document.getElementById('senderType').value;
+
+            if (!chatId || !message) {
+                showStatus('sendStatus', 'error', 'يرجى ملء جميع الحقول');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/test/send-message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        message: message,
+                        sender_type: senderType
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('sendStatus', 'success', 'تم إرسال الرسالة بنجاح!');
+                    addMessage('رسالة مُرسلة', result.data);
+                } else {
+                    showStatus('sendStatus', 'error', 'فشل في إرسال الرسالة: ' + result.message);
+                }
+            } catch (error) {
+                showStatus('sendStatus', 'error', 'خطأ: ' + error.message);
+            }
+        }
+
+        async function createTestChat() {
+            const subject = document.getElementById('chatSubject').value;
+            const email = document.getElementById('customerEmail').value;
+
+            try {
+                const response = await fetch('/api/test/create-chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        subject: subject,
+                        customer_email: email
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('createStatus', 'success', `تم إنشاء المحادثة! Chat ID: ${result.data.chat_id}`);
+                    document.getElementById('chatId').value = result.data.chat_id;
+                    document.getElementById('sendChatId').value = result.data.chat_id;
+                } else {
+                    showStatus('createStatus', 'error', 'فشل في إنشاء المحادثة: ' + result.message);
+                }
+            } catch (error) {
+                showStatus('createStatus', 'error', 'خطأ: ' + error.message);
+            }
+        }
+
+        async function testDirectPusher() {
+            const channel = document.getElementById('testChannel').value;
+            const event = document.getElementById('testEvent').value;
+
+            if (!channel || !event) {
+                showStatus('directStatus', 'error', 'يرجى ملء جميع الحقول');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/test/pusher-broadcast', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        channel: channel,
+                        event: event,
+                        data: {
+                            test: true,
+                            message: 'اختبار مباشر من صفحة الاختبار',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus('directStatus', 'success', 'تم إرسال الحدث بنجاح!');
+                    addMessage('حدث مُرسل مباشرة', result.data);
+                } else {
+                    showStatus('directStatus', 'error', 'فشل في إرسال الحدث: ' + result.message);
+                }
+            } catch (error) {
+                showStatus('directStatus', 'error', 'خطأ: ' + error.message);
+            }
+        }
+
+        function clearMessages() {
+            document.getElementById('receivedMessages').innerHTML = '<p>لا توجد رسائل بعد...</p>';
+        }
+
+        // Initialize
+        updateConnectionStatus('disconnected', 'غير متصل');
+    </script>
+</body>
+</html>
