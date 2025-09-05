@@ -148,8 +148,6 @@ class BroadcastingAuthController extends Controller
                     return response($auth);
                 }
             }
-        }
-
         } elseif (strpos($channelName, 'admin-chats-public') !== false) {
             // Public admin channel for testing
             \Log::info('Public admin channel access', [
