@@ -104,18 +104,103 @@ Route::get('/test-pusher-config', function () {
 });
 
 // Test Broadcasting Auth endpoint
-Route::get('/test-broadcasting-auth', function () {
+Route::get('/test-broadcasting-auth', function (\Illuminate\Http\Request $request) {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return response()->json([
+            'error' => 'Not authenticated',
+            'session_id' => $request->session()->getId(),
+            'has_session' => $request->hasSession(),
+            'cookies' => $request->cookies->all(),
+            'headers' => $request->headers->all()
+        ], 401);
+    }
+    
+    return response()->json([
+        'user' => $user->only(['id', 'name', 'email', 'role']),
+        'auth_endpoint' => url('/broadcasting/auth'),
+        'can_access_admin_chats' => $user->role === 'admin',
+        'test_channel' => 'private-admin.chats',
+        'session_id' => $request->session()->getId(),
+        'csrf_token' => csrf_token(),
+        'cookies' => array_keys($request->cookies->all())
+    ]);
+})->middleware(['web', 'auth']);
+
+// Test manual broadcasting auth
+Route::post('/test-manual-auth', function (\Illuminate\Http\Request $request) {
     if (!auth()->check()) {
         return response()->json(['error' => 'Not authenticated'], 401);
     }
     
-    return response()->json([
-        'user' => auth()->user()->only(['id', 'name', 'email', 'role']),
-        'auth_endpoint' => url('/broadcasting/auth'),
-        'can_access_admin_chats' => auth()->user()->role === 'admin',
-        'test_channel' => 'private-admin.chats'
+    $user = auth()->user();
+    $channelName = $request->input('channel_name', 'private-admin.chats');
+    $socketId = $request->input('socket_id', 'test-socket-123');
+    
+    // Test the same logic as BroadcastingAuthController
+    if (strpos($channelName, 'private-admin.chats') !== false) {
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'error' => 'User is not admin',
+                'user_role' => $user->role,
+                'required_role' => 'admin'
+            ], 403);
+        }
+        
+        try {
+            $pusher = new \Pusher\Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                config('broadcasting.connections.pusher.options')
+            );
+            
+            $userData = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'role' => 'admin'
+            ];
+            
+            $auth = $pusher->socket_auth($channelName, $socketId, json_encode($userData));
+            
+            return response()->json([
+                'success' => true,
+                'auth' => $auth,
+                'user' => $userData,
+                'channel' => $channelName,
+                'socket_id' => $socketId
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Pusher error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    return response()->json(['error' => 'Invalid channel'], 400);
+})->middleware(['web', 'auth']);
+
+// Debug endpoint to simulate Pusher auth request exactly
+Route::post('/debug-pusher-auth', function (\Illuminate\Http\Request $request) {
+    \Log::info('Debug Pusher Auth Request', [
+        'method' => $request->method(),
+        'url' => $request->fullUrl(),
+        'headers' => $request->headers->all(),
+        'body' => $request->all(),
+        'cookies' => $request->cookies->all(),
+        'session_id' => $request->session()->getId(),
+        'user' => auth()->user() ? auth()->user()->only(['id', 'name', 'role']) : null
     ]);
-})->middleware('auth');
+    
+    return response()->json([
+        'debug' => true,
+        'authenticated' => auth()->check(),
+        'user' => auth()->user() ? auth()->user()->only(['id', 'name', 'role']) : null,
+        'request_data' => $request->all()
+    ]);
+})->middleware(['web']);
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -177,7 +262,7 @@ Route::get('/welcome', function () {
 })->name('welcome');
 
 // Broadcasting Auth Route (outside admin group for global access)
-Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'auth'])->name('broadcasting.auth')->middleware('auth');
+Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'auth'])->name('broadcasting.auth')->middleware(['web', 'auth']);
 
 // Admin Dashboard Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

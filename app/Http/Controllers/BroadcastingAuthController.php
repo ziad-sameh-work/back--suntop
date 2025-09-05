@@ -14,10 +14,32 @@ class BroadcastingAuthController extends Controller
      */
     public function auth(Request $request)
     {
+        // First try to get user from session
         $user = Auth::user();
         
+        // If no user from session, try to get from guard
         if (!$user) {
-            return response('Unauthorized', 401);
+            $user = Auth::guard('web')->user();
+        }
+        
+        // Debug logging
+        \Log::info('Broadcasting auth attempt', [
+            'user_id' => $user ? $user->id : null,
+            'user_role' => $user ? $user->role : null,
+            'channel' => $request->input('channel_name'),
+            'socket_id' => $request->input('socket_id'),
+            'session_id' => $request->session()->getId(),
+            'has_session' => $request->hasSession(),
+            'csrf_token' => $request->input('_token'),
+            'headers' => $request->headers->all(),
+            'all_input' => $request->all()
+        ]);
+        
+        if (!$user) {
+            \Log::warning('Broadcasting auth failed: No authenticated user', [
+                'session_data' => $request->session()->all()
+            ]);
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
         $pusher = new Pusher(
@@ -33,7 +55,16 @@ class BroadcastingAuthController extends Controller
         // Check channel authorization
         if (strpos($channelName, 'private-admin.chats') !== false) {
             // Admin chats channel
+            \Log::info('Checking admin.chats channel access', [
+                'user_role' => $user->role,
+                'channel' => $channelName
+            ]);
+            
             if ($user->role !== 'admin') {
+                \Log::warning('Broadcasting auth failed: User is not admin', [
+                    'user_role' => $user->role,
+                    'required_role' => 'admin'
+                ]);
                 return response('Forbidden', 403);
             }
             
@@ -44,7 +75,13 @@ class BroadcastingAuthController extends Controller
             ];
             
             $auth = $pusher->socket_auth($channelName, $socketId, json_encode($userData));
-            return response($auth);
+            \Log::info('Broadcasting auth successful for admin.chats', [
+                'user_id' => $user->id,
+                'channel' => $channelName
+            ]);
+            return response($auth, 200, [
+                'Content-Type' => 'application/json'
+            ]);
             
         } elseif (strpos($channelName, 'chat.') !== false && strpos($channelName, 'private-') === false) {
             // Public chat channel for individual chats

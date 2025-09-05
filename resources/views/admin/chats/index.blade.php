@@ -726,16 +726,61 @@ function initializePusher() {
     
     try {
         // Initialize Pusher with proper configuration
-        pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
-            cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
+        const pusherKey = @json(config('broadcasting.connections.pusher.key'));
+        const pusherCluster = @json(config('broadcasting.connections.pusher.options.cluster'));
+        const csrfToken = @json(csrf_token());
+        
+        if (!pusherKey || !pusherCluster) {
+            console.error('❌ Pusher configuration missing. Check your .env file.');
+            showConnectionStatus('config_error');
+            return;
+        }
+        
+        // Debug: Test authentication before initializing Pusher
+        console.log('🧪 Testing authentication before Pusher...');
+        fetch('/test-broadcasting-auth', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            console.log('🔍 Auth test response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('🔍 Auth test data:', data);
+            if (data.error) {
+                console.error('❌ Authentication test failed:', data.error);
+                showConnectionStatus('auth_failed');
+                return;
+            }
+        })
+        .catch(error => {
+            console.error('❌ Auth test error:', error);
+        });
+        
+        pusher = new Pusher(pusherKey, {
+            cluster: pusherCluster,
             encrypted: true,
             authEndpoint: '/broadcasting/auth',
             auth: {
                 headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                params: {
+                    '_token': csrfToken
                 }
+            },
+            // Ensure credentials (cookies) are sent with auth requests
+            authTransport: 'ajax',
+            authOptions: {
+                withCredentials: true
             }
         });
         
@@ -1063,7 +1108,7 @@ function highlightChatItem(chatItem) {
 
 function updateUnreadStats() {
     // Refresh unread messages count
-    fetch('{{ route("admin.chats.index") }}?ajax=1&stats_only=1')
+    fetch(@json(route('admin.chats.index')) + '?ajax=1&stats_only=1')
         .then(response => response.json())
         .then(data => {
             if (data.stats) {
@@ -1091,6 +1136,47 @@ function updateStatsDisplay(stats) {
             element.textContent = new Intl.NumberFormat('ar-EG').format(stats[key]);
         }
     });
+}
+
+function showConnectionStatus(status) {
+    const statusMessages = {
+        'connected': '✅ متصل',
+        'disconnected': '🔴 منقطع',
+        'subscribed': '✅ مشترك',
+        'error': '❌ خطأ',
+        'config_error': '⚠️ خطأ في الإعدادات',
+        'subscription_error': '❌ خطأ في الاشتراك',
+        'init_error': '❌ خطأ في التهيئة',
+        'failed': '❌ فشل الاتصال'
+    };
+    
+    console.log('📡 Connection Status:', statusMessages[status] || status);
+}
+
+function showNotification(title, message) {
+    console.log('🔔 Notification:', title, message);
+    
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+            body: message,
+            icon: '/favicon.ico'
+        });
+    }
+}
+
+function updateChatStats() {
+    refreshChatStats();
+}
+
+function refreshChatStats() {
+    fetch(window.location.href + '?ajax=1')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('✅ Stats refreshed');
+            }
+        })
+        .catch(error => console.error('Error refreshing stats:', error));
 }
 
 function updateChatStatus(chatId, newStatus) {
@@ -1196,40 +1282,6 @@ function showConnectionStatus(status) {
     console.log(`📡 Pusher Status: ${config.text} (${status})`);
 }
 
-function updateChatStats() {
-    fetch('/admin/chats/stats', {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.stats) {
-            updateStatsDisplay(data.stats);
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error updating stats:', error);
-    });
-            left: 20px;
-            background: white;
-            padding: 10px 15px;
-            border-radius: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            font-size: 12px;
-            font-weight: 600;
-            z-index: 1000;
-            border: 2px solid;
-        `;
-        document.body.appendChild(statusIndicator);
-    }
-    
-    statusIndicator.textContent = statusText;
-    statusIndicator.style.borderColor = statusColor;
-    statusIndicator.style.color = statusColor;
-}
 
 function refreshChatStats() {
     // Backup refresh function
@@ -1282,5 +1334,4 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 </script>
-@endsection
 @endsection

@@ -656,15 +656,26 @@ const chatId = {{ $chat->id }};
 function initializePusherChat() {
     try {
         // Initialize Pusher with your credentials
-        pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
-            cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
+        const pusherKey = @json(config('broadcasting.connections.pusher.key'));
+        const pusherCluster = @json(config('broadcasting.connections.pusher.options.cluster'));
+        const csrfToken = @json(csrf_token());
+        
+        if (!pusherKey || !pusherCluster) {
+            console.error('❌ Pusher configuration missing. Check your .env file.');
+            showConnectionStatus('config_error');
+            return;
+        }
+        
+        pusher = new Pusher(pusherKey, {
+            cluster: pusherCluster,
             forceTLS: true,
             authEndpoint: '/broadcasting/auth',
             auth: {
                 headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             }
         });
@@ -926,5 +937,39 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+function showConnectionStatus(status) {
+    const statusMessages = {
+        'connected': '✅ متصل',
+        'disconnected': '🔴 منقطع',
+        'subscribed': '✅ مشترك',
+        'error': '❌ خطأ',
+        'config_error': '⚠️ خطأ في الإعدادات',
+        'subscription_error': '❌ خطأ في الاشتراك',
+        'init_error': '❌ خطأ في التهيئة',
+        'failed': '❌ فشل الاتصال'
+    };
+    
+    console.log('📡 Connection Status:', statusMessages[status] || status);
+}
+
+function showMessageNotification(message) {
+    console.log('🔔 New Message:', message);
+    
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const senderName = message.sender ? message.sender.name : 'مجهول';
+        new Notification(`رسالة جديدة من ${senderName}`, {
+            body: message.message,
+            icon: '/favicon.ico'
+        });
+    }
+}
+
+function scrollToBottom() {
+    const messagesContainer = document.querySelector('.messages-container');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
 </script>
 @endsection
