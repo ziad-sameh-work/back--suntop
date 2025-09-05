@@ -18,6 +18,9 @@ use App\Http\Controllers\AdminPusherChatController;
 use App\Http\Controllers\BroadcastingAuthController;
 use App\Events\NewChatMessage;
 use App\Models\ChatMessage;
+
+// Test Real-time routes
+require __DIR__ . '/test-realtime.php';
 use App\Models\Chat;
 
 /*
