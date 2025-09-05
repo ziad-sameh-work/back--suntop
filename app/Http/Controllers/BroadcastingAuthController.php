@@ -46,6 +46,36 @@ class BroadcastingAuthController extends Controller
             $auth = $pusher->socket_auth($channelName, $socketId, json_encode($userData));
             return response($auth);
             
+        } elseif (strpos($channelName, 'chat.') !== false && strpos($channelName, 'private-') === false) {
+            // Public chat channel for individual chats
+            $chatId = str_replace('chat.', '', $channelName);
+            
+            if ($user->role === 'admin') {
+                // Admins can access any chat
+                $userData = [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'role' => 'admin'
+                ];
+                
+                $auth = $pusher->socket_auth($channelName, $socketId, json_encode($userData));
+                return response($auth);
+                
+            } else {
+                // Customers can only access their own chat
+                $chat = \App\Models\Chat::find($chatId);
+                if ($chat && $chat->customer_id === $user->id) {
+                    $userData = [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'role' => 'customer'
+                    ];
+                    
+                    $auth = $pusher->socket_auth($channelName, $socketId, json_encode($userData));
+                    return response($auth);
+                }
+            }
+            
         } elseif (strpos($channelName, 'private-chat.') !== false) {
             // Individual chat channel
             $chatId = str_replace('private-chat.', '', $channelName);

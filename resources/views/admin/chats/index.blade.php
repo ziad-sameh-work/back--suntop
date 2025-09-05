@@ -708,7 +708,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Pusher for Real-time Updates
-    initializePusherRealtime();
+    initializePusher();
     
     // Fallback: Auto-refresh page every 5 minutes as backup
     setInterval(function() {
@@ -716,72 +716,78 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 300000);
 });
 
-let pusher = null;
-let adminChannel = null;
+let pusher, adminChannel;
+let isConnected = false;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
 
-function initializePusherRealtime() {
+function initializePusher() {
+    console.log('🚀 Initializing Pusher Real-time System...');
+    
     try {
-        // Initialize Pusher with your credentials
-        pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
-            cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
-            forceTLS: true,
-            authEndpoint: '/admin/broadcasting/auth',
+        // Initialize Pusher with proper configuration
+        pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+            cluster: '{{ env('PUSHER_APP_CLUSTER') }}',
+            encrypted: true,
+            authEndpoint: '/broadcasting/auth',
             auth: {
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Authorization': 'Bearer {{ auth()->user()->createToken("chat-realtime")->plainTextToken }}'
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                 }
             }
         });
-
-        // Subscribe to admin chats channel for real-time updates
-        adminChannel = pusher.subscribe('private-admin.chats');
         
-        // Bind to the new chat message event
-        adminChannel.bind('App\\Events\\NewChatMessage', function(data) {
-            console.log('🔥 NewChatMessage event received:', data);
-            console.log('🔍 Event details:', {
-                chatId: data.message?.chat_id,
-                messageId: data.message?.id,
-                senderType: data.message?.sender_type,
-                message: data.message?.message?.substring(0, 50) + '...'
-            });
-            handleNewChatMessage(data);
-        });
+        // Make pusher available globally for debugging
+        window.pusher = pusher;
+        console.log('🔧 Pusher instance created:', pusher);
 
-        // Also listen to all individual chat channels for broader coverage
-        pusher.bind_global(function(eventName, data) {
-            console.log('Global Pusher event:', eventName, data);
-            if (eventName === 'App\\Events\\NewChatMessage') {
-                handleNewChatMessage(data);
-            }
-        });
-
-        // Listen for chat status changes
-        adminChannel.bind('chat.status.updated', function(data) {
-            console.log('📊 Chat status updated:', data);
-            updateChatStatus(data.chat_id, data.status);
-        });
-
-        // Connection status handling
+        // Connection event handlers
         pusher.connection.bind('connected', function() {
             console.log('✅ Pusher connected successfully');
+            isConnected = true;
+            reconnectAttempts = 0;
             showConnectionStatus('connected');
+            subscribeToChannels();
         });
 
         pusher.connection.bind('disconnected', function() {
-            console.log('❌ Pusher disconnected');
+            console.log('🔴 Pusher disconnected');
+            isConnected = false;
             showConnectionStatus('disconnected');
         });
 
         pusher.connection.bind('error', function(error) {
             console.error('🔴 Pusher connection error:', error);
             showConnectionStatus('error');
+            handleReconnection();
         });
 
+        pusher.connection.bind('unavailable', function() {
+            console.log('🔴 Pusher unavailable');
+            showConnectionStatus('unavailable');
+            handleReconnection();
+        });
+
+    } catch (error) {
+        console.error('❌ Failed to initialize Pusher:', error);
+        showConnectionStatus('init_error');
+    }
+}
+
+function subscribeToChannels() {
+    try {
+        // Subscribe to private admin channel for all chat updates
+        adminChannel = pusher.subscribe('private-admin.chats');
+        
+        // Make channel available globally
+        window.adminChannel = adminChannel;
+        
         adminChannel.bind('pusher:subscription_succeeded', function() {
             console.log('✅ Successfully subscribed to admin chats channel');
             showConnectionStatus('subscribed');
+            setupEventListeners();
         });
 
         adminChannel.bind('pusher:subscription_error', function(error) {
@@ -790,28 +796,119 @@ function initializePusherRealtime() {
         });
 
     } catch (error) {
-        console.error('Failed to initialize Pusher:', error);
-        showConnectionStatus('init_error');
+        console.error('❌ Failed to subscribe to channels:', error);
     }
 }
 
-function handleNewChatMessage(data) {
-    console.log('📨 Processing new chat message:', data);
+function setupEventListeners() {
+    // Listen for new chat messages
+    adminChannel.bind('message.new', function(data) {
+        console.log('🔥 New message received:', data);
+        console.log('🔍 Message details:', {
+            messageId: data.message?.id,
+            chatId: data.message?.chat_id,
+            senderType: data.message?.sender_type,
+            message: data.message?.message?.substring(0, 50)
+        });
+        handleNewMessage(data);
+    });
     
-    // Show notification with customer name
-    const customerName = data.message.sender_type === 'customer' ? data.message.sender.name : 'الإدارة';
+    // Also bind to all events for debugging
+    adminChannel.bind_all(function(eventName, data) {
+        console.log('📡 All events on admin channel:', eventName, data);
+    });
+    
+    console.log('✅ Event listeners setup complete');
+}
+
+function handleReconnection() {
+    if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        console.log(`🔄 Attempting to reconnect (${reconnectAttempts}/${maxReconnectAttempts})...`);
+        setTimeout(() => {
+            initializePusher();
+        }, 2000 * reconnectAttempts);
+    } else {
+        console.error('❌ Max reconnection attempts reached');
+        showConnectionStatus('failed');
+    }
+}
+
+function handleNewMessage(data) {
+    console.log('📨 Processing new message:', data);
+    
+    // Validate data structure
+    if (!data || !data.message || !data.chat) {
+        console.error('❌ Invalid message data received:', data);
+        return;
+    }
+    
+    // Show notification
+    const customerName = data.message.sender_type === 'customer' ? 
+        data.message.sender.name : 'الإدارة';
     showNotification(`رسالة جديدة من ${customerName}`, data.message.message);
     
-    // Update the UI immediately without reload
-    const success = updateChatListRealtime(data);
+    // Update chat list in real-time
+    updateChatInList(data);
     
-    // If UI update failed, force page reload after a delay
-    if (!success) {
-        console.log('🔄 UI update failed, forcing page reload...');
-        setTimeout(() => {
-            window.location.reload();
-        }, 1500);
+    // Update statistics
+    updateChatStats();
+}
+
+function updateChatInList(data) {
+    const chatId = data.message.chat_id;
+    const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+    
+    if (!chatItem) {
+        console.log('❌ Chat item not found, reloading page...');
+        setTimeout(() => window.location.reload(), 1000);
+        return;
     }
+    
+    console.log('✅ Updating chat item:', chatId);
+    
+    // Update time
+    const timeElement = chatItem.querySelector('.chat-time');
+    if (timeElement) {
+        timeElement.textContent = 'الآن';
+    }
+    
+    // Update preview
+    const previewElement = chatItem.querySelector('.chat-preview');
+    if (previewElement) {
+        const senderName = data.message.sender_type === 'customer' ? 
+            data.message.sender.name : 'الإدارة';
+        const messageText = data.message.message.length > 100 ? 
+            data.message.message.substring(0, 100) + '...' : 
+            data.message.message;
+        previewElement.innerHTML = `<strong>${senderName}:</strong> ${messageText}`;
+    }
+    
+    // Update unread count for customer messages
+    if (data.message.sender_type === 'customer') {
+        let unreadBadge = chatItem.querySelector('.unread-badge');
+        if (!unreadBadge) {
+            unreadBadge = document.createElement('span');
+            unreadBadge.className = 'unread-badge';
+            chatItem.querySelector('.chat-meta').appendChild(unreadBadge);
+        }
+        const currentCount = parseInt(unreadBadge.textContent) || 0;
+        unreadBadge.textContent = currentCount + 1;
+        unreadBadge.style.display = 'inline-block';
+    }
+    
+    // Move to top of list
+    const chatsList = chatItem.parentNode;
+    chatsList.insertBefore(chatItem, chatsList.firstChild);
+    
+    // Add highlight animation
+    chatItem.style.backgroundColor = '#fff3cd';
+    chatItem.style.transition = 'background-color 0.5s ease';
+    setTimeout(() => {
+        chatItem.style.backgroundColor = '';
+    }, 2000);
+    
+    console.log('✅ Chat updated successfully');
 }
 
 function updateChatListRealtime(data) {
@@ -1076,38 +1173,46 @@ function showInPageNotification(title, message) {
 }
 
 function showConnectionStatus(status) {
-    let statusText = '';
-    let statusColor = '';
+    const statusElement = document.getElementById('pusher-status');
+    if (!statusElement) return;
+
+    const statusMap = {
+        'connected': { text: 'متصل', class: 'status-connected', icon: '🟢' },
+        'disconnected': { text: 'منقطع', class: 'status-disconnected', icon: '🔴' },
+        'connecting': { text: 'جاري الاتصال...', class: 'status-connecting', icon: '🟡' },
+        'error': { text: 'خطأ في الاتصال', class: 'status-error', icon: '🔴' },
+        'subscribed': { text: 'مشترك', class: 'status-subscribed', icon: '✅' },
+        'subscription_error': { text: 'خطأ في الاشتراك', class: 'status-error', icon: '❌' },
+        'init_error': { text: 'خطأ في التهيئة', class: 'status-error', icon: '❌' },
+        'unavailable': { text: 'غير متاح', class: 'status-error', icon: '🚫' },
+        'failed': { text: 'فشل الاتصال', class: 'status-error', icon: '💥' }
+    };
+
+    const config = statusMap[status] || statusMap['error'];
+    statusElement.innerHTML = `${config.icon} ${config.text}`;
+    statusElement.className = `pusher-status ${config.class}`;
     
-    switch (status) {
-        case 'connected':
-            statusText = '🟢 متصل';
-            statusColor = '#28a745';
-            break;
-        case 'subscribed':
-            statusText = '🟢 Real-time نشط';
-            statusColor = '#28a745';
-            break;
-        case 'disconnected':
-            statusText = '🟡 منقطع';
-            statusColor = '#ffc107';
-            break;
-        case 'error':
-        case 'subscription_error':
-        case 'init_error':
-            statusText = '🔴 خطأ في الاتصال';
-            statusColor = '#dc3545';
-            break;
-    }
-    
-    // Create or update status indicator
-    let statusIndicator = document.getElementById('pusher-status');
-    if (!statusIndicator) {
-        statusIndicator = document.createElement('div');
-        statusIndicator.id = 'pusher-status';
-        statusIndicator.style.cssText = `
-            position: fixed;
-            bottom: 20px;
+    // Log status changes
+    console.log(`📡 Pusher Status: ${config.text} (${status})`);
+}
+
+function updateChatStats() {
+    fetch('/admin/chats/stats', {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.stats) {
+            updateStatsDisplay(data.stats);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error updating stats:', error);
+    });
             left: 20px;
             background: white;
             padding: 10px 15px;

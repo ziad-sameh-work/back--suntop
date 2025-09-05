@@ -86,7 +86,7 @@ class NewChatMessage implements ShouldBroadcast
         // Load chat with customer relationship
         $this->chatMessage->load(['chat.customer']);
         
-        return [
+        $data = [
             'message' => $this->formattedMessage,
             'chat' => [
                 'id' => $this->chatMessage->chat->id,
@@ -110,5 +110,17 @@ class NewChatMessage implements ShouldBroadcast
             ],
             'timestamp' => now()->toISOString(),
         ];
+        
+        // Log the broadcast data for debugging
+        \Log::info('Broadcasting NewChatMessage event', [
+            'event_name' => 'message.new',
+            'channels' => ['chat.' . $this->chatMessage->chat_id, 'private-admin.chats'],
+            'message_id' => $this->chatMessage->id,
+            'chat_id' => $this->chatMessage->chat_id,
+            'sender_type' => $this->chatMessage->sender_type,
+            'data_keys' => array_keys($data)
+        ]);
+        
+        return $data;
     }
 }

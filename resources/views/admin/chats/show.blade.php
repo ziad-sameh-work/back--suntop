@@ -659,11 +659,12 @@ function initializePusherChat() {
         pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
             cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
             forceTLS: true,
-            authEndpoint: '/admin/broadcasting/auth',
+            authEndpoint: '/broadcasting/auth',
             auth: {
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Authorization': 'Bearer {{ auth()->user()->createToken("chat-individual")->plainTextToken }}'
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
                 }
             }
         });
@@ -671,17 +672,19 @@ function initializePusherChat() {
         // Subscribe to specific chat channel (regular chat uses public channel)
         chatChannel = pusher.subscribe(`chat.${chatId}`);
         
-        // Listen for NewChatMessage events (the main event from ChatMessage model)
-        chatChannel.bind('App\\Events\\NewChatMessage', function(data) {
+        // Make pusher and channel available globally for chat interface
+        window.pusher = pusher;
+        window.adminChannel = chatChannel;
+
+        // Listen for new messages using the correct event name
+        chatChannel.bind('message.new', function(data) {
             console.log('🔔 New chat message received:', data);
             if (data.message.chat_id == chatId) {
-                addMessageToChat(data.message);
-                showMessageNotification(data.message);
-                
-                // Refresh Livewire component
+                // Refresh Livewire component immediately
                 if (typeof Livewire !== 'undefined') {
                     Livewire.emit('refreshMessages');
                 }
+                showMessageNotification(data.message);
             }
         });
 

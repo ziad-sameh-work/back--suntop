@@ -95,9 +95,27 @@ Route::get('/test-pusher-config', function () {
             'BROADCAST_DRIVER' => env('BROADCAST_DRIVER'),
             'PUSHER_APP_KEY' => env('PUSHER_APP_KEY'),
             'PUSHER_APP_CLUSTER' => env('PUSHER_APP_CLUSTER'),
+        ],
+        'auth_endpoint' => url('/broadcasting/auth'),
+        'routes_registered' => [
+            'broadcasting_auth' => route_exists('broadcasting.auth') ? 'YES' : 'NO'
         ]
     ]);
 });
+
+// Test Broadcasting Auth endpoint
+Route::get('/test-broadcasting-auth', function () {
+    if (!auth()->check()) {
+        return response()->json(['error' => 'Not authenticated'], 401);
+    }
+    
+    return response()->json([
+        'user' => auth()->user()->only(['id', 'name', 'email', 'role']),
+        'auth_endpoint' => url('/broadcasting/auth'),
+        'can_access_admin_chats' => auth()->user()->role === 'admin',
+        'test_channel' => 'private-admin.chats'
+    ]);
+})->middleware('auth');
 
 // Authentication Routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -157,6 +175,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::get('/welcome', function () {
     return view('welcome');
 })->name('welcome');
+
+// Broadcasting Auth Route (outside admin group for global access)
+Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'auth'])->name('broadcasting.auth')->middleware('auth');
 
 // Admin Dashboard Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -260,8 +281,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/stats/data', [App\Http\Controllers\AdminFeaturedOffersController::class, 'getStats'])->name('featured-offers.stats');
     });
 
-    // Broadcasting Auth for web interface
-    Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'auth'])->name('broadcasting.auth');
     
     // Removed duplicate pusher-chat routes - using main chats routes instead
 });

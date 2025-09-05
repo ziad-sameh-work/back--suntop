@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>اختبار سريع للأحداث</title>
+    <style>
+        body { font-family: Arial; margin: 20px; direction: rtl; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .events { background: #f8f9fa; padding: 15px; margin: 20px 0; max-height: 300px; overflow-y: auto; }
+        .event { background: white; padding: 10px; margin: 5px 0; border-left: 4px solid #007bff; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 اختبار سريع للأحداث الفورية</h1>
+    
+    <div id="status" class="status info">جاري التهيئة...</div>
+    
+    <button onclick="sendTestMessage()">إرسال رسالة تجريبية</button>
+    <button onclick="clearEvents()">مسح الأحداث</button>
+    
+    <h3>الأحداث المستلمة:</h3>
+    <div id="events" class="events">
+        <div class="event">انتظار الأحداث...</div>
+    </div>
+
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        let pusher;
+        let adminChannel;
+        let eventCount = 0;
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            console.log(`Status: ${message}`);
+        }
+
+        function addEvent(eventName, data) {
+            eventCount++;
+            const eventsEl = document.getElementById('events');
+            const eventEl = document.createElement('div');
+            eventEl.className = 'event';
+            
+            const time = new Date().toLocaleTimeString('ar-EG');
+            eventEl.innerHTML = `
+                <strong>${time} - ${eventName}</strong><br>
+                <pre style="font-size: 12px; margin: 5px 0;">${JSON.stringify(data, null, 2)}</pre>
+            `;
+            
+            eventsEl.insertBefore(eventEl, eventsEl.firstChild);
+            console.log(`Event: ${eventName}`, data);
+        }
+
+        function clearEvents() {
+            document.getElementById('events').innerHTML = '<div class="event">تم مسح الأحداث...</div>';
+            eventCount = 0;
+        }
+
+        function sendTestMessage() {
+            fetch('/api/test-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: 'رسالة تجريبية ' + new Date().toLocaleTimeString('ar-EG')
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Test message sent:', data);
+                addEvent('test-message-sent', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addEvent('error', {message: error.message});
+            });
+        }
+
+        // Initialize Pusher
+        try {
+            updateStatus('جاري تهيئة Pusher...', 'info');
+            
+            pusher = new Pusher('f546bf192457a6d47ed5', {
+                cluster: 'eu',
+                encrypted: true
+            });
+
+            pusher.connection.bind('connected', function() {
+                updateStatus('✅ متصل بـ Pusher', 'connected');
+                addEvent('pusher-connected', {
+                    socket_id: pusher.connection.socket_id
+                });
+                
+                // Subscribe to channels
+                adminChannel = pusher.subscribe('private-admin.chats');
+                
+                adminChannel.bind('message.new', function(data) {
+                    addEvent('message.new', data);
+                    updateStatus('🔥 تم استلام رسالة جديدة!', 'connected');
+                });
+
+                adminChannel.bind('pusher:subscription_succeeded', function() {
+                    addEvent('subscription-succeeded', {channel: 'private-admin.chats'});
+                });
+
+                adminChannel.bind('pusher:subscription_error', function(error) {
+                    addEvent('subscription-error', error);
+                    updateStatus('❌ فشل الاشتراك في القناة', 'error');
+                });
+
+                // Also try public channel
+                const chatChannel = pusher.subscribe('chat.1');
+                chatChannel.bind('message.new', function(data) {
+                    addEvent('message.new (chat.1)', data);
+                });
+            });
+
+            pusher.connection.bind('disconnected', function() {
+                updateStatus('🔴 انقطع الاتصال', 'error');
+                addEvent('pusher-disconnected', {});
+            });
+
+            pusher.connection.bind('error', function(error) {
+                updateStatus('❌ خطأ: ' + error.message, 'error');
+                addEvent('pusher-error', error);
+            });
+
+        } catch (error) {
+            updateStatus('❌ فشل التهيئة: ' + error.message, 'error');
+            console.error('Pusher error:', error);
+        }
+
+        // Make available globally
+        window.pusher = pusher;
+        window.adminChannel = adminChannel;
+    </script>
+</body>
+</html>

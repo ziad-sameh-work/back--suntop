@@ -154,53 +154,41 @@
             }, 100);
         });
         
-        // Wait for the parent page's Pusher to be ready, then add our listener
+        // Setup real-time message updates for this chat
         const chatId = @json($chat->id);
-        console.log('🔥 CHAT INTERFACE: Setting up for chat:', chatId);
+        console.log('🔥 CHAT INTERFACE: Setting up real-time for chat:', chatId);
         
-        // Function to set up our listener
-        function setupChatInterfaceListener() {
+        function setupChatRealtime() {
             // Check if parent page has pusher ready
-            if (window.pusher && window.chatChannel) {
-                console.log('✅ CHAT INTERFACE: Using parent page Pusher instance');
+            if (window.pusher && window.adminChannel) {
+                console.log('✅ CHAT INTERFACE: Using parent Pusher instance');
                 
-                // Add our own listener to the existing channel
-                window.chatChannel.bind('App\\Events\\NewChatMessage', function(data) {
-                    console.log('🔥 CHAT INTERFACE: NewChatMessage received:', data);
+                // Listen for new messages on this chat
+                window.adminChannel.bind('message.new', function(data) {
+                    console.log('🔥 CHAT INTERFACE: New message received:', data);
                     
                     if (data.message && data.message.chat_id == chatId) {
-                        console.log('✅ CHAT INTERFACE: Message for current chat, refreshing Livewire...');
+                        console.log('✅ CHAT INTERFACE: Message for current chat, refreshing...');
                         
-                        // Force immediate Livewire component refresh
+                        // Refresh messages immediately
                         @this.call('refreshMessages').then(() => {
-                            console.log('✅ CHAT INTERFACE: Livewire refreshed successfully');
-                            
-                            // Force re-render by calling $refresh
-                            Livewire.emit('$refresh');
-                            
-                            setTimeout(() => {
-                                scrollToBottom();
-                            }, 200);
+                            console.log('✅ CHAT INTERFACE: Messages refreshed');
+                            setTimeout(scrollToBottom, 100);
                         }).catch((error) => {
-                            console.error('❌ CHAT INTERFACE: Error refreshing Livewire:', error);
-                            // Fallback: reload the page if Livewire fails
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1000);
+                            console.error('❌ CHAT INTERFACE: Refresh error:', error);
                         });
                     }
                 });
                 
-                console.log('✅ CHAT INTERFACE: Listener added successfully');
+                console.log('✅ CHAT INTERFACE: Real-time listener setup complete');
             } else {
                 console.log('⏳ CHAT INTERFACE: Waiting for parent Pusher...');
-                // Try again after a short delay
-                setTimeout(setupChatInterfaceListener, 500);
+                setTimeout(setupChatRealtime, 500);
             }
         }
         
-        // Start trying to set up the listener
-        setupChatInterfaceListener();
+        // Start setup
+        setupChatRealtime();
         
         // دالة التمرير لأسفل
         function scrollToBottom() {

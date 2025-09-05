@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار أحداث Pusher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.connected { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .events {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .event {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #007bff;
+            border-radius: 3px;
+        }
+        .event-time {
+            color: #666;
+            font-size: 12px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 اختبار أحداث Pusher المباشر</h1>
+        
+        <div id="status" class="status info">جاري التهيئة...</div>
+        
+        <div>
+            <button onclick="testConnection()">اختبار الاتصال</button>
+            <button onclick="clearEvents()">مسح الأحداث</button>
+            <button onclick="window.open('/debug-pusher-events.php', '_blank')">تشغيل debug script</button>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ffeaa7;">
+            <strong>📋 خطوات الاختبار:</strong><br>
+            1. راقب حالة الاتصال أعلاه<br>
+            2. اضغط "تشغيل debug script" أو شغل: <code>php debug-pusher-events.php</code><br>
+            3. راقب الأحداث الواردة أسفل<br>
+            4. أو شغل: <code>php test-realtime-chat.php customer "اختبار"</code>
+        </div>
+        
+        <h3>الأحداث المستلمة:</h3>
+        <div id="events" class="events">
+            <div class="event">
+                <div class="event-time">جاري انتظار الأحداث...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        let pusher;
+        let adminChannel;
+        let chatChannel;
+        let eventCount = 0;
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            console.log(`📊 Status: ${message}`);
+        }
+
+        function addEvent(eventName, data, channel = 'unknown') {
+            eventCount++;
+            const eventsEl = document.getElementById('events');
+            const eventEl = document.createElement('div');
+            eventEl.className = 'event';
+            
+            const time = new Date().toLocaleTimeString('ar-EG');
+            eventEl.innerHTML = `
+                <div class="event-time">${time} - Event #${eventCount}</div>
+                <strong>📡 ${eventName}</strong> على القناة: <code>${channel}</code>
+                <pre style="margin: 10px 0; background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
+            `;
+            
+            eventsEl.insertBefore(eventEl, eventsEl.firstChild);
+            console.log(`🔥 Event received: ${eventName}`, data);
+        }
+
+        function clearEvents() {
+            document.getElementById('events').innerHTML = '<div class="event"><div class="event-time">تم مسح الأحداث...</div></div>';
+            eventCount = 0;
+        }
+
+        function testConnection() {
+            if (pusher) {
+                addEvent('connection-test', {
+                    state: pusher.connection.state,
+                    socket_id: pusher.connection.socket_id,
+                    channels: Object.keys(pusher.channels.channels)
+                }, 'system');
+            }
+        }
+
+        function sendTestEvent() {
+            fetch('/test-chat-event/1', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Test event response:', data);
+                addEvent('test-event-sent', data, 'system');
+            })
+            .catch(error => {
+                console.error('Error sending test event:', error);
+                addEvent('test-event-error', {error: error.message}, 'system');
+            });
+        }
+
+        // Initialize Pusher
+        try {
+            updateStatus('جاري تهيئة Pusher...', 'info');
+            
+            pusher = new Pusher('f546bf192457a6d47ed5', {
+                cluster: 'eu',
+                encrypted: true,
+                authEndpoint: '/broadcasting/auth',
+                auth: {
+                    headers: {
+                        'X-CSRF-TOKEN': 'test-token',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                }
+            });
+
+            // Connection events
+            pusher.connection.bind('connected', function() {
+                updateStatus('✅ متصل بـ Pusher بنجاح', 'connected');
+                addEvent('pusher-connected', {
+                    socket_id: pusher.connection.socket_id,
+                    state: pusher.connection.state
+                }, 'connection');
+            });
+
+            pusher.connection.bind('disconnected', function() {
+                updateStatus('🔴 انقطع الاتصال مع Pusher', 'error');
+                addEvent('pusher-disconnected', {}, 'connection');
+            });
+
+            pusher.connection.bind('error', function(error) {
+                updateStatus('❌ خطأ في الاتصال: ' + error.message, 'error');
+                addEvent('pusher-error', error, 'connection');
+            });
+
+            // Subscribe to channels
+            setTimeout(() => {
+                // Public chat channel
+                chatChannel = pusher.subscribe('chat.1');
+                chatChannel.bind('message.new', function(data) {
+                    addEvent('message.new', data, 'chat.1');
+                });
+
+                chatChannel.bind('pusher:subscription_succeeded', function() {
+                    addEvent('subscription-succeeded', {}, 'chat.1');
+                });
+
+                chatChannel.bind('pusher:subscription_error', function(error) {
+                    addEvent('subscription-error', error, 'chat.1');
+                });
+
+                // Private admin channel
+                adminChannel = pusher.subscribe('private-admin.chats');
+                
+                adminChannel.bind('message.new', function(data) {
+                    addEvent('message.new', data, 'private-admin.chats');
+                });
+
+                adminChannel.bind('pusher:subscription_succeeded', function() {
+                    addEvent('subscription-succeeded', {}, 'private-admin.chats');
+                });
+
+                adminChannel.bind('pusher:subscription_error', function(error) {
+                    addEvent('subscription-error', error, 'private-admin.chats');
+                });
+
+                // Bind to all events for debugging
+                adminChannel.bind_all(function(eventName, data) {
+                    if (!eventName.startsWith('pusher:')) {
+                        addEvent('all-events: ' + eventName, data, 'private-admin.chats');
+                    }
+                });
+
+                chatChannel.bind_all(function(eventName, data) {
+                    if (!eventName.startsWith('pusher:')) {
+                        addEvent('all-events: ' + eventName, data, 'chat.1');
+                    }
+                });
+
+            }, 1000);
+
+        } catch (error) {
+            updateStatus('❌ فشل في تهيئة Pusher: ' + error.message, 'error');
+            console.error('Pusher initialization error:', error);
+        }
+
+        // Make pusher available globally for debugging
+        window.pusher = pusher;
+        window.adminChannel = adminChannel;
+        window.chatChannel = chatChannel;
+    </script>
+</body>
+</html>
