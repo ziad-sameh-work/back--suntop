@@ -39,26 +39,51 @@ class ProductDetailResource extends JsonResource
         
         // Get authenticated user
         $user = $request->user();
-        if (!$user || !$user->user_category_id) {
+        if (!$user) {
+            return $originalPrice;
+        }
+
+        // Load user category if not loaded
+        if (!$user->relationLoaded('userCategory')) {
+            $user->load('userCategory');
+        }
+
+        // If user has no category, return original price
+        if (!$user->userCategory) {
             return $originalPrice;
         }
         
         // Get active offers for user's category
         $offers = \App\Modules\Offers\Models\Offer::where('is_active', true)
-            ->where('user_category_id', $user->user_category_id)
+            ->where('user_category_id', $user->userCategory->id)
             ->where('valid_from', '<=', now())
             ->where('valid_until', '>=', now())
             ->get();
+        
+        // If no offers found, return original price
+        if ($offers->isEmpty()) {
+            return $originalPrice;
+        }
         
         $bestDiscount = 0;
         
         foreach ($offers as $offer) {
             $discount = 0;
             
-            if ($offer->discount_percentage) {
+            // Check minimum purchase amount if specified
+            if ($offer->minimum_amount && $originalPrice < $offer->minimum_amount) {
+                continue;
+            }
+            
+            if ($offer->discount_percentage && $offer->discount_percentage > 0) {
                 // Percentage discount
                 $discount = ($originalPrice * $offer->discount_percentage) / 100;
-            } elseif ($offer->discount_amount) {
+                
+                // Apply maximum discount limit if specified
+                if ($offer->maximum_discount && $discount > $offer->maximum_discount) {
+                    $discount = $offer->maximum_discount;
+                }
+            } elseif ($offer->discount_amount && $offer->discount_amount > 0) {
                 // Fixed amount discount
                 $discount = min($offer->discount_amount, $originalPrice);
             }
@@ -67,6 +92,11 @@ class ProductDetailResource extends JsonResource
             if ($discount > $bestDiscount) {
                 $bestDiscount = $discount;
             }
+        }
+        
+        // Return original price if no valid discount found
+        if ($bestDiscount <= 0) {
+            return $originalPrice;
         }
         
         return max(0, $originalPrice - $bestDiscount);
